@@ -2,10 +2,10 @@ import { UserStore } from "~/utils/stores/userStore";
 
 export default defineNuxtRouteMiddleware(async(to) => {
 
-    const token = useCookie("cmp_session_token").value;
+    const session_token = useAppCookies().sessionToken.get().value;
 
     if (to.path.startsWith('/auth')) {
-        if (!token) {
+        if (!session_token) {
             return;
         }
 
@@ -14,7 +14,7 @@ export default defineNuxtRouteMiddleware(async(to) => {
         return navigateTo('/');
     }
 
-    if (!token) {
+    if (!session_token) {
         return navigateTo('/auth/login?url=' + encodeURIComponent(to.fullPath));
     }
 
