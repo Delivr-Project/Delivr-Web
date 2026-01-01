@@ -10,7 +10,7 @@ const toast = useToast();
 
 const userinfo = await UserStore.use();
 if (!UserStore.isValid(userinfo)) {
-    throw new Error("User not authenticated but should be to access UserMenu");
+    throw new Error("User not found in UserMenu component");
 }
 
 const user = computed(() => ({
@@ -28,7 +28,7 @@ async function logout() {
 
         UserStore.clear();
 
-        useAppCookies().sessionToken.set(null);
+        useCookie("session_token").value = null;
 
         if (!result.success) {
             toast.add({
@@ -73,6 +73,20 @@ const items = computed<DropdownMenuItem[][]>(() => [
             icon: "i-lucide-settings",
             to: "/dashboard/settings",
         },
+    ],
+    [
+        {
+            label: 'Documentation',
+            icon: 'i-lucide-book-open',
+            to: 'https://github.com/Delivr-Project',
+            target: '_blank'
+        },
+        {
+            label: 'GitHub repository',
+            icon: 'i-simple-icons-github',
+            to: 'https://github.com/Delivr-Project',
+            target: '_blank'
+        }
     ],
     [
         {
