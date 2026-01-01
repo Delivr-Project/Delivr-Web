@@ -7,9 +7,6 @@ import { UserStore } from "~/utils/stores/userStore";
 
 type AdminUser = GetAdminUsersResponses[200]["data"][number];
 
-definePageMeta({
-    layout: "dashboard",
-});
 
 useSeoMeta({
     title: "Users | Delivr",
@@ -26,7 +23,7 @@ if (!UserStore.isValid(currentUser)) {
 
 
 if (!currentUser || currentUser.value.role !== "admin") {
-    navigateTo("/dashboard");
+    navigateTo("/");
 }
 
 const userColumns: TableColumn<AdminUser>[] = [
@@ -96,7 +93,7 @@ const createSchema = z.object({
     display_name: z.string().min(1, "Display name is required"),
     email: z.string().email("Must be a valid email"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    role: z.enum(["admin", "developer", "user"]),
+    role: z.enum(["admin", "user"]),
 });
 
 type CreateSchema = z.output<typeof createSchema>;
@@ -104,7 +101,7 @@ type CreateSchema = z.output<typeof createSchema>;
 const editForm = reactive({
     display_name: "",
     email: "",
-    role: "developer" as "admin" | "developer" | "user",
+    role: "developer" as "admin" | "user",
 });
 
 const passwordForm = reactive({
@@ -219,8 +216,6 @@ function getRoleColor(role: AdminUser["role"]) {
     switch (role) {
         case "admin":
             return "error";
-        case "developer":
-            return "info";
         default:
             return "neutral";
     }

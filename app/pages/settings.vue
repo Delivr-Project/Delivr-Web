@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-definePageMeta({
-    layout: 'dashboard'
-})
-
 useSeoMeta({
     title: 'Settings | Delivr',
     description: 'Manage your account settings'
@@ -13,12 +9,12 @@ useSeoMeta({
 const links = [[{
 	label: 'General',
 	icon: 'i-lucide-user',
-	to: '/dashboard/settings',
+	to: '/settings',
 	exact: true
 }, {
 	label: 'Security',
 	icon: 'i-lucide-shield',
-	to: '/dashboard/settings/security'
+	to: '/settings/security'
 }]] satisfies NavigationMenuItem[][]
 
 </script>

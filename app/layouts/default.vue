@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
+import UserMenu from '~/components/dashboard/UserMenu.vue';
 import { UserStore } from '~/utils/stores/userStore';
 
 const route = useRoute()
@@ -18,41 +19,12 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
 		{
 			label: "Emails",
 			icon: "i-lucide-mail",
-			to: "/emails/inbox",
+			to: "/inbox",
 		},
         {
-            label: "Chats",
-            icon: "i-lucide-package",
-            to: "/chats",
-        },
-        {
-            label: "Meine Aufgaben",
+            label: "Tasks",
             icon: "i-lucide-list-checks",
             to: "/my-tasks",
-        },
-    ];
-    const settings: NavigationMenuItem[] = [
-        {
-            type: "label",
-            class: "mt-4 pt-3 border-t-2 border-default",
-        },
-        {
-            label: "Settings",
-            to: "/dashboard/settings",
-            icon: "i-lucide-settings",
-            defaultOpen: true,
-            type: "trigger",
-            children: [
-                {
-                    label: "General",
-                    to: "/dashboard/settings",
-                    exact: true,
-                },
-                {
-                    label: "Security",
-                    to: "/dashboard/settings/security",
-                },
-            ],
         },
     ];
 
@@ -66,19 +38,39 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
         {
             label: "Users",
             icon: "i-lucide-users",
-            to: "/dashboard/admin/users",
-        },
-        {
-            label: "Alle Freizeiten",
-            icon: "i-lucide-package-search",
-            to: "/dashboard/admin/packages",
+            to: "/admin/users",
         },
         {
             label: "Tasks",
             icon: "i-lucide-list-checks",
-            to: "/dashboard/admin/tasks",
+            to: "/admin/tasks",
         }
     ] : [];
+
+    const settings: NavigationMenuItem[] = [
+        {
+            type: "label",
+            class: "mt-4 pt-3 border-t-2 border-default",
+        },
+        {
+            label: "Settings",
+            to: "/settings",
+            icon: "i-lucide-settings",
+            defaultOpen: true,
+            type: "trigger",
+            children: [
+                {
+                    label: "General",
+                    to: "/settings",
+                    exact: true,
+                },
+                {
+                    label: "Security",
+                    to: "/settings/security",
+                },
+            ],
+        },
+    ];
 
     const footerItems: NavigationMenuItem[] = [
         {
@@ -93,7 +85,7 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
         },
     ];
 
-    return [[...basicItems], [...adminItems, ...settings], [...footerItems]];
+    return [[...basicItems, ...adminItems, ...settings], [...footerItems]];
 });
 
 const groups = computed(() => [{
@@ -133,24 +125,15 @@ const groups = computed(() => [{
 					class="bg-transparent ring-default"
 				/>
 
-				<UNavigationMenu
+                <UNavigationMenu
                     :collapsed="collapsed"
                     :items="sidebarItems[0]"
                     orientation="vertical"
-					class="mb-4 pb-4 border-b-2 border-default"
                 />
-
-				<CampsMenu :collapsed="collapsed" />
 
                 <UNavigationMenu
                     :collapsed="collapsed"
                     :items="sidebarItems[1]"
-                    orientation="vertical"
-                />
-
-                <UNavigationMenu
-                    :collapsed="collapsed"
-                    :items="sidebarItems[2]"
                     orientation="vertical"
                     class="mt-auto"
                 />
