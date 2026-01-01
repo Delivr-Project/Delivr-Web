@@ -24,6 +24,8 @@ export interface Mail {
     subject: string
     body: string
     date: string
+    hasAttachment?: boolean;
+    isHTML?: boolean;
 }
 
 export interface Member {
