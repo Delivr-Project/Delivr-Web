@@ -2,7 +2,7 @@ import { UserStore } from "~/utils/stores/userStore";
 
 export default defineNuxtRouteMiddleware(async(to) => {
 
-    const token = useAppCookies().sessionToken.get().value;
+    const token = useCookie("cmp_session_token").value;
 
     if (to.path.startsWith('/auth')) {
         if (!token) {
@@ -11,23 +11,19 @@ export default defineNuxtRouteMiddleware(async(to) => {
 
         await UserStore.fetchAndSetIfNeeded();
 
-        return navigateTo('/dashboard');
+        return navigateTo('/');
     }
 
-    if (to.path.startsWith('/dashboard')) {
+    if (!token) {
+        return navigateTo('/auth/login?url=' + encodeURIComponent(to.fullPath));
+    }
 
-        if (!token) {
-            return navigateTo('/auth/login?url=' + encodeURIComponent(to.fullPath));
+    const user = await UserStore.use();
+
+    if (to.path.startsWith('/admin')) {
+        // Check admin access
+        if (!user.value || user.value.role !== 'admin') {
+            navigateTo('/')
         }
-
-        const user = await UserStore.use();
-
-        if (to.path.startsWith('/dashboard/admin')) {
-            // Check admin access
-            if (!user.value || user.value.role !== 'admin') {
-                navigateTo('/dashboard')
-            }
-        }
-
     }
 });

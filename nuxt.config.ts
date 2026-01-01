@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
 	compatibilityDate: '2025-07-15',
 	devtools: { enabled: true },
-	modules: ['@nuxt/ui'],
+	modules: ['@nuxt/ui', '@vite-pwa/nuxt'],
 
 	colorMode: {
 		preference: 'dark',
@@ -46,5 +46,22 @@ export default defineNuxtConfig({
 
 	routeRules: {
 		"/**": { ssr: false }
-	}
+	},
+
+	pwa: {
+        registerType: 'autoUpdate',
+        manifest: {
+            name: 'Delivr',
+            short_name: 'Delivr',
+            start_url: '/',
+            description: 'Delivr - The Mail Client that actually delivers.',
+
+            display: 'standalone',
+            orientation: 'portrait',
+
+            theme_color: '#ffffff',
+            background_color: '#18181a',
+        }
+    }
+
 });

@@ -1,33 +1,36 @@
 <script setup lang="ts">
-import type { NavigationMenuItem } from "@nuxt/ui";
-import UserMenu from "~/components/dashboard/UserMenu.vue";
-import DelivrLogo from "~/components/img/DelivrLogo.vue";
-import DelivrIcon from "~/components/img/DelivrIcon.vue";
-import { UserStore } from "~/utils/stores/userStore";
+import type { NavigationMenuItem } from '@nuxt/ui'
+import { UserStore } from '~/utils/stores/userStore';
+
+const route = useRoute()
 
 const user = await UserStore.use();
 
 const isAdmin = computed(() => user.value?.role === "admin");
 
 const sidebarItems = computed<NavigationMenuItem[][]>(() => {
-    const devItems: NavigationMenuItem[] = [
+    const basicItems: NavigationMenuItem[] = [
         {
             label: "Overview",
             icon: "i-lucide-layout-dashboard",
-            to: "/dashboard",
+            to: "/",
         },
+		{
+			label: "Emails",
+			icon: "i-lucide-mail",
+			to: "/emails/inbox",
+		},
         {
-            label: "Packages",
+            label: "Chats",
             icon: "i-lucide-package",
-            to: "/dashboard/packages",
+            to: "/chats",
         },
         {
-            label: "Tasks",
+            label: "Meine Aufgaben",
             icon: "i-lucide-list-checks",
-            to: "/dashboard/tasks",
+            to: "/my-tasks",
         },
     ];
-
     const settings: NavigationMenuItem[] = [
         {
             type: "label",
@@ -59,21 +62,6 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
             icon: "i-lucide-shield",
             type: "label",
             class: "mt-4 pt-4 border-t-2 border-default",
-            // defaultOpen: route.path.startsWith("/dashboard/admin"),
-            // children: [
-            //     {
-            //         label: "Stable Requests",
-            //         to: "/dashboard/admin/requests",
-            //     },
-            //     {
-            //         label: "Users",
-            //         to: "/dashboard/admin/users",
-            //     },
-            //     {
-            //         label: "All Packages",
-            //         to: "/dashboard/admin/packages",
-            //     },
-            // ],
         },
         {
             label: "Users",
@@ -81,19 +69,9 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
             to: "/dashboard/admin/users",
         },
         {
-            label: "All Packages",
+            label: "Alle Freizeiten",
             icon: "i-lucide-package-search",
             to: "/dashboard/admin/packages",
-        },
-        {
-            label: "Stable Requests",
-            icon: "i-lucide-git-pull-request",
-            to: "/dashboard/admin/requests",
-        },
-        {
-            label: "OS Releases",
-            icon: "i-lucide-rocket",
-            to: "/dashboard/admin/os-releases",
         },
         {
             label: "Tasks",
@@ -106,7 +84,7 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
         {
             label: "Explorer",
             icon: "i-lucide-compass",
-            to: "/explore",
+            to: "/explorer",
         },
         {
             label: "Back to Home",
@@ -115,62 +93,79 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
         },
     ];
 
-    return [[...devItems, ...adminItems, ...settings], footerItems];
+    return [[...basicItems], [...adminItems, ...settings], [...footerItems]];
 });
+
+const groups = computed(() => [{
+	id: 'links',
+	label: 'Go to',
+	items: sidebarItems.value.flat()
+}])
 
 
 </script>
 
 <template>
-    <NuxtLoadingIndicator
-        color="#00bcff"
-        position="top"
-    />
-
-    <UDashboardGroup class="app-layout-dashboard">
-        <UDashboardSidebar
-            collapsible
-            resizable
-            :ui="{
-                header: 'main-bg-color',
-                body: 'main-bg-color',
-                content: 'main-bg-color',
-                footer: 'border-t border-default main-bg-color',
-            }"
-            :min-size="18"
-            :default-size="20"
+	<UDashboardGroup>
+		<UDashboardSidebar id="default"
+			collapsible
+			resizable
+			:ui="{
+				footer: 'lg:border-t lg:border-default'
+			}"
+			:min-size="18"
+            :default-size="18"
             :max-size="30"
-        >
-            <template #header="{ collapsed }">
-                <NuxtLink to="/" class="lg:ms-2.5 flex items-center gap-1.5">
-                    <DelivrLogo v-if="!collapsed" class="h-6 w-auto flex-none" />
-                    <span v-if="!collapsed" class="text-lg font-semibold">/</span>
-                    <span v-if="!collapsed" class="text-lg font-semibold">Hub</span>
-                    <DelivrIcon v-else class="h-8 w-8" />
-                </NuxtLink>
-            </template>
+		>
+			<template #header="{ collapsed }">
+				<h1
+					class="text-lg font-semibold"
+					v-if="!collapsed"
+				>
+                    Delivr Dashboard
+                </h1>
+			</template>
 
-            <template #default="{ collapsed }">
-                <UNavigationMenu
+			<template #default="{ collapsed }">
+				
+				<UDashboardSearchButton
+					:collapsed="collapsed"
+					class="bg-transparent ring-default"
+				/>
+
+				<UNavigationMenu
                     :collapsed="collapsed"
                     :items="sidebarItems[0]"
                     orientation="vertical"
+					class="mb-4 pb-4 border-b-2 border-default"
                 />
+
+				<CampsMenu :collapsed="collapsed" />
 
                 <UNavigationMenu
                     :collapsed="collapsed"
                     :items="sidebarItems[1]"
                     orientation="vertical"
+                />
+
+                <UNavigationMenu
+                    :collapsed="collapsed"
+                    :items="sidebarItems[2]"
+                    orientation="vertical"
                     class="mt-auto"
                 />
             </template>
 
-            <template #footer="{ collapsed }">
-                <UserMenu :collapsed="collapsed"></UserMenu>
-            </template>
-        </UDashboardSidebar>
+			<template #footer="{ collapsed }">
+				<UserMenu :collapsed="collapsed" />
+			</template>
 
-        <slot />
-    </UDashboardGroup>
+		</UDashboardSidebar>
+
+		<UDashboardSearch :groups="groups" />
+
+		<slot />
+
+		<NotificationsSlideover />
+	</UDashboardGroup>
 </template>
-

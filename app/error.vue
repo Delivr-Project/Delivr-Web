@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
-import Header from '~/components/layout/Header.vue'
-import Footer from '~/components/layout/Footer.vue'
+
 
 
 const props = defineProps<{
@@ -12,16 +11,12 @@ const props = defineProps<{
 
 <template>
     <div class="app-layout">
-        <!-- Navigation -->
-        <Header />
 
         <!-- Main Content -->
         <UMain class="main-content">
             <UError :error="error" />
         </UMain>
 
-        <!-- Footer -->
-        <Footer />
     </div>
 </template>
 
