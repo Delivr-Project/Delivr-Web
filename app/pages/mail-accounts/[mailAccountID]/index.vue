@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { FormError, NavigationMenuItem } from '@nuxt/ui';
-import { zPutMailAccountsMailAccountIdData } from '~/api-client/zod.gen';
+import { zPostMailAccountsData, zPutMailAccountsMailAccountIdData } from '~/api-client/zod.gen';
 import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
 
 const toast = useToast();
@@ -25,15 +25,53 @@ const headerTexts = computed(() => {
 });
 
 
-const mailAccount_form_schema = zPutMailAccountsMailAccountIdData.shape.body;
+const mailAccount_form_schema = mailAccount.isNew ? zPostMailAccountsData.shape.body : zPutMailAccountsMailAccountIdData.shape.body;
 const mailAccount_form_state = computed({
-    get: () => ({
-        display_name: mailAccount_data.value.display_name,
-        is_default: mailAccount_data.value.is_default,
-    }),
+    get: () => {
+		if (mailAccount.isNew) {
+			return {
+				display_name: mailAccount_data.value.display_name,
+				is_default: mailAccount_data.value.is_default,
+			
+				imap_host: mailAccount_data.value.imap_host,
+				imap_port: mailAccount_data.value.imap_port,
+				imap_username: mailAccount_data.value.imap_username,
+				imap_password: (mailAccount_data.value as NewMailAccount).imap_password,
+				imap_encryption: mailAccount_data.value.imap_encryption,
+
+				smtp_host: mailAccount_data.value.smtp_host,
+				smtp_port: mailAccount_data.value.smtp_port,
+				smtp_username: mailAccount_data.value.smtp_username,
+				smtp_password: (mailAccount_data.value as NewMailAccount).smtp_password,
+				smtp_encryption: mailAccount_data.value.smtp_encryption
+			}
+		}
+		return {
+			display_name: mailAccount_data.value.display_name,
+			is_default: mailAccount_data.value.is_default,
+		}
+
+    },
     set: (newState) => {
-        mailAccount_data.value.display_name = newState.display_name;
-        mailAccount_data.value.is_default = newState.is_default;
+		if (mailAccount.isNew) {
+			mailAccount_data.value.display_name = newState.display_name;
+			mailAccount_data.value.is_default = newState.is_default;
+
+			(mailAccount_data.value as NewMailAccount).imap_host = newState.imap_host as string;
+			(mailAccount_data.value as NewMailAccount).imap_port = newState.imap_port as number;
+			(mailAccount_data.value as NewMailAccount).imap_username = newState.imap_username as string;
+			(mailAccount_data.value as NewMailAccount).imap_password = newState.imap_password as string;
+			(mailAccount_data.value as NewMailAccount).imap_encryption = newState.imap_encryption as 'SSL' | 'STARTTLS' | 'NONE';
+
+			(mailAccount_data.value as NewMailAccount).smtp_host = newState.smtp_host as string;
+			(mailAccount_data.value as NewMailAccount).smtp_port = newState.smtp_port as number;
+			(mailAccount_data.value as NewMailAccount).smtp_username = newState.smtp_username as string;
+			(mailAccount_data.value as NewMailAccount).smtp_password = newState.smtp_password as string;
+			(mailAccount_data.value as NewMailAccount).smtp_encryption = newState.smtp_encryption as 'SSL' | 'STARTTLS' | 'NONE';
+		} else {
+			mailAccount_data.value.display_name = newState.display_name;
+			mailAccount_data.value.is_default = newState.is_default;
+		}
     }
 });
 
@@ -164,69 +202,122 @@ async function onDeleteMailAccount() {
 			</p>
 		</div>
 
-		<!-- Profile Card -->
-		<div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
-			<div class="px-6 py-4 border-b border-slate-800">
-				<div class="flex items-center gap-3">
-					<div class="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-						<UIcon class="w-5 h-5 text-sky-400" name="i-lucide-info" />
+		<UForm :schema="mailAccount_form_schema" :state="mailAccount_form_state" @submit="onFormSubmit()">
+
+			<!-- Settings Card -->
+			<div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+				<div class="px-6 py-4 border-b border-slate-800">
+					<div class="flex items-center gap-3">
+						<div class="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
+							<UIcon class="w-5 h-5 text-sky-400" name="i-lucide-info" />
+						</div>
+						<div>
+							<h3 class="font-medium text-white">Mail Account Information</h3>
+							<p class="text-sm text-slate-400">Modify the details of your mail account</p>
+						</div>
 					</div>
-					<div>
-						<h3 class="font-medium text-white">Mail Account Information</h3>
-						<p class="text-sm text-slate-400">View and manage the details of this OS Release.</p>
+				</div>
+				
+				<div class="p-6">
+					<div class="divide-y divide-slate-800">
+
+						<UFormField 
+							name="display_name" 
+							label="Display Name"
+							description="Shown publicly. Leave empty to use username."
+							class="flex max-sm:flex-col justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
+							:ui='{
+								root: "w-full sm:w-auto",
+								container: "w-full sm:w-auto",
+							}'
+						>
+							<UInput v-model="mailAccount_data.display_name" placeholder="Enter display name" class="w-full sm:w-96" />
+						</UFormField>
+
+						<UFormField 
+							name="is_default" 
+							label="Is Default Mail Account"
+							description="Set this Mail Account as the default for sending emails."
+							required
+							class="flex justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
+						>
+							<div class="w-full sm:w-96 rounded-md border-0 appearance-none placeholder:text-dimmed focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 transition-colors py-1.5 text-sm gap-1.5 text-highlighted bg-transparent sm:flex sm:justify-center">
+								<UCheckbox v-model="mailAccount_data.is_default" />
+							</div>
+						</UFormField>
+
+						<div class="pt-4" v-if="!mailAccount.isNew">
+							<UButton
+								label="Save Changes" 
+								color="primary"
+								disabled
+								type="submit" 
+								:loading="mail_account_form_submit_loading"
+								icon="i-lucide-save"
+							/>
+						</div>
+
 					</div>
 				</div>
 			</div>
-			
-			<div class="p-6">
-				<UForm id="settings" class="divide-y divide-slate-800" :schema="mailAccount_form_schema" :state="mailAccount_form_state" @submit="onFormSubmit()">
 
-					<UFormField 
-						name="display_name" 
-						label="Display Name"
-						description="Shown publicly. Leave empty to use username."
-						class="flex max-sm:flex-col justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
-						:ui='{
-							root: "w-full sm:w-auto",
-							container: "w-full sm:w-auto",
-						}'
-					>
-						<UInput v-model="mailAccount_data.display_name" placeholder="Enter display name" class="w-full sm:w-96" />
-					</UFormField>
-
-                    <UFormField 
-                        name="is_default" 
-                        label="Is Default Mail Account"
-                        description="Set this Mail Account as the default for sending emails."
-                        required
-                        class="flex justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
-					>
-                        <div class="w-full sm:w-96 rounded-md border-0 appearance-none placeholder:text-dimmed focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 transition-colors py-1.5 text-sm gap-1.5 text-highlighted bg-transparent sm:flex sm:justify-center">
-                            <UCheckbox v-model="mailAccount_data.is_default" />
-                        </div>
-					</UFormField>
-
-                    <div class="pt-4">
-						<UButton v-if="!mailAccount.isNew"
-							label="Save Changes" 
-							color="primary"
-                            disabled
-							type="submit" 
-							:loading="mail_account_form_submit_loading"
-							icon="i-lucide-save"
-						/>
-						<UButton v-else
-							label="Add Mail Account"
-							color="primary"
-							type="submit" 
-							:loading="mail_account_form_submit_loading"
-							icon="i-lucide-plus-circle"
-						/>
+			<div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+				<div class="px-6 py-4 border-b border-slate-800">
+					<div class="flex items-center gap-3">
+						<div class="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
+							<UIcon class="w-5 h-5 text-sky-400" name="i-lucide-info" />
+						</div>
+						<div>
+							<h3 class="font-medium text-white">Backend Configuration</h3>
+							<p class="text-sm text-slate-400">Modify backend settings for your mail account</p>
+						</div>
 					</div>
+				</div>
+				
+				<div class="p-6">
+					<div class="divide-y divide-slate-800">
 
-				</UForm>
+						<UFormField 
+							name="display_name" 
+							label="Display Name"
+							description="Shown publicly. Leave empty to use username."
+							class="flex max-sm:flex-col justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
+							:ui='{
+								root: "w-full sm:w-auto",
+								container: "w-full sm:w-auto",
+							}'
+						>
+							<UInput v-model="mailAccount_data.display_name" placeholder="Enter display name" class="w-full sm:w-96" />
+						</UFormField>
+
+						<UFormField 
+							name="is_default" 
+							label="Is Default Mail Account"
+							description="Set this Mail Account as the default for sending emails."
+							required
+							class="flex justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
+						>
+							<div class="w-full sm:w-96 rounded-md border-0 appearance-none placeholder:text-dimmed focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 transition-colors py-1.5 text-sm gap-1.5 text-highlighted bg-transparent sm:flex sm:justify-center">
+								<UCheckbox v-model="mailAccount_data.is_default" />
+							</div>
+						</UFormField>
+
+						<div class="pt-4" v-if="!mailAccount.isNew">
+							<UButton
+								label="Save Changes" 
+								color="primary"
+								disabled
+								type="submit" 
+								:loading="mail_account_form_submit_loading"
+								icon="i-lucide-save"
+							/>
+						</div>
+
+					</div>
+				</div>
 			</div>
-		</div>
+
+		</UForm>
 
         <!-- Danger Zone Card -->
 		<div v-if="!mailAccount.isNew" class="rounded-xl border border-red-900/50 bg-red-950/20 backdrop-blur-sm overflow-hidden">
