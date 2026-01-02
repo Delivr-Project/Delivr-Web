@@ -23,12 +23,7 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
 			label: "Emails",
 			icon: "i-lucide-mail",
 			to: "/inbox",
-		},
-        {
-            label: "Tasks",
-            icon: "i-lucide-list-checks",
-            to: "/my-tasks",
-        },
+		}
     ];
 
     const adminItems: NavigationMenuItem[] = isAdmin.value ? [
@@ -36,21 +31,23 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
             label: "Admin",
             icon: "i-lucide-shield",
             type: "label",
-            class: "mt-4 pt-4 border-t-2 border-default",
+            // class: "mt-4 pt-4 border-t-2 border-default",
         },
         {
             label: "Users",
             icon: "i-lucide-users",
             to: "/admin/users",
-        },
-        {
-            label: "Tasks",
-            icon: "i-lucide-list-checks",
-            to: "/admin/tasks",
         }
     ] : [];
 
     const settings: NavigationMenuItem[] = [
+
+        {
+            label: "Manage Mail Accounts",
+            to: "/mail-accounts",
+            icon: "i-lucide-at-sign",
+        },
+
         {
             type: "label",
             class: "mt-4 pt-3 border-t-2 border-default",
@@ -80,6 +77,7 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
             label: "Explorer",
             icon: "i-lucide-compass",
             to: "/explorer",
+            class: "mt-4 pt-4 border-t-2 border-default",
         },
         {
             label: "Back to Home",
@@ -88,7 +86,7 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
         },
     ];
 
-    return [[...basicItems, ...adminItems, ...settings], [...footerItems]];
+    return [[...basicItems], [...adminItems, ...settings, ...footerItems]];
 });
 
 const groups = computed(() => [{
