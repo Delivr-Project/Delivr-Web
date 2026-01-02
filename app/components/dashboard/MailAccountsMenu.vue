@@ -55,10 +55,10 @@ const items = computed<DropdownMenuItem[][]>(() => {
         }">
         <UButton
             v-bind="{
-                avatar: selectedMailAccount ? {
-                    alt: selectedMailAccount.imap_username,
-                } : undefined,
-                label: collapsed ? undefined : selectedMailAccount?.imap_username,
+                avatar: {
+                    alt: selectedMailAccount ? selectedMailAccount.imap_username : 'No Account Selected',
+                },
+                label: collapsed ? undefined : selectedMailAccount ? selectedMailAccount.imap_username : 'No Account Selected',
                 trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
             }"
             color="neutral"
