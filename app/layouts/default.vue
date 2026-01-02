@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
+import MailAccountsMenu from '~/components/dashboard/MailAccountsMenu.vue';
 import UserMenu from '~/components/dashboard/UserMenu.vue';
 import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
@@ -124,6 +125,8 @@ const groups = computed(() => [{
 					:collapsed="collapsed"
 					class="bg-transparent ring-default"
 				/>
+
+                <MailAccountsMenu :collapsed="collapsed" />
 
                 <UNavigationMenu
                     :collapsed="collapsed"

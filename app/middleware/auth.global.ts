@@ -1,3 +1,4 @@
+import { MailAccountsStore } from "~/utils/stores/mailAccountsStore";
 import { UserStore } from "~/utils/stores/userStore";
 
 export default defineNuxtRouteMiddleware(async(to) => {
@@ -10,6 +11,7 @@ export default defineNuxtRouteMiddleware(async(to) => {
         }
 
         await UserStore.fetchAndSetIfNeeded();
+        await MailAccountsStore.fetchAndSetIfNeeded();
 
         return navigateTo('/');
     }

@@ -15,6 +15,15 @@ export class MailAccountsStore {
         return response.data satisfies MailAccount[];
     });
 
+    private static currentSelectedMailAccountID: Ref<number | null> = ref(null);
+    private static currentSelectedMailAccount: ComputedRef<MailAccount | null> = computed(() => {
+        const accounts = this.mailAccounts.data.value;
+        if (!accounts) {
+            return null;
+        }
+        return accounts.find(acc => acc.id === this.currentSelectedMailAccountID.value) || null;
+    });
+
     static async use() {
         await this.fetchAndSetIfNeeded();
         return this.mailAccounts.data satisfies Ref<MailAccount[] | null>;
@@ -29,6 +38,21 @@ export class MailAccountsStore {
 
     static async refresh() {
         await this.mailAccounts.fetchData();
+        if (!this.currentSelectedMailAccountID.value) {
+            this.currentSelectedMailAccountID.value = (await this.getDefaultMailAccount())?.id || null;
+        }
+    }
+
+    static async getDefaultMailAccount() {
+        if (!this.isValid(this.mailAccounts.data)) {
+            return null;
+        }
+        for (const account of this.mailAccounts.data.value) {
+            if (account.is_default) {
+                return account;
+            }
+        }
+        return this.mailAccounts.data.value[0] || null;
     }
 
     static async update(updates: Partial<MailAccount[]>) {
@@ -49,6 +73,14 @@ export class MailAccountsStore {
 
     static isValid(data: Ref<MailAccount[] | null>): data is Ref<MailAccount[]> {
         return !!data.value && Array.isArray(data.value);
+    }
+
+    static useSelected() {
+        return this.currentSelectedMailAccount;
+    }
+
+    static setSelected(mailAccountID: number | null) {
+        this.currentSelectedMailAccountID.value = mailAccountID;
     }
 
 }
