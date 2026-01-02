@@ -41,6 +41,10 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
     ] : [];
 
     const settings: NavigationMenuItem[] = [
+        {
+            type: "label",
+            class: "mt-4 pt-3 border-t-2 border-default",
+        },
 
         {
             label: "Manage Mail Accounts",
@@ -48,10 +52,6 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
             icon: "i-lucide-at-sign",
         },
 
-        {
-            type: "label",
-            class: "mt-4 pt-3 border-t-2 border-default",
-        },
         {
             label: "Settings",
             to: "/settings",

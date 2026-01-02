@@ -422,36 +422,6 @@ export const zGetMailAccountsMailAccountIdResponse = z.object({
 export const zPutMailAccountsMailAccountIdData = z.object({
     body: z.optional(z.object({
         display_name: z.optional(z.string().min(1).max(255)),
-        smtp_host: z.optional(z.union([
-            z.union([
-                z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
-                z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
-            ]),
-            z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
-        ])),
-        smtp_port: z.optional(z.int().gte(1).lte(65535)),
-        smtp_username: z.optional(z.string().min(1).max(255)),
-        smtp_password: z.optional(z.string().min(1).max(1023)),
-        smtp_encryption: z.optional(z.enum([
-            'SSL',
-            'STARTTLS',
-            'NONE'
-        ])),
-        imap_host: z.optional(z.union([
-            z.union([
-                z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
-                z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
-            ]),
-            z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
-        ])),
-        imap_port: z.optional(z.int().gte(1).lte(65535)),
-        imap_username: z.optional(z.string().min(1).max(255)),
-        imap_password: z.optional(z.string().min(1).max(1023)),
-        imap_encryption: z.optional(z.enum([
-            'SSL',
-            'STARTTLS',
-            'NONE'
-        ])),
         is_default: z.optional(z.boolean())
     })),
     path: z.object({
@@ -467,6 +437,55 @@ export const zPutMailAccountsMailAccountIdResponse = z.object({
     success: z.literal(true),
     code: z.literal(200),
     message: z.literal('Mail account updated successfully'),
+    data: z.null()
+});
+
+export const zPutMailAccountsMailAccountIdCredentialsData = z.object({
+    body: z.optional(z.object({
+        smtp_host: z.union([
+            z.union([
+                z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
+                z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
+            ]),
+            z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
+        ]),
+        smtp_port: z.int().gte(1).lte(65535),
+        smtp_username: z.string().min(1).max(255),
+        smtp_password: z.string().min(1).max(1023),
+        smtp_encryption: z.enum([
+            'SSL',
+            'STARTTLS',
+            'NONE'
+        ]),
+        imap_host: z.union([
+            z.union([
+                z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
+                z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
+            ]),
+            z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
+        ]),
+        imap_port: z.int().gte(1).lte(65535),
+        imap_username: z.string().min(1).max(255),
+        imap_password: z.string().min(1).max(1023),
+        imap_encryption: z.enum([
+            'SSL',
+            'STARTTLS',
+            'NONE'
+        ])
+    })),
+    path: z.object({
+        mailAccountID: z.number().gt(0)
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mail account credentials updated successfully
+ */
+export const zPutMailAccountsMailAccountIdCredentialsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail account credentials updated successfully'),
     data: z.null()
 });
 

@@ -2,7 +2,7 @@
 
 import type { Client, Composable, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteAccountApikeysApiKeyIdData, DeleteAccountApikeysApiKeyIdError, DeleteAccountApikeysApiKeyIdResponse, DeleteAccountData, DeleteAccountError, DeleteAccountResponse, DeleteMailAccountsMailAccountIdData, DeleteMailAccountsMailAccountIdError, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdData, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdError, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, DeleteMailAccountsMailAccountIdResponse, GetAccountApikeysData, GetAccountApikeysResponse, GetAccountData, GetAccountError, GetAccountResponse, GetAuthSessionData, GetAuthSessionError, GetAuthSessionResponse, GetMailAccountsData, GetMailAccountsMailAccountIdData, GetMailAccountsMailAccountIdError, GetMailAccountsMailAccountIdIdentitiesData, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdData, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdError, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, GetMailAccountsMailAccountIdIdentitiesResponse, GetMailAccountsMailAccountIdMailsData, GetMailAccountsMailAccountIdMailsMailUidData, GetMailAccountsMailAccountIdMailsMailUidError, GetMailAccountsMailAccountIdMailsMailUidResponse, GetMailAccountsMailAccountIdMailsResponse, GetMailAccountsMailAccountIdResponse, GetMailAccountsResponse, PostAccountApikeysData, PostAccountApikeysError, PostAccountApikeysResponse, PostAuthLoginData, PostAuthLoginError, PostAuthLoginResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthResetPasswordData, PostAuthResetPasswordError, PostAuthResetPasswordRequestData, PostAuthResetPasswordRequestError, PostAuthResetPasswordRequestResponse, PostAuthResetPasswordResponse, PostMailAccountsData, PostMailAccountsError, PostMailAccountsMailAccountIdIdentitiesData, PostMailAccountsMailAccountIdIdentitiesError, PostMailAccountsMailAccountIdIdentitiesResponse, PostMailAccountsResponse, PutAccountData, PutAccountError, PutAccountPasswordData, PutAccountPasswordError, PutAccountPasswordResponse, PutAccountResponse, PutMailAccountsMailAccountIdData, PutMailAccountsMailAccountIdError, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdData, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdError, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, PutMailAccountsMailAccountIdResponse } from './types.gen';
+import type { DeleteAccountApikeysApiKeyIdData, DeleteAccountApikeysApiKeyIdError, DeleteAccountApikeysApiKeyIdResponse, DeleteAccountData, DeleteAccountError, DeleteAccountResponse, DeleteMailAccountsMailAccountIdData, DeleteMailAccountsMailAccountIdError, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdData, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdError, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, DeleteMailAccountsMailAccountIdResponse, GetAccountApikeysData, GetAccountApikeysResponse, GetAccountData, GetAccountError, GetAccountResponse, GetAuthSessionData, GetAuthSessionError, GetAuthSessionResponse, GetMailAccountsData, GetMailAccountsMailAccountIdData, GetMailAccountsMailAccountIdError, GetMailAccountsMailAccountIdIdentitiesData, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdData, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdError, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, GetMailAccountsMailAccountIdIdentitiesResponse, GetMailAccountsMailAccountIdMailsData, GetMailAccountsMailAccountIdMailsMailUidData, GetMailAccountsMailAccountIdMailsMailUidError, GetMailAccountsMailAccountIdMailsMailUidResponse, GetMailAccountsMailAccountIdMailsResponse, GetMailAccountsMailAccountIdResponse, GetMailAccountsResponse, PostAccountApikeysData, PostAccountApikeysError, PostAccountApikeysResponse, PostAuthLoginData, PostAuthLoginError, PostAuthLoginResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthResetPasswordData, PostAuthResetPasswordError, PostAuthResetPasswordRequestData, PostAuthResetPasswordRequestError, PostAuthResetPasswordRequestResponse, PostAuthResetPasswordResponse, PostMailAccountsData, PostMailAccountsError, PostMailAccountsMailAccountIdIdentitiesData, PostMailAccountsMailAccountIdIdentitiesError, PostMailAccountsMailAccountIdIdentitiesResponse, PostMailAccountsResponse, PutAccountData, PutAccountError, PutAccountPasswordData, PutAccountPasswordError, PutAccountPasswordResponse, PutAccountResponse, PutMailAccountsMailAccountIdCredentialsData, PutMailAccountsMailAccountIdCredentialsError, PutMailAccountsMailAccountIdCredentialsResponse, PutMailAccountsMailAccountIdData, PutMailAccountsMailAccountIdError, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdData, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdError, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, PutMailAccountsMailAccountIdResponse } from './types.gen';
 
 export type Options<TComposable extends Composable = '$fetch', TData extends TDataShape = TDataShape, ResT = unknown, DefaultT = undefined> = Options2<TComposable, TData, ResT, DefaultT> & {
     /**
@@ -220,13 +220,28 @@ export const getMailAccountsMailAccountId = <TComposable extends Composable = '$
 });
 
 /**
- * Update mail account
+ * Update mail account info
  *
  * Update a field in a mail account.
  */
 export const putMailAccountsMailAccountId = <TComposable extends Composable = '$fetch', DefaultT extends PutMailAccountsMailAccountIdResponse = PutMailAccountsMailAccountIdResponse>(options: Options<TComposable, PutMailAccountsMailAccountIdData, PutMailAccountsMailAccountIdResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutMailAccountsMailAccountIdResponse | DefaultT, PutMailAccountsMailAccountIdError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/mail-accounts/{mailAccountID}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Update mail account credentials
+ *
+ * Update the SMTP/IMAP credentials for a mail account.
+ */
+export const putMailAccountsMailAccountIdCredentials = <TComposable extends Composable = '$fetch', DefaultT extends PutMailAccountsMailAccountIdCredentialsResponse = PutMailAccountsMailAccountIdCredentialsResponse>(options: Options<TComposable, PutMailAccountsMailAccountIdCredentialsData, PutMailAccountsMailAccountIdCredentialsResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutMailAccountsMailAccountIdCredentialsResponse | DefaultT, PutMailAccountsMailAccountIdCredentialsError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mail-accounts/{mailAccountID}/credentials',
     ...options,
     headers: {
         'Content-Type': 'application/json',

@@ -702,22 +702,6 @@ export type GetMailAccountsMailAccountIdResponse = GetMailAccountsMailAccountIdR
 export type PutMailAccountsMailAccountIdData = {
     body?: {
         display_name?: string;
-        smtp_host?: string | string | string;
-        /**
-         * Port
-         */
-        smtp_port?: number;
-        smtp_username?: string;
-        smtp_password?: string;
-        smtp_encryption?: 'SSL' | 'STARTTLS' | 'NONE';
-        imap_host?: string | string | string;
-        /**
-         * Port
-         */
-        imap_port?: number;
-        imap_username?: string;
-        imap_password?: string;
-        imap_encryption?: 'SSL' | 'STARTTLS' | 'NONE';
         is_default?: boolean;
     };
     path: {
@@ -761,6 +745,67 @@ export type PutMailAccountsMailAccountIdResponses = {
 };
 
 export type PutMailAccountsMailAccountIdResponse = PutMailAccountsMailAccountIdResponses[keyof PutMailAccountsMailAccountIdResponses];
+
+export type PutMailAccountsMailAccountIdCredentialsData = {
+    body?: {
+        smtp_host: string | string | string;
+        /**
+         * Port
+         */
+        smtp_port: number;
+        smtp_username: string;
+        smtp_password: string;
+        smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+        imap_host: string | string | string;
+        /**
+         * Port
+         */
+        imap_port: number;
+        imap_username: string;
+        imap_password: string;
+        imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+    };
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/credentials';
+};
+
+export type PutMailAccountsMailAccountIdCredentialsErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mail account with the specified ID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail account with the specified ID not found';
+    };
+};
+
+export type PutMailAccountsMailAccountIdCredentialsError = PutMailAccountsMailAccountIdCredentialsErrors[keyof PutMailAccountsMailAccountIdCredentialsErrors];
+
+export type PutMailAccountsMailAccountIdCredentialsResponses = {
+    /**
+     * Mail account credentials updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail account credentials updated successfully';
+        data: null;
+    };
+};
+
+export type PutMailAccountsMailAccountIdCredentialsResponse = PutMailAccountsMailAccountIdCredentialsResponses[keyof PutMailAccountsMailAccountIdCredentialsResponses];
 
 export type GetMailAccountsMailAccountIdMailsData = {
     body?: never;

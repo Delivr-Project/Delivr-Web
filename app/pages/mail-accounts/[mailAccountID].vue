@@ -72,6 +72,24 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
                     ]
                 };
             }
+        },
+        [`/mail-accounts/new/backend-configuration`]: {
+            isNavLink: true,
+            label: 'Backend Configuration',
+            icon: 'i-lucide-settings',
+            exact: true,
+            getDynamicValues() {
+                return {
+                    seoSettings: {
+                        title: `Mail Account ${mailAccountID} Settings`,
+                        description: `Manage settings for Mail Account ${mailAccountID} on Delivr`
+                    },
+                    breadcrumbItems: [
+                        { label: mailAccountID, to: `/mail-accounts/${mailAccountID}` },
+                        { label: 'Backend Configuration' }
+                    ]
+                };
+            }
         }
     } : {
         [`/mail-accounts/${mailAccountID}`]: {
@@ -90,6 +108,24 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
                     ]
                 };
             }
+        },
+        [`/mail-accounts/${mailAccountID}/backend-configuration`]: {
+            isNavLink: true,
+            label: 'Backend Configuration',
+            icon: 'i-lucide-settings',
+            exact: true,
+            getDynamicValues() {
+                return {
+                    seoSettings: {
+                        title: `Mail Account ${mailAccountID} Settings`,
+                        description: `Manage settings for Mail Account ${mailAccountID} on Delivr`
+                    },
+                    breadcrumbItems: [
+                        { label: mailAccountID, to: `/mail-accounts/${mailAccountID}` },
+                        { label: 'Backend Configuration' }
+                    ]
+                };
+            }
         }
     };
 }
@@ -97,7 +133,7 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
 const subrouterPathDynamics = useSubrouterPathDynamics({
     baseTitle: `Mail Accounts | Delivr`,
     basebreadcrumbItems: [
-        { label: 'OS Releases', to: '/mail-accounts' }
+        { label: 'Manage Mail Accounts', to: '/mail-accounts' }
     ],
     routes: getRoutesConfig()
 });
