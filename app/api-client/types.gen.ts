@@ -531,6 +531,7 @@ export type GetMailAccountsResponses = {
         data: Array<{
             id: number;
             created_at: number;
+            display_name: string;
             smtp_host: string | string | string;
             /**
              * Port
@@ -554,6 +555,7 @@ export type GetMailAccountsResponse = GetMailAccountsResponses[keyof GetMailAcco
 
 export type PostMailAccountsData = {
     body?: {
+        display_name: string;
         smtp_host: string | string | string;
         /**
          * Port
@@ -570,7 +572,7 @@ export type PostMailAccountsData = {
         imap_username: string;
         imap_password: string;
         imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
-        is_default: boolean;
+        is_default?: boolean;
     };
     path?: never;
     query?: never;
@@ -675,6 +677,7 @@ export type GetMailAccountsMailAccountIdResponses = {
         data: {
             id: number;
             created_at: number;
+            display_name: string;
             smtp_host: string | string | string;
             /**
              * Port
@@ -698,6 +701,7 @@ export type GetMailAccountsMailAccountIdResponse = GetMailAccountsMailAccountIdR
 
 export type PutMailAccountsMailAccountIdData = {
     body?: {
+        display_name?: string;
         smtp_host?: string | string | string;
         /**
          * Port

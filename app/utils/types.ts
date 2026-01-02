@@ -6,6 +6,7 @@ export namespace UtilityTypes {
 }
 
 import type { AvatarProps } from '@nuxt/ui'
+import type { GetMailAccountsResponses, PostMailAccountsData } from '~/api-client';
 
 export type UserStatus = 'subscribed' | 'unsubscribed' | 'bounced'
 export type SaleStatus = 'paid' | 'failed' | 'refunded'
@@ -93,18 +94,8 @@ export interface Notification {
     date: string
 }
 
-export interface MailAccount {
-    id: number;
-    created_at: number;
-    smtp_host: string;
-    smtp_port: number;
-    smtp_username: string;
-    smtp_encryption: "SSL" | "STARTTLS" | "NONE";
-    imap_host: string;
-    imap_port: number;
-    imap_username: string;
-    imap_encryption: "SSL" | "STARTTLS" | "NONE";
-}
+export type MailAccount = GetMailAccountsResponses["200"]["data"][number];
+export type NewMailAccount = NonNullable<PostMailAccountsData["body"]>;
 
 
 export type Period = 'daily' | 'weekly' | 'monthly'

@@ -266,6 +266,7 @@ export const zGetMailAccountsResponse = z.object({
     data: z.array(z.object({
         id: z.int().gt(0).lte(9007199254740991),
         created_at: z.int().gt(0).lte(9007199254740991),
+        display_name: z.string().min(1).max(255),
         smtp_host: z.union([
             z.union([
                 z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
@@ -300,6 +301,7 @@ export const zGetMailAccountsResponse = z.object({
 
 export const zPostMailAccountsData = z.object({
     body: z.optional(z.object({
+        display_name: z.string().min(1).max(255),
         smtp_host: z.union([
             z.union([
                 z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
@@ -330,7 +332,7 @@ export const zPostMailAccountsData = z.object({
             'STARTTLS',
             'NONE'
         ]),
-        is_default: z.boolean()
+        is_default: z.optional(z.boolean())
     })),
     path: z.optional(z.never()),
     query: z.optional(z.never())
@@ -384,6 +386,7 @@ export const zGetMailAccountsMailAccountIdResponse = z.object({
     data: z.object({
         id: z.int().gt(0).lte(9007199254740991),
         created_at: z.int().gt(0).lte(9007199254740991),
+        display_name: z.string().min(1).max(255),
         smtp_host: z.union([
             z.union([
                 z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
@@ -418,6 +421,7 @@ export const zGetMailAccountsMailAccountIdResponse = z.object({
 
 export const zPutMailAccountsMailAccountIdData = z.object({
     body: z.optional(z.object({
+        display_name: z.optional(z.string().min(1).max(255)),
         smtp_host: z.optional(z.union([
             z.union([
                 z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),

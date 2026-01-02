@@ -1,6 +1,4 @@
-import type { GetMailAccountsResponses } from "~/api-client";
-
-type MailAccount = GetMailAccountsResponses["200"]["data"][0];
+import type { MailAccount } from "~/utils/types";
 
 export class MailAccountsStore {
 
@@ -12,13 +10,14 @@ export class MailAccountsStore {
         if (!response.success) {
             return null;
         }
+        
         return response.data satisfies MailAccount[];
     });
 
     private static currentSelectedMailAccountID: Ref<number | null> = ref(null);
     private static currentSelectedMailAccount: ComputedRef<MailAccount | null> = computed(() => {
         const accounts = this.mailAccounts.data.value;
-        if (!accounts) {
+        if (!accounts || !this.currentSelectedMailAccountID.value) {
             return null;
         }
         return accounts.find(acc => acc.id === this.currentSelectedMailAccountID.value) || null;
@@ -55,6 +54,15 @@ export class MailAccountsStore {
         return this.mailAccounts.data.value[0] || null;
     }
 
+    static async getByID(mailAccountID: number) {
+        return useAwaitedComputed(async () => {
+            if (!this.isValid(this.mailAccounts.data)) {
+                return null;
+            }
+            return this.mailAccounts.data.value.find(acc => acc.id === mailAccountID) || null;
+        })
+    }
+
     static async update(updates: Partial<MailAccount[]>) {
         await this.fetchAndSetIfNeeded();
         const current = await this.use();
@@ -81,6 +89,10 @@ export class MailAccountsStore {
 
     static setSelected(mailAccountID: number | null) {
         this.currentSelectedMailAccountID.value = mailAccountID;
+    }
+
+    static get isLoading() {
+        return this.mailAccounts.loading;
     }
 
 }
