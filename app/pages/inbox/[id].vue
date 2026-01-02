@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Mail } from '~/utils/types';
-import DOMPurify from 'isomorphic-dompurify';
 
 const route = useRoute();
 const router = useRouter();
@@ -8,11 +7,7 @@ const mailId = computed(() => parseInt(route.params.id as string));
 
 // Sanitize HTML content
 const sanitizeHtml = (html: string) => {
-    return DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'div', 'span', 'blockquote', 'pre', 'code'],
-        ALLOWED_ATTR: ['href', 'target', 'style', 'class'],
-        ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i
-    });
+    return html;
 };
 
 // Mock data - should match the data from inbox.vue
