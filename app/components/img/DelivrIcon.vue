@@ -1,45 +1,10 @@
 <template>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8">
 
-        <path d="
-        M0 0 h1 v1 h-1
-        M3 0 h2 v1 h-2
-        M7 0 h1 v1 h-1
-        M0 7 h1 v1 h-1
-        M7 7 h1 v1 h-1
-    z" fill="rgb(0, 0, 0)" shape-rendering="crispEdges" />
-
-        <path d="
-        M1 0 h2 v1 h-2
-        M5 0 h2 v1 h-2
-        M0 1 h1 v1 h-1
-        M3 1 h2 v1 h-2
-        M7 1 h1 v1 h-1
-        M0 4 h1 v3 h-1
-        M7 4 h1 v3 h-1
-        M1 7 h1 v1 h-1
-        M3 7 h2 v1 h-2
-        M6 7 h1 v1 h-1
-    z" fill="rgb(0, 0, 72)" shape-rendering="crispEdges" />
-
-        <path d="
-        M1 1 h2 v1 h-2
-        M5 1 h2 v1 h-2
-        M0 2 h1 v2 h-1
-        M3 2 h2 v2 h-2
-        M7 2 h1 v2 h-1
-        M1 4 h2 v1 h-1 v2 h-1
-        M7 4 h-2 v1 h1 v2 h1
-        M3 6 h2 v1 h-2
-        M2 7 h1 v1 h-1
-        M5 7 h1 v1 h-1
-    z" fill="rgb(0, 0, 193)" shape-rendering="crispEdges" />
-
-        <path d="
-        M1 2 h2 v2 h-2
-        M5 2 h2 v2 h-2
-        M3 4 h2 v2 h-2 M5 5 h1 v2 h-1 M2 5 h1 v2 h-1
-    z" fill="rgb(0, 255, 255)" shape-rendering="crispEdges" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="#00bcff" class="bi bi-send-check-fill" viewBox="0 0 16 16">
+            <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 1.59 2.498C8 14 8 13 8 12.5a4.5 4.5 0 0 1 5.026-4.47zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z"/>
+            <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0m-1.993-1.679a.5.5 0 0 0-.686.172l-1.17 1.95-.547-.547a.5.5 0 0 0-.708.708l.774.773a.75.75 0 0 0 1.174-.144l1.335-2.226a.5.5 0 0 0-.172-.686"/>
+        </svg>
 
     </svg>
 </template>
