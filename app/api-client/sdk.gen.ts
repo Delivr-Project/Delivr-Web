@@ -2,7 +2,7 @@
 
 import type { Client, Composable, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteAccountApikeysApiKeyIdData, DeleteAccountApikeysApiKeyIdError, DeleteAccountApikeysApiKeyIdResponse, DeleteAccountData, DeleteAccountError, DeleteAccountResponse, DeleteAdminUsersUserIdData, DeleteAdminUsersUserIdError, DeleteAdminUsersUserIdResponse, GetAccountApikeysData, GetAccountApikeysResponse, GetAccountData, GetAccountError, GetAccountResponse, GetAdminUsersData, GetAdminUsersResponse, GetAdminUsersUserIdData, GetAdminUsersUserIdError, GetAdminUsersUserIdResponse, GetAuthSessionData, GetAuthSessionError, GetAuthSessionResponse, PostAccountApikeysData, PostAccountApikeysError, PostAccountApikeysResponse, PostAdminUsersData, PostAdminUsersError, PostAdminUsersResponse, PostAuthLoginData, PostAuthLoginError, PostAuthLoginResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthResetPasswordData, PostAuthResetPasswordError, PostAuthResetPasswordRequestData, PostAuthResetPasswordRequestError, PostAuthResetPasswordRequestResponse, PostAuthResetPasswordResponse, PutAccountData, PutAccountError, PutAccountPasswordData, PutAccountPasswordError, PutAccountPasswordResponse, PutAccountResponse, PutAdminUsersUserIdData, PutAdminUsersUserIdError, PutAdminUsersUserIdPasswordData, PutAdminUsersUserIdPasswordError, PutAdminUsersUserIdPasswordResponse, PutAdminUsersUserIdResponse } from './types.gen';
+import type { DeleteAccountApikeysApiKeyIdData, DeleteAccountApikeysApiKeyIdError, DeleteAccountApikeysApiKeyIdResponse, DeleteAccountData, DeleteAccountError, DeleteAccountResponse, DeleteMailAccountsMailAccountIdData, DeleteMailAccountsMailAccountIdError, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdData, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdError, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, DeleteMailAccountsMailAccountIdResponse, GetAccountApikeysData, GetAccountApikeysResponse, GetAccountData, GetAccountError, GetAccountResponse, GetAuthSessionData, GetAuthSessionError, GetAuthSessionResponse, GetMailAccountsData, GetMailAccountsMailAccountIdData, GetMailAccountsMailAccountIdError, GetMailAccountsMailAccountIdIdentitiesData, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdData, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdError, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, GetMailAccountsMailAccountIdIdentitiesResponse, GetMailAccountsMailAccountIdMailsData, GetMailAccountsMailAccountIdMailsResponse, GetMailAccountsMailAccountIdResponse, GetMailAccountsResponse, PostAccountApikeysData, PostAccountApikeysError, PostAccountApikeysResponse, PostAuthLoginData, PostAuthLoginError, PostAuthLoginResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthResetPasswordData, PostAuthResetPasswordError, PostAuthResetPasswordRequestData, PostAuthResetPasswordRequestError, PostAuthResetPasswordRequestResponse, PostAuthResetPasswordResponse, PostMailAccountsData, PostMailAccountsError, PostMailAccountsMailAccountIdIdentitiesData, PostMailAccountsMailAccountIdIdentitiesError, PostMailAccountsMailAccountIdIdentitiesResponse, PostMailAccountsResponse, PutAccountData, PutAccountError, PutAccountPasswordData, PutAccountPasswordError, PutAccountPasswordResponse, PutAccountResponse, PutMailAccountsMailAccountIdData, PutMailAccountsMailAccountIdError, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdData, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdError, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, PutMailAccountsMailAccountIdResponse } from './types.gen';
 
 export type Options<TComposable extends Composable = '$fetch', TData extends TDataShape = TDataShape, ResT = unknown, DefaultT = undefined> = Options2<TComposable, TData, ResT, DefaultT> & {
     /**
@@ -172,24 +172,24 @@ export const deleteAccountApikeysApiKeyId = <TComposable extends Composable = '$
 });
 
 /**
- * List users
+ * List Mail Accounts
  *
- * Retrieve Delivr accounts with optional role and search filters.
+ * Retrieve a list of mail accounts.
  */
-export const getAdminUsers = <TComposable extends Composable = '$fetch', DefaultT extends GetAdminUsersResponse = GetAdminUsersResponse>(options: Options<TComposable, GetAdminUsersData, GetAdminUsersResponse, DefaultT>) => (options.client ?? client).get<TComposable, GetAdminUsersResponse | DefaultT, unknown, DefaultT>({
+export const getMailAccounts = <TComposable extends Composable = '$fetch', DefaultT extends GetMailAccountsResponse = GetMailAccountsResponse>(options: Options<TComposable, GetMailAccountsData, GetMailAccountsResponse, DefaultT>) => (options.client ?? client).get<TComposable, GetMailAccountsResponse | DefaultT, unknown, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/admin/users',
+    url: '/mail-accounts',
     ...options
 });
 
 /**
- * Create user
+ * Create mail account
  *
- * Provision a new Delivr account with the desired role.
+ * Create a new mail account.
  */
-export const postAdminUsers = <TComposable extends Composable = '$fetch', DefaultT extends PostAdminUsersResponse = PostAdminUsersResponse>(options: Options<TComposable, PostAdminUsersData, PostAdminUsersResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostAdminUsersResponse | DefaultT, PostAdminUsersError, DefaultT>({
+export const postMailAccounts = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsResponse = PostMailAccountsResponse>(options: Options<TComposable, PostMailAccountsData, PostMailAccountsResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsResponse | DefaultT, PostMailAccountsError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/admin/users',
+    url: '/mail-accounts',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -198,35 +198,35 @@ export const postAdminUsers = <TComposable extends Composable = '$fetch', Defaul
 });
 
 /**
- * Delete user
+ * Delete mail account
  *
- * Permanently remove a Delivr account after verifying it has no owned packages.
+ * Delete a mail account.
  */
-export const deleteAdminUsersUserId = <TComposable extends Composable = '$fetch', DefaultT extends DeleteAdminUsersUserIdResponse = DeleteAdminUsersUserIdResponse>(options: Options<TComposable, DeleteAdminUsersUserIdData, DeleteAdminUsersUserIdResponse, DefaultT>) => (options.client ?? client).delete<TComposable, DeleteAdminUsersUserIdResponse | DefaultT, DeleteAdminUsersUserIdError, DefaultT>({
+export const deleteMailAccountsMailAccountId = <TComposable extends Composable = '$fetch', DefaultT extends DeleteMailAccountsMailAccountIdResponse = DeleteMailAccountsMailAccountIdResponse>(options: Options<TComposable, DeleteMailAccountsMailAccountIdData, DeleteMailAccountsMailAccountIdResponse, DefaultT>) => (options.client ?? client).delete<TComposable, DeleteMailAccountsMailAccountIdResponse | DefaultT, DeleteMailAccountsMailAccountIdError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/admin/users/{userId}',
+    url: '/mail-accounts/{mailAccountID}',
     ...options
 });
 
 /**
- * Get user
+ * Get Mail Account info
  *
- * Retrieve details for a specific Delivr account.
+ * Retrieve information about a specific mail account.
  */
-export const getAdminUsersUserId = <TComposable extends Composable = '$fetch', DefaultT extends GetAdminUsersUserIdResponse = GetAdminUsersUserIdResponse>(options: Options<TComposable, GetAdminUsersUserIdData, GetAdminUsersUserIdResponse, DefaultT>) => (options.client ?? client).get<TComposable, GetAdminUsersUserIdResponse | DefaultT, GetAdminUsersUserIdError, DefaultT>({
+export const getMailAccountsMailAccountId = <TComposable extends Composable = '$fetch', DefaultT extends GetMailAccountsMailAccountIdResponse = GetMailAccountsMailAccountIdResponse>(options: Options<TComposable, GetMailAccountsMailAccountIdData, GetMailAccountsMailAccountIdResponse, DefaultT>) => (options.client ?? client).get<TComposable, GetMailAccountsMailAccountIdResponse | DefaultT, GetMailAccountsMailAccountIdError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/admin/users/{userId}',
+    url: '/mail-accounts/{mailAccountID}',
     ...options
 });
 
 /**
- * Update user
+ * Update mail account
  *
- * Modify profile fields or role for a Delivr account.
+ * Update a field in a mail account.
  */
-export const putAdminUsersUserId = <TComposable extends Composable = '$fetch', DefaultT extends PutAdminUsersUserIdResponse = PutAdminUsersUserIdResponse>(options: Options<TComposable, PutAdminUsersUserIdData, PutAdminUsersUserIdResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutAdminUsersUserIdResponse | DefaultT, PutAdminUsersUserIdError, DefaultT>({
+export const putMailAccountsMailAccountId = <TComposable extends Composable = '$fetch', DefaultT extends PutMailAccountsMailAccountIdResponse = PutMailAccountsMailAccountIdResponse>(options: Options<TComposable, PutMailAccountsMailAccountIdData, PutMailAccountsMailAccountIdResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutMailAccountsMailAccountIdResponse | DefaultT, PutMailAccountsMailAccountIdError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/admin/users/{userId}',
+    url: '/mail-accounts/{mailAccountID}',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -235,13 +235,72 @@ export const putAdminUsersUserId = <TComposable extends Composable = '$fetch', D
 });
 
 /**
- * Reset user password
+ * List Mails
  *
- * Set a new password for a Delivr account and revoke active sessions.
+ * Retrieve a list of mails for a specific mail account.
  */
-export const putAdminUsersUserIdPassword = <TComposable extends Composable = '$fetch', DefaultT extends PutAdminUsersUserIdPasswordResponse = PutAdminUsersUserIdPasswordResponse>(options: Options<TComposable, PutAdminUsersUserIdPasswordData, PutAdminUsersUserIdPasswordResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutAdminUsersUserIdPasswordResponse | DefaultT, PutAdminUsersUserIdPasswordError, DefaultT>({
+export const getMailAccountsMailAccountIdMails = <TComposable extends Composable = '$fetch', DefaultT extends GetMailAccountsMailAccountIdMailsResponse = GetMailAccountsMailAccountIdMailsResponse>(options: Options<TComposable, GetMailAccountsMailAccountIdMailsData, GetMailAccountsMailAccountIdMailsResponse, DefaultT>) => (options.client ?? client).get<TComposable, GetMailAccountsMailAccountIdMailsResponse | DefaultT, unknown, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/admin/users/{userId}/password',
+    url: '/mail-accounts/{mailAccountID}/mails',
+    ...options
+});
+
+/**
+ * List Mail Identities
+ *
+ * Retrieve a list of mail identities for a specific mail account.
+ */
+export const getMailAccountsMailAccountIdIdentities = <TComposable extends Composable = '$fetch', DefaultT extends GetMailAccountsMailAccountIdIdentitiesResponse = GetMailAccountsMailAccountIdIdentitiesResponse>(options: Options<TComposable, GetMailAccountsMailAccountIdIdentitiesData, GetMailAccountsMailAccountIdIdentitiesResponse, DefaultT>) => (options.client ?? client).get<TComposable, GetMailAccountsMailAccountIdIdentitiesResponse | DefaultT, unknown, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mail-accounts/{mailAccountID}/identities',
+    ...options
+});
+
+/**
+ * Create Mail Identity
+ *
+ * Create a new mail identity for a specific mail account.
+ */
+export const postMailAccountsMailAccountIdIdentities = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsMailAccountIdIdentitiesResponse = PostMailAccountsMailAccountIdIdentitiesResponse>(options: Options<TComposable, PostMailAccountsMailAccountIdIdentitiesData, PostMailAccountsMailAccountIdIdentitiesResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsMailAccountIdIdentitiesResponse | DefaultT, PostMailAccountsMailAccountIdIdentitiesError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mail-accounts/{mailAccountID}/identities',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Mail Identity
+ *
+ * Delete a specific mail identity for a specific mail account.
+ */
+export const deleteMailAccountsMailAccountIdIdentitiesMailIdentityId = <TComposable extends Composable = '$fetch', DefaultT extends DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse = DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse>(options: Options<TComposable, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdData, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, DefaultT>) => (options.client ?? client).delete<TComposable, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse | DefaultT, DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}',
+    ...options
+});
+
+/**
+ * Get Mail Identity by ID
+ *
+ * Retrieve a specific mail identity by its ID for a specific mail account.
+ */
+export const getMailAccountsMailAccountIdIdentitiesMailIdentityId = <TComposable extends Composable = '$fetch', DefaultT extends GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse = GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse>(options: Options<TComposable, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdData, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, DefaultT>) => (options.client ?? client).get<TComposable, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse | DefaultT, GetMailAccountsMailAccountIdIdentitiesMailIdentityIdError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}',
+    ...options
+});
+
+/**
+ * Update Mail Identity
+ *
+ * Update a specific mail identity for a specific mail account.
+ */
+export const putMailAccountsMailAccountIdIdentitiesMailIdentityId = <TComposable extends Composable = '$fetch', DefaultT extends PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse = PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse>(options: Options<TComposable, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdData, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse | DefaultT, PutMailAccountsMailAccountIdIdentitiesMailIdentityIdError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}',
     ...options,
     headers: {
         'Content-Type': 'application/json',

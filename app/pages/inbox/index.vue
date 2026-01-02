@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Mail } from '~/utils/types';
-import DOMPurify from 'isomorphic-dompurify';
+import type { MailRessource } from '~/utils/types';
+type Mail = MailRessource.IMail;
 
 useSeoMeta({
     title: 'Inbox | Delivr',

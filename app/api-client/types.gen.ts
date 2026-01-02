@@ -229,6 +229,14 @@ export type DeleteAccountData = {
 
 export type DeleteAccountErrors = {
     /**
+     * Please delete all mail accounts associated with this account before deleting the account
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Please delete all mail accounts associated with this account before deleting the account';
+    };
+    /**
      * Your Auth Context is not a session
      */
     401: {
@@ -505,56 +513,71 @@ export type DeleteAccountApikeysApiKeyIdResponses = {
 
 export type DeleteAccountApikeysApiKeyIdResponse = DeleteAccountApikeysApiKeyIdResponses[keyof DeleteAccountApikeysApiKeyIdResponses];
 
-export type GetAdminUsersData = {
+export type GetMailAccountsData = {
     body?: never;
     path?: never;
-    query?: {
-        role?: 'admin' | 'user';
-        search?: string;
-        limit?: number;
-        offset?: number;
-    };
-    url: '/admin/users';
+    query?: never;
+    url: '/mail-accounts';
 };
 
-export type GetAdminUsersResponses = {
+export type GetMailAccountsResponses = {
     /**
-     * Users retrieved successfully
+     * Mail accounts retrieved successfully
      */
     200: {
         success: true;
         code: 200;
-        message: 'Users retrieved successfully';
+        message: 'Mail accounts retrieved successfully';
         data: Array<{
             id: number;
             created_at: number;
-            username: string;
-            display_name: string;
-            email: string;
-            role: 'admin' | 'user';
+            smtp_host: string | string | string;
+            /**
+             * Port
+             */
+            smtp_port: number;
+            smtp_username: string;
+            smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            imap_host: string | string | string;
+            /**
+             * Port
+             */
+            imap_port: number;
+            imap_username: string;
+            imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            is_default: boolean;
         }>;
     };
 };
 
-export type GetAdminUsersResponse = GetAdminUsersResponses[keyof GetAdminUsersResponses];
+export type GetMailAccountsResponse = GetMailAccountsResponses[keyof GetMailAccountsResponses];
 
-export type PostAdminUsersData = {
+export type PostMailAccountsData = {
     body?: {
+        smtp_host: string | string | string;
         /**
-         * Username for the account
+         * Port
          */
-        username: string;
-        display_name: string;
-        email: string;
-        role?: 'admin' | 'user';
-        password: string;
+        smtp_port: number;
+        smtp_username: string;
+        smtp_password: string;
+        smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+        imap_host: string | string | string;
+        /**
+         * Port
+         */
+        imap_port: number;
+        imap_username: string;
+        imap_password: string;
+        imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+        is_default: boolean;
     };
     path?: never;
     query?: never;
-    url: '/admin/users';
+    url: '/mail-accounts';
 };
 
-export type PostAdminUsersErrors = {
+export type PostMailAccountsErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -563,205 +586,144 @@ export type PostAdminUsersErrors = {
         code: 400;
         message: 'Bad Request: Syntax or validation error in request';
     };
-    /**
-     * Conflict: Username or email already exists
-     */
-    409: {
-        success: false;
-        code: 409;
-        message: 'Conflict: Username or email already exists';
-    };
 };
 
-export type PostAdminUsersError = PostAdminUsersErrors[keyof PostAdminUsersErrors];
+export type PostMailAccountsError = PostMailAccountsErrors[keyof PostMailAccountsErrors];
 
-export type PostAdminUsersResponses = {
+export type PostMailAccountsResponses = {
     /**
-     * User created successfully
-     */
-    201: {
-        success: true;
-        code: 201;
-        message: 'User created successfully';
-        data: {
-            id: number;
-            created_at: number;
-            username: string;
-            display_name: string;
-            email: string;
-            role: 'admin' | 'user';
-        };
-    };
-};
-
-export type PostAdminUsersResponse = PostAdminUsersResponses[keyof PostAdminUsersResponses];
-
-export type DeleteAdminUsersUserIdData = {
-    body?: never;
-    path: {
-        userId: number;
-    };
-    query?: never;
-    url: '/admin/users/{userId}';
-};
-
-export type DeleteAdminUsersUserIdErrors = {
-    /**
-     * Cannot delete user while packages are assigned
-     */
-    400: {
-        success: false;
-        code: 400;
-        message: 'Cannot delete user while packages are assigned';
-    };
-    /**
-     * User not found
-     */
-    404: {
-        success: false;
-        code: 404;
-        message: 'User not found';
-    };
-};
-
-export type DeleteAdminUsersUserIdError = DeleteAdminUsersUserIdErrors[keyof DeleteAdminUsersUserIdErrors];
-
-export type DeleteAdminUsersUserIdResponses = {
-    /**
-     * User deleted successfully
+     * Mail account created successfully
      */
     200: {
         success: true;
         code: 200;
-        message: 'User deleted successfully';
+        message: 'Mail account created successfully';
+        data: {
+            id: number;
+        };
+    };
+};
+
+export type PostMailAccountsResponse = PostMailAccountsResponses[keyof PostMailAccountsResponses];
+
+export type DeleteMailAccountsMailAccountIdData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}';
+};
+
+export type DeleteMailAccountsMailAccountIdErrors = {
+    /**
+     * Mail account with the specified ID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail account with the specified ID not found';
+    };
+};
+
+export type DeleteMailAccountsMailAccountIdError = DeleteMailAccountsMailAccountIdErrors[keyof DeleteMailAccountsMailAccountIdErrors];
+
+export type DeleteMailAccountsMailAccountIdResponses = {
+    /**
+     * Mail account deleted successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail account deleted successfully';
         data: null;
     };
 };
 
-export type DeleteAdminUsersUserIdResponse = DeleteAdminUsersUserIdResponses[keyof DeleteAdminUsersUserIdResponses];
+export type DeleteMailAccountsMailAccountIdResponse = DeleteMailAccountsMailAccountIdResponses[keyof DeleteMailAccountsMailAccountIdResponses];
 
-export type GetAdminUsersUserIdData = {
+export type GetMailAccountsMailAccountIdData = {
     body?: never;
     path: {
-        userId: number;
+        mailAccountID: number;
     };
     query?: never;
-    url: '/admin/users/{userId}';
+    url: '/mail-accounts/{mailAccountID}';
 };
 
-export type GetAdminUsersUserIdErrors = {
+export type GetMailAccountsMailAccountIdErrors = {
     /**
-     * User not found
+     * Mail Account with the specified ID not found
      */
     404: {
         success: false;
         code: 404;
-        message: 'User not found';
+        message: 'Mail Account with the specified ID not found';
     };
 };
 
-export type GetAdminUsersUserIdError = GetAdminUsersUserIdErrors[keyof GetAdminUsersUserIdErrors];
+export type GetMailAccountsMailAccountIdError = GetMailAccountsMailAccountIdErrors[keyof GetMailAccountsMailAccountIdErrors];
 
-export type GetAdminUsersUserIdResponses = {
+export type GetMailAccountsMailAccountIdResponses = {
     /**
-     * User retrieved successfully
+     * Mail account retrieved successfully
      */
     200: {
         success: true;
         code: 200;
-        message: 'User retrieved successfully';
+        message: 'Mail account retrieved successfully';
         data: {
             id: number;
             created_at: number;
-            username: string;
-            display_name: string;
-            email: string;
-            role: 'admin' | 'user';
+            smtp_host: string | string | string;
+            /**
+             * Port
+             */
+            smtp_port: number;
+            smtp_username: string;
+            smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            imap_host: string | string | string;
+            /**
+             * Port
+             */
+            imap_port: number;
+            imap_username: string;
+            imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            is_default: boolean;
         };
     };
 };
 
-export type GetAdminUsersUserIdResponse = GetAdminUsersUserIdResponses[keyof GetAdminUsersUserIdResponses];
+export type GetMailAccountsMailAccountIdResponse = GetMailAccountsMailAccountIdResponses[keyof GetMailAccountsMailAccountIdResponses];
 
-export type PutAdminUsersUserIdData = {
+export type PutMailAccountsMailAccountIdData = {
     body?: {
-        username?: string;
-        display_name?: string;
-        email?: string;
-        role?: 'admin' | 'user';
-    };
-    path: {
-        userId: number;
-    };
-    query?: never;
-    url: '/admin/users/{userId}';
-};
-
-export type PutAdminUsersUserIdErrors = {
-    /**
-     * Bad Request: Syntax or validation error in request
-     */
-    400: {
-        success: false;
-        code: 400;
-        message: 'Bad Request: Syntax or validation error in request';
-    };
-    /**
-     * User not found
-     */
-    404: {
-        success: false;
-        code: 404;
-        message: 'User not found';
-    };
-    /**
-     * Conflict: Username or email already exists
-     */
-    409: {
-        success: false;
-        code: 409;
-        message: 'Conflict: Username or email already exists';
-    };
-};
-
-export type PutAdminUsersUserIdError = PutAdminUsersUserIdErrors[keyof PutAdminUsersUserIdErrors];
-
-export type PutAdminUsersUserIdResponses = {
-    /**
-     * User updated successfully
-     */
-    200: {
-        success: true;
-        code: 200;
-        message: 'User updated successfully';
-        data: {
-            id: number;
-            created_at: number;
-            username: string;
-            display_name: string;
-            email: string;
-            role: 'admin' | 'user';
-        };
-    };
-};
-
-export type PutAdminUsersUserIdResponse = PutAdminUsersUserIdResponses[keyof PutAdminUsersUserIdResponses];
-
-export type PutAdminUsersUserIdPasswordData = {
-    body?: {
+        smtp_host?: string | string | string;
         /**
-         * New password for the account
+         * Port
          */
-        password: string;
+        smtp_port?: number;
+        smtp_username?: string;
+        smtp_password?: string;
+        smtp_encryption?: 'SSL' | 'STARTTLS' | 'NONE';
+        imap_host?: string | string | string;
+        /**
+         * Port
+         */
+        imap_port?: number;
+        imap_username?: string;
+        imap_password?: string;
+        imap_encryption?: 'SSL' | 'STARTTLS' | 'NONE';
+        is_default?: boolean;
     };
     path: {
-        userId: number;
+        mailAccountID: number;
     };
     query?: never;
-    url: '/admin/users/{userId}/password';
+    url: '/mail-accounts/{mailAccountID}';
 };
 
-export type PutAdminUsersUserIdPasswordErrors = {
+export type PutMailAccountsMailAccountIdErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -771,27 +733,261 @@ export type PutAdminUsersUserIdPasswordErrors = {
         message: 'Bad Request: Syntax or validation error in request';
     };
     /**
-     * User not found
+     * Mail account with the specified ID not found
      */
     404: {
         success: false;
         code: 404;
-        message: 'User not found';
+        message: 'Mail account with the specified ID not found';
     };
 };
 
-export type PutAdminUsersUserIdPasswordError = PutAdminUsersUserIdPasswordErrors[keyof PutAdminUsersUserIdPasswordErrors];
+export type PutMailAccountsMailAccountIdError = PutMailAccountsMailAccountIdErrors[keyof PutMailAccountsMailAccountIdErrors];
 
-export type PutAdminUsersUserIdPasswordResponses = {
+export type PutMailAccountsMailAccountIdResponses = {
     /**
-     * Password reset successfully
+     * Mail account updated successfully
      */
     200: {
         success: true;
         code: 200;
-        message: 'Password reset successfully';
+        message: 'Mail account updated successfully';
         data: null;
     };
 };
 
-export type PutAdminUsersUserIdPasswordResponse = PutAdminUsersUserIdPasswordResponses[keyof PutAdminUsersUserIdPasswordResponses];
+export type PutMailAccountsMailAccountIdResponse = PutMailAccountsMailAccountIdResponses[keyof PutMailAccountsMailAccountIdResponses];
+
+export type GetMailAccountsMailAccountIdMailsData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mails';
+};
+
+export type GetMailAccountsMailAccountIdMailsResponses = {
+    /**
+     * Mails retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mails retrieved successfully';
+        data: Array<{
+            [key: string]: unknown;
+        }>;
+    };
+};
+
+export type GetMailAccountsMailAccountIdMailsResponse = GetMailAccountsMailAccountIdMailsResponses[keyof GetMailAccountsMailAccountIdMailsResponses];
+
+export type GetMailAccountsMailAccountIdIdentitiesData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/identities';
+};
+
+export type GetMailAccountsMailAccountIdIdentitiesResponses = {
+    /**
+     * Mail identities retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail identities retrieved successfully';
+        data: Array<{
+            id: number;
+            mail_account_id: number;
+            created_at: number;
+            display_name: string;
+            email_address: string;
+            is_default: boolean;
+        }>;
+    };
+};
+
+export type GetMailAccountsMailAccountIdIdentitiesResponse = GetMailAccountsMailAccountIdIdentitiesResponses[keyof GetMailAccountsMailAccountIdIdentitiesResponses];
+
+export type PostMailAccountsMailAccountIdIdentitiesData = {
+    body?: {
+        display_name: string;
+        email_address: string;
+        is_default: boolean;
+    };
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/identities';
+};
+
+export type PostMailAccountsMailAccountIdIdentitiesErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PostMailAccountsMailAccountIdIdentitiesError = PostMailAccountsMailAccountIdIdentitiesErrors[keyof PostMailAccountsMailAccountIdIdentitiesErrors];
+
+export type PostMailAccountsMailAccountIdIdentitiesResponses = {
+    /**
+     * Mail identity created successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail identity created successfully';
+        data: {
+            id: number;
+        };
+    };
+};
+
+export type PostMailAccountsMailAccountIdIdentitiesResponse = PostMailAccountsMailAccountIdIdentitiesResponses[keyof PostMailAccountsMailAccountIdIdentitiesResponses];
+
+export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        mailIdentityID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}';
+};
+
+export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mail identity with the specified ID does not exist
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail identity with the specified ID does not exist';
+    };
+};
+
+export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdError = DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors[keyof DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors];
+
+export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses = {
+    /**
+     * Mail identity deleted successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail identity deleted successfully';
+        data: null;
+    };
+};
+
+export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse = DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses[keyof DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses];
+
+export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        mailIdentityID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}';
+};
+
+export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors = {
+    /**
+     * Mail identity with the specified ID does not exist
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail identity with the specified ID does not exist';
+    };
+};
+
+export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdError = GetMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors[keyof GetMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors];
+
+export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses = {
+    /**
+     * Mail identity retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail identity retrieved successfully';
+        data: {
+            id: number;
+            created_at: number;
+            display_name: string;
+            email_address: string;
+            is_default: boolean;
+        };
+    };
+};
+
+export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse = GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses[keyof GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses];
+
+export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdData = {
+    body?: {
+        display_name?: string;
+        email_address?: string;
+        is_default?: boolean;
+    };
+    path: {
+        mailAccountID: number;
+        mailIdentityID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}';
+};
+
+export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mail identity with the specified ID does not exist
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail identity with the specified ID does not exist';
+    };
+};
+
+export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdError = PutMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors[keyof PutMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors];
+
+export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses = {
+    /**
+     * Mail identity updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail identity updated successfully';
+        data: null;
+    };
+};
+
+export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse = PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses[keyof PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses];

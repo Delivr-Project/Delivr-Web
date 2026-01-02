@@ -17,15 +17,49 @@ export interface User {
     avatar?: AvatarProps
 }
 
-export interface Mail {
-    id: number
-    unread?: boolean
-    from: User
-    subject: string
-    body: string
-    date: string
-    hasAttachment?: boolean;
-    isHTML?: boolean;
+export namespace MailRessource {
+
+    export interface IMail {
+        uid: number;
+        rawHeaders: MailHeaders;
+        from?: EmailAddress[];
+        to?: EmailAddress[];
+        cc?: EmailAddress[];
+        bcc?: EmailAddress[];
+        subject?: string;
+        inReplyTo?: string;
+        references?: string | string[];
+        date?: number;
+        attachments: MailAttachment[];
+        body?: MailBody;
+    }
+
+    export interface EmailAddress {
+        name?: string;
+        address: string;
+    }
+
+    export interface MailAttachment {
+        filename?: string;
+        contentType: string;
+        size: number;
+        content: Buffer;
+        contentId?: string;
+        contentDisposition?: string;
+    }
+
+
+    export interface MailHeaders {
+        [key: string]: string;
+    }
+
+    export interface MailBody {
+        contentType: MailContentTypes;
+        content: string;
+    }
+
+    export type MailContentTypes = "text" | "html";
+
 }
 
 export interface Member {
