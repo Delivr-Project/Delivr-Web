@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import UserMenu from '~/components/dashboard/UserMenu.vue';
+import DelivrIcon from '~/components/img/DelivrIcon.vue';
+import DelivrLogo from '~/components/img/DelivrLogo.vue';
 import { UserStore } from '~/utils/stores/userStore';
 
 const route = useRoute()
@@ -110,12 +112,10 @@ const groups = computed(() => [{
             :max-size="30"
 		>
 			<template #header="{ collapsed }">
-				<h1
-					class="text-lg font-semibold"
-					v-if="!collapsed"
-				>
-                    Delivr Dashboard
-                </h1>
+                <div :class="`${!collapsed ? 'ms-2.5' : ''} flex items-center gap-1.5`">
+                    <DelivrLogo v-if="!collapsed" class="h-8 w-auto flex-none" />
+                    <DelivrIcon v-else class="h-8 w-8" />
+                </div>
 			</template>
 
 			<template #default="{ collapsed }">
