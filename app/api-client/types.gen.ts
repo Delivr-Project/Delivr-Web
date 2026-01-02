@@ -763,7 +763,10 @@ export type GetMailAccountsMailAccountIdMailsData = {
     path: {
         mailAccountID: number;
     };
-    query?: never;
+    query?: {
+        mailbox?: string;
+        limit?: number;
+    };
     url: '/mail-accounts/{mailAccountID}/mails';
 };
 
@@ -776,12 +779,127 @@ export type GetMailAccountsMailAccountIdMailsResponses = {
         code: 200;
         message: 'Mails retrieved successfully';
         data: Array<{
-            [key: string]: unknown;
+            uid: number;
+            rawHeaders: {
+                [key: string]: string;
+            };
+            from?: {
+                name?: string;
+                address: string;
+            };
+            to?: Array<{
+                name?: string;
+                address: string;
+            }>;
+            cc?: Array<{
+                name?: string;
+                address: string;
+            }>;
+            bcc?: Array<{
+                name?: string;
+                address: string;
+            }>;
+            subject?: string;
+            inReplyTo?: string;
+            replyTo?: {
+                name?: string;
+                address: string;
+            };
+            references?: string | Array<string>;
+            date?: number;
+            attachments: Array<{
+                filename?: string;
+                contentType: string;
+                size: number;
+                contentId?: string;
+                contentDisposition?: string;
+            }>;
+            body?: {
+                text?: string;
+                html?: string;
+            };
         }>;
     };
 };
 
 export type GetMailAccountsMailAccountIdMailsResponse = GetMailAccountsMailAccountIdMailsResponses[keyof GetMailAccountsMailAccountIdMailsResponses];
+
+export type GetMailAccountsMailAccountIdMailsMailUidData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        mailUID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mails/{mailUID}';
+};
+
+export type GetMailAccountsMailAccountIdMailsMailUidErrors = {
+    /**
+     * Mail with specified UID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail with specified UID not found';
+    };
+};
+
+export type GetMailAccountsMailAccountIdMailsMailUidError = GetMailAccountsMailAccountIdMailsMailUidErrors[keyof GetMailAccountsMailAccountIdMailsMailUidErrors];
+
+export type GetMailAccountsMailAccountIdMailsMailUidResponses = {
+    /**
+     * Mail retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail retrieved successfully';
+        data: {
+            uid: number;
+            rawHeaders: {
+                [key: string]: string;
+            };
+            from?: {
+                name?: string;
+                address: string;
+            };
+            to?: Array<{
+                name?: string;
+                address: string;
+            }>;
+            cc?: Array<{
+                name?: string;
+                address: string;
+            }>;
+            bcc?: Array<{
+                name?: string;
+                address: string;
+            }>;
+            subject?: string;
+            inReplyTo?: string;
+            replyTo?: {
+                name?: string;
+                address: string;
+            };
+            references?: string | Array<string>;
+            date?: number;
+            attachments: Array<{
+                filename?: string;
+                contentType: string;
+                size: number;
+                contentId?: string;
+                contentDisposition?: string;
+            }>;
+            body?: {
+                text?: string;
+                html?: string;
+            };
+        };
+    };
+};
+
+export type GetMailAccountsMailAccountIdMailsMailUidResponse = GetMailAccountsMailAccountIdMailsMailUidResponses[keyof GetMailAccountsMailAccountIdMailsMailUidResponses];
 
 export type GetMailAccountsMailAccountIdIdentitiesData = {
     body?: never;

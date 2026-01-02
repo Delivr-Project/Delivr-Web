@@ -471,7 +471,10 @@ export const zGetMailAccountsMailAccountIdMailsData = z.object({
     path: z.object({
         mailAccountID: z.number().gt(0)
     }),
-    query: z.optional(z.never())
+    query: z.optional(z.object({
+        mailbox: z.optional(z.string()).default('INBOX'),
+        limit: z.optional(z.number()).default(50)
+    }))
 });
 
 /**
@@ -481,7 +484,108 @@ export const zGetMailAccountsMailAccountIdMailsResponse = z.object({
     success: z.literal(true),
     code: z.literal(200),
     message: z.literal('Mails retrieved successfully'),
-    data: z.array(z.record(z.string(), z.unknown()))
+    data: z.array(z.object({
+        uid: z.number(),
+        rawHeaders: z.record(z.string(), z.string()),
+        from: z.optional(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        to: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        cc: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        bcc: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        subject: z.optional(z.string()),
+        inReplyTo: z.optional(z.string()),
+        replyTo: z.optional(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        references: z.optional(z.union([
+            z.string(),
+            z.array(z.string())
+        ])),
+        date: z.optional(z.number()),
+        attachments: z.array(z.object({
+            filename: z.optional(z.string()),
+            contentType: z.string(),
+            size: z.number(),
+            contentId: z.optional(z.string()),
+            contentDisposition: z.optional(z.string())
+        })),
+        body: z.optional(z.object({
+            text: z.optional(z.string()),
+            html: z.optional(z.string())
+        }))
+    }))
+});
+
+export const zGetMailAccountsMailAccountIdMailsMailUidData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailUID: z.number()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mail retrieved successfully
+ */
+export const zGetMailAccountsMailAccountIdMailsMailUidResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail retrieved successfully'),
+    data: z.object({
+        uid: z.number(),
+        rawHeaders: z.record(z.string(), z.string()),
+        from: z.optional(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        to: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        cc: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        bcc: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        subject: z.optional(z.string()),
+        inReplyTo: z.optional(z.string()),
+        replyTo: z.optional(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        references: z.optional(z.union([
+            z.string(),
+            z.array(z.string())
+        ])),
+        date: z.optional(z.number()),
+        attachments: z.array(z.object({
+            filename: z.optional(z.string()),
+            contentType: z.string(),
+            size: z.number(),
+            contentId: z.optional(z.string()),
+            contentDisposition: z.optional(z.string())
+        })),
+        body: z.optional(z.object({
+            text: z.optional(z.string()),
+            html: z.optional(z.string())
+        }))
+    })
 });
 
 export const zGetMailAccountsMailAccountIdIdentitiesData = z.object({
