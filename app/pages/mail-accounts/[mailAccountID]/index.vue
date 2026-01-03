@@ -202,7 +202,7 @@ async function onDeleteMailAccount() {
 			</p>
 		</div>
 
-		<UForm :schema="mailAccount_form_schema" :state="mailAccount_form_state" @submit="onFormSubmit()">
+		<UForm class="space-y-6" :schema="mailAccount_form_schema" :state="mailAccount_form_state" @submit="onFormSubmit()">
 
 			<!-- Settings Card -->
 			<div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
@@ -261,7 +261,7 @@ async function onDeleteMailAccount() {
 				</div>
 			</div>
 
-			<div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+			<div v-if="mailAccount.isNew" class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
 				<div class="px-6 py-4 border-b border-slate-800">
 					<div class="flex items-center gap-3">
 						<div class="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
@@ -302,14 +302,13 @@ async function onDeleteMailAccount() {
 							</div>
 						</UFormField>
 
-						<div class="pt-4" v-if="!mailAccount.isNew">
+						<div class="pt-4">
 							<UButton
-								label="Save Changes" 
+								label="Add Mail Account"
 								color="primary"
-								disabled
 								type="submit" 
 								:loading="mail_account_form_submit_loading"
-								icon="i-lucide-save"
+								icon="i-lucide-plus-circle"
 							/>
 						</div>
 
