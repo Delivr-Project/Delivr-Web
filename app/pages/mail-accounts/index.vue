@@ -14,13 +14,14 @@ useSeoMeta({
 
 const mailAccounts = await MailAccountsStore.use();
 const loading = MailAccountsStore.isLoading;
-const refresh = MailAccountsStore.refresh;
+function refresh() {
+    return MailAccountsStore.refresh()
+}
 
 const mailAccountsTableColumns: TableColumn<MailAccount>[] = [
-    { accessorKey: 'version' , header: 'Version' },
+    { accessorKey: 'display_name', header: 'Display Name' },
     { accessorKey: 'created_at', header: 'Created At' },
-    { accessorKey: 'publishing_status', header: 'Publishing Status' },
-    { accessorKey: 'published_at', header: 'Published At' },
+    { accessorKey: 'is_default', header: 'Default' }
 ]
 
 </script>

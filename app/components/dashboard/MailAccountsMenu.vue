@@ -12,10 +12,12 @@ const selectedMailAccount = MailAccountsStore.useSelected();
 
 const baseItems: DropdownMenuItem[] = [{
     label: 'Add new Account',
-    icon: 'i-lucide-circle-plus'
+    icon: 'i-lucide-circle-plus',
+    to: '/mail-accounts/new'
 },{
     label: 'Manage Accounts',
-    icon: 'i-lucide-cog'
+    icon: 'i-lucide-cog',
+    to: '/mail-accounts'
 }];
 
 const items = computed<DropdownMenuItem[][]>(() => {
@@ -33,9 +35,9 @@ const items = computed<DropdownMenuItem[][]>(() => {
     return [
         mailAccountsList.value.map(account => ({
             // @TODO: change label to primary identiy email address when implemented
-            label: account.imap_username,
+            label: account.display_name,
             avatar: {
-                alt: account.imap_username,
+                alt: account.display_name,
             },
             onSelect() {
                 MailAccountsStore.setSelected(account.id);
@@ -56,9 +58,9 @@ const items = computed<DropdownMenuItem[][]>(() => {
         <UButton
             v-bind="{
                 avatar: {
-                    alt: selectedMailAccount ? selectedMailAccount.imap_username : 'No Account Selected',
+                    alt: selectedMailAccount ? selectedMailAccount.display_name : 'No Account Selected',
                 },
-                label: collapsed ? undefined : selectedMailAccount ? selectedMailAccount.imap_username : 'No Account Selected',
+                label: collapsed ? undefined : selectedMailAccount ? selectedMailAccount.display_name : 'No Account Selected',
                 trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
             }"
             color="neutral"
