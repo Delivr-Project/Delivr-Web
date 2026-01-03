@@ -5,6 +5,7 @@ const mailAccountID = useRoute().params.mailAccountID as string;
 
 let error = null;
 
+await MailAccountsStore.fetchAndSetIfNeeded();
 const account = await MailAccountsStore.getByID(parseInt(mailAccountID));
 
 if (!account.value) {
@@ -26,8 +27,16 @@ if (!account.value) {
 </script>
 
 <template>
-
     <NuxtPage v-if="!error" />
-    <UError v-else-if="error" :error="error" />
+
+    <UDashboardPanel v-else-if="error">
+
+        <template #body>
+            <div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full">
+                <UError :error="error" />
+            </div>
+        </template>
+
+    </UDashboardPanel>
 
 </template>
