@@ -14,7 +14,11 @@ const stripHtml = (html: string) => {
     return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 };
 
+const mails = useAPIAsyncData(`/mail-accounts/{mailAccountID}/mails`, async () => {
+    
+    const response = await useAPI(api => api.getMailAccountsMailAccountIdMails
 
+});
 const mails_data = ref<Mail[]>([])
 
 const selectedMails = ref<number[]>([]);
