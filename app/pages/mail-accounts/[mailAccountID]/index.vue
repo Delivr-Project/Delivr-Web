@@ -191,6 +191,45 @@ async function onDeleteMailAccount() {
     deleteLoading.value = false;
 }
 
+async function testConfiguration() {
+	
+	mail_account_form_submit_loading.value = true;
+
+	try {
+
+		const result = await useAPI((api) => api.getMailAccountsMailAccountIdMails({
+			path: {
+				mailAccountID: (mailAccount_data.value as MailAccount).id,
+			},
+			query: {
+				limit: 1
+			}
+		}));
+
+		if (result.success) {
+			toast.add({
+				title: 'Configuration Successful',
+				description: `The Mail Account configuration is valid and working.`,
+				icon: 'i-lucide-check',
+				color: 'success'
+			});
+		} else {
+			throw new Error(result.message || 'Failed to test Mail Account configuration');
+		}
+
+	} catch (error: any) {
+		toast.add({
+			title: 'Error',
+			description: error.message || 'An unexpected error occurred.',
+			icon: 'i-lucide-x-circle',
+			color: 'error'
+		});
+	}
+
+	mail_account_form_submit_loading.value = false;
+
+}
+
 </script>
 
 <template>
@@ -468,6 +507,14 @@ async function onDeleteMailAccount() {
 							type="submit" 
 							:loading="mail_account_form_submit_loading"
 							icon="i-lucide-plus"
+						/>
+						<UButton
+							label="Test Configuration" 
+							color="secondary"
+							class="ms-3"
+							:loading="mail_account_form_submit_loading"
+							icon="i-lucide-send"
+							@click="testConfiguration()"
 						/>
 					</div>
 				</div>
