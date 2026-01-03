@@ -506,16 +506,16 @@ async function testConfiguration() {
 							color="primary"
 							type="submit" 
 							:loading="mail_account_form_submit_loading"
-							icon="i-lucide-plus"
+							icon="i-lucide-plus-circle"
 						/>
-						<UButton
+						<!-- <UButton
 							label="Test Configuration" 
 							color="secondary"
 							class="ms-3"
 							:loading="mail_account_form_submit_loading"
 							icon="i-lucide-send"
 							@click="testConfiguration()"
-						/>
+						/> -->
 					</div>
 				</div>
 			</div>
