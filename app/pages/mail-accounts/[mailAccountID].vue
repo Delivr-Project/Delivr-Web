@@ -9,32 +9,33 @@ const mailAccountID = route.params.mailAccountID as string;
 
 let error = null;
 
+const account = mailAccountID === "new" ? ref({
+    display_name: '',
+
+    smtp_host: '',
+    smtp_port: 465,
+    smtp_username: '',
+    smtp_password: '',
+    smtp_encryption: 'SSL',
+
+    imap_host: '',
+    imap_port: 993,
+    imap_username: '',
+    imap_password: '',
+    imap_encryption: 'SSL',
+
+    is_default: false
+
+}) : await MailAccountsStore.getByID(parseInt(mailAccountID));
+
 if (mailAccountID === "new") {
 
     useSubrouterInjectedData<number, NewMailAccount>('mail_account', true).provide({
-        data: ref({
-            display_name: '',
-
-            smtp_host: '',
-            smtp_port: 465,
-            smtp_username: '',
-            smtp_password: '',
-            smtp_encryption: 'SSL',
-
-            imap_host: '',
-            imap_port: 993,
-            imap_username: '',
-            imap_password: '',
-            imap_encryption: 'SSL',
-
-            is_default: false
-        }),
+        data: account as Ref<NewMailAccount>,
         isNew: true
     });
 
 } else {
-    
-    const account = await MailAccountsStore.getByID(parseInt(mailAccountID));
 
     if (!account.value) {
         error = createError({
@@ -82,11 +83,11 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
             getDynamicValues() {
                 return {
                     seoSettings: {
-                        title: `Mail Account ${mailAccountID}`,
-                        description: `Manage Mail Account ${mailAccountID} on Delivr`
+                        title: `Mail Account ${account.value?.display_name}`,
+                        description: `Manage Mail Account ${account.value?.display_name} on Delivr`
                     },
                     breadcrumbItems: [
-                        { label: mailAccountID }
+                        { label: account.value?.display_name }
                     ]
                 };
             }
@@ -99,11 +100,11 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
             getDynamicValues() {
                 return {
                     seoSettings: {
-                        title: `Mail Account ${mailAccountID} Settings`,
-                        description: `Manage settings for Mail Account ${mailAccountID} on Delivr`
+                        title: `Mail Account ${account.value?.display_name} Settings`,
+                        description: `Manage settings for Mail Account ${account.value?.display_name} on Delivr`
                     },
                     breadcrumbItems: [
-                        { label: mailAccountID, to: `/mail-accounts/${mailAccountID}` },
+                        { label: account.value?.display_name, to: `/mail-accounts/${mailAccountID}` },
                         { label: 'Backend Configuration' }
                     ]
                 };
@@ -131,24 +132,21 @@ const routePathDynamicValues = await useAwaitedComputed(async () => {
 <template>
     <UDashboardPanel>
         <template #header>
-            <DashboardPageHeader
-                icon="i-lucide-rocket"
-                :breadcrumb-items="routePathDynamicValues.breadcrumbItems"
-            />
+            <DashboardPageHeader icon="i-lucide-rocket" :breadcrumb-items="routePathDynamicValues.breadcrumbItems" />
 
             <UDashboardToolbar>
-				<!-- NOTE: The `-mx-1` class is used to align with the `DashboardSidebarCollapse` button here. -->
-				<UNavigationMenu :items="subrouterPathDynamics.links" highlight class="-mx-1 flex-1" />
-			</UDashboardToolbar>
+                <!-- NOTE: The `-mx-1` class is used to align with the `DashboardSidebarCollapse` button here. -->
+                <UNavigationMenu :items="subrouterPathDynamics.links" highlight class="-mx-1 flex-1" />
+            </UDashboardToolbar>
 
         </template>
 
         <template #body>
-			<div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full">
-				<NuxtPage v-if="!error" />
+            <div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full">
+                <NuxtPage v-if="!error" />
                 <UError v-else-if="error" :error="error" />
-			</div>
-		</template>
+            </div>
+        </template>
 
     </UDashboardPanel>
 </template>

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import type { FormError, NavigationMenuItem } from '@nuxt/ui';
+import type { FormError, FormErrorEvent, NavigationMenuItem } from '@nuxt/ui';
 import { zPostMailAccountsData, zPutMailAccountsMailAccountIdData } from '~/api-client/zod.gen';
+import { useDefaultOnFormError } from '~/composables/useDefaultOnFormError';
 import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
 
 const toast = useToast();
@@ -244,7 +245,7 @@ async function testConfiguration() {
 			</p>
 		</div>
 
-		<UForm class="space-y-6" :schema="mailAccount_form_schema" :state="mailAccount_form_state" @submit="onFormSubmit()">
+		<UForm class="space-y-6" :schema="mailAccount_form_schema" :state="mailAccount_form_state" @submit="onFormSubmit()" @error="useDefaultOnFormError()">
 
 			<!-- Settings Card -->
 			<div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
