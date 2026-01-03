@@ -182,6 +182,7 @@ const deleteMails = () => {
                         variant="outline"
                         size="md"
                         aria-label="Refresh"
+                        @click="mails.refresh()"
                     />
                 </div>
 
