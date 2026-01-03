@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { MailRessource } from '~/utils/types';
+import { useGravatarURL } from '~/composables/useGravatarURL';
+import type { MailAccount, MailRessource } from '~/utils/types';
 type Mail = MailRessource.IMail;
 
 useSeoMeta({
@@ -7,19 +8,33 @@ useSeoMeta({
     description: 'Manage your emails'
 });
 
-const router = useRouter();
+const toast = useToast();
 
 // Helper to strip HTML tags for preview
 const stripHtml = (html: string) => {
     return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 };
 
-const mails = useAPIAsyncData(`/mail-accounts/{mailAccountID}/mails`, async () => {
-    
-    const response = await useAPI(api => api.getMailAccountsMailAccountIdMails
+const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
 
+const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mails`, async () => {
+    const response = await useAPI(api => api.getMailAccountsMailAccountIdMails({
+        path: {
+            mailAccountID: mailAccount.data.value.id
+        }
+    }));
+    if (!response.success) {
+        toast.add({
+            title: 'Error loading emails',
+            description: response.message || 'An unknown error occurred while fetching emails.',
+            color: 'error'
+        });
+        return [];
+    }
+    return response.data;
 });
-const mails_data = ref<Mail[]>([])
+
+const mails_data = mails.data;
 
 const selectedMails = ref<number[]>([]);
 const searchQuery = ref<string>('');
@@ -33,12 +48,12 @@ const filteredMails = computed(() => {
     const result = [];
     
     for (const mail of mails_data.value) {
-        const bodyText = mail.isHTML ? stripHtml(mail.body) : mail.body;
+        const bodyText = mail.body?.text || (mail.body?.html ? stripHtml(mail.body.html) : '');
         if (
-            mail.subject.toLowerCase().includes(queryLower) ||
-            mail.from.name.toLowerCase().includes(queryLower) ||
-            mail.from.email.toLowerCase().includes(queryLower) ||
-            bodyText.toLowerCase().includes(queryLower)
+            mail.subject?.toLowerCase().includes(queryLower) ||
+            mail.from?.name?.toLowerCase().includes(queryLower) ||
+            mail.from?.address?.toLowerCase().includes(queryLower) ||
+            bodyText?.toLowerCase().includes(queryLower)
         ) {
             result.push(mail);
         }
@@ -50,7 +65,8 @@ const filteredMails = computed(() => {
 const unreadCount = computed(() => {
     let count = 0;
     for (const mail of mails_data.value) {
-        if (mail.unread) count++;
+        // @TODO: add unred flag
+        if ((mail as any).unread) count++;
     }
     return count;
 });
@@ -93,19 +109,19 @@ const selectAll = () => {
     if (selectedMails.value.length === filteredMails.value.length) {
         selectedMails.value = [];
     } else {
-        const ids: number[] = [];
+        const uids: number[] = [];
         for (const mail of filteredMails.value) {
-            ids.push(mail.id);
+            uids.push(mail.uid);
         }
-        selectedMails.value = ids;
+        selectedMails.value = uids;
     }
 };
 
 const markAsRead = () => {
-    for (const id of selectedMails.value) {
+    for (const uid of selectedMails.value) {
         for (const mail of mails_data.value) {
-            if (mail.id === id) {
-                mail.unread = false;
+            if (mail.uid === uid) {
+                (mail as any).unread = false;
                 break;
             }
         }
@@ -114,10 +130,10 @@ const markAsRead = () => {
 };
 
 const markAsUnread = () => {
-    for (const id of selectedMails.value) {
+    for (const uid of selectedMails.value) {
         for (const mail of mails_data.value) {
-            if (mail.id === id) {
-                mail.unread = true;
+            if (mail.uid === uid) {
+                (mail as any).unread = true;
                 break;
             }
         }
@@ -128,7 +144,7 @@ const markAsUnread = () => {
 const deleteMails = () => {
     const remaining = [];
     for (const mail of mails_data.value) {
-        if (!selectedMails.value.includes(mail.id)) {
+        if (!selectedMails.value.includes(mail.uid)) {
             remaining.push(mail);
         }
     }
@@ -219,27 +235,27 @@ const deleteMails = () => {
 
                     <div
                         v-for="mail in filteredMails"
-                        :key="mail.id"
+                        :key="mail.uid"
                         class="group flex items-start gap-3 p-4 border-b border-gray-200 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer transition-colors"
                         :class="{
-                            'bg-white dark:bg-gray-950': !mail.unread,
-                            'bg-blue-50 dark:bg-blue-950/30': mail.unread,
-                            'bg-primary-50 dark:bg-primary-950/50': selectedMails.includes(mail.id)
+                            'bg-white dark:bg-gray-950': !(mail as any).unread,
+                            'bg-blue-50 dark:bg-blue-950/30': (mail as any).unread,
+                            'bg-primary-50 dark:bg-primary-950/50': selectedMails.includes(mail.uid)
                         }"
-                        @click="openEmail(mail.id)"
+                        @click="openEmail(mail.uid)"
                     >
                         <!-- Checkbox -->
                         <UCheckbox
-                            :model-value="selectedMails.includes(mail.id)"
+                            :model-value="selectedMails.includes(mail.uid)"
                             class="mt-1"
                             @click.stop
-                            @update:model-value="toggleSelection(mail.id)"
+                            @update:model-value="toggleSelection(mail.uid)"
                         />
 
                         <!-- Avatar -->
                         <UAvatar
-                            :src="mail.from.avatar?.src"
-                            :alt="mail.from.name"
+                            :src="mail.from?.address ? await useGravatarURL(mail.from?.address) : undefined"
+                            :alt="mail.from?.name"
                             size="md"
                             class="shrink-0 mt-0.5"
                         />
@@ -250,12 +266,12 @@ const deleteMails = () => {
                                 <div class="flex items-center gap-2 min-w-0 flex-1">
                                     <span 
                                         class="font-semibold text-gray-900 dark:text-gray-100 truncate"
-                                        :class="{ 'font-bold': mail.unread }"
+                                        :class="{ 'font-bold': (mail as any).unread }"
                                     >
-                                        {{ mail.from.name }}
+                                        {{ mail.from?.name || "Unknown" }}
                                     </span>
                                     <UBadge
-                                        v-if="mail.unread"
+                                        v-if="(mail as any).unread"
                                         color="primary"
                                         size="xs"
                                         class="shrink-0"
@@ -265,23 +281,23 @@ const deleteMails = () => {
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0">
                                     <UIcon
-                                        v-if="mail.hasAttachment"
+                                        v-if="(mail as any).hasAttachment"
                                         name="i-lucide-paperclip"
                                         class="w-4 h-4 text-gray-400"
                                     />
                                     <span class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ formatDate(mail.date) }}
+                                        {{ mail.date ? formatDate(mail.date.toString()) : "Unknown" }}
                                     </span>
                                 </div>
                             </div>
                             <div 
                                 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 truncate"
-                                :class="{ 'font-semibold': mail.unread }"
+                                :class="{ 'font-semibold': (mail as any).unread }"
                             >
                                 {{ mail.subject }}
                             </div>
                             <div class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {{ mail.isHTML ? stripHtml(mail.body) : mail.body }}
+                                {{ mail.body?.text ? stripHtml(mail.body.text) : (mail.body?.html ? stripHtml(mail.body.html) : 'No preview available.') }}
                             </div>
                         </div>
                     </div>
