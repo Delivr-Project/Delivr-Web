@@ -14,107 +14,8 @@ const stripHtml = (html: string) => {
     return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 };
 
-// Mock data - in a real app, this would come from an API
-const mails = ref<Mail[]>([
-    {
-        id: 1,
-        unread: true,
-        from: {
-            id: 1,
-            name: 'Sarah Johnson',
-            email: 'sarah.j@example.com',
-            avatar: { src: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' }
-        },
-        subject: 'Welcome to Delivr - Get Started Today',
-        body: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <h2 style="color: #2563eb;">Welcome to Delivr! 🎉</h2>
-            <p>Hi there!</p>
-            <p>We're <strong>excited</strong> to have you on board. Here are some tips to get started with Delivr:</p>
-            <ul>
-                <li><strong>Organize your inbox:</strong> Use labels and filters</li>
-                <li><strong>Set up notifications:</strong> Stay on top of important emails</li>
-                <li><strong>Use keyboard shortcuts:</strong> Speed up your workflow</li>
-            </ul>
-            <p>If you have any questions, feel free to reach out!</p>
-            <p style="color: #666;">Best regards,<br>Sarah Johnson</p>
-        </div>`,
-        date: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        hasAttachment: true,
-        isHTML: true
-    },
-    {
-        id: 2,
-        unread: true,
-        from: {
-            id: 2,
-            name: 'Marketing Team',
-            email: 'marketing@company.com',
-            avatar: { src: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marketing' }
-        },
-        subject: 'Q1 Campaign Results & Analysis',
-        body: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <p>Dear Team,</p>
-            <p>Please find attached the comprehensive analysis of our Q1 marketing campaigns.</p>
-            <div style="background: #f0f9ff; padding: 15px; border-left: 4px solid #2563eb; margin: 15px 0;">
-                <h3 style="margin-top: 0; color: #1e40af;">Key Highlights:</h3>
-                <ul style="margin-bottom: 0;">
-                    <li>Email campaign performance increased by <strong>45%</strong></li>
-                    <li>Social media engagement up by <strong>67%</strong></li>
-                    <li>Overall ROI improved by <strong>32%</strong></li>
-                </ul>
-            </div>
-            <p>Please review and come prepared for Friday's meeting.</p>
-        </div>`,
-        date: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-        hasAttachment: true,
-        isHTML: true
-    },
-    {
-        id: 3,
-        unread: false,
-        from: {
-            id: 3,
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            avatar: { src: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John' }
-        },
-        subject: 'Meeting Notes - Product Review',
-        body: 'Here are the notes from today\'s product review meeting. Key points discussed include...',
-        date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-        hasAttachment: false,
-        isHTML: false
-    },
-    {
-        id: 4,
-        unread: false,
-        from: {
-            id: 4,
-            name: 'Support Team',
-            email: 'support@delivr.app',
-            avatar: { src: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Support' }
-        },
-        subject: 'Your ticket has been resolved',
-        body: 'Good news! Your support ticket #12345 has been successfully resolved. We hope...',
-        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        hasAttachment: false,
-        isHTML: false
-    },
-    {
-        id: 5,
-        unread: false,
-        from: {
-            id: 5,
-            name: 'Newsletter',
-            email: 'newsletter@techweekly.com',
-            avatar: { src: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Newsletter' }
-        },
-        subject: 'Tech Weekly - Latest Updates in Web Development',
-        body: 'This week\'s highlights: New Nuxt 4 features, TypeScript 5.3 released, and more...',
-        date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        hasAttachment: false,
-        isHTML: false
-    }
-]);
+
+const mails_data = ref<Mail[]>([])
 
 const selectedMails = ref<number[]>([]);
 const searchQuery = ref<string>('');
@@ -122,12 +23,12 @@ const searchQuery = ref<string>('');
 // Filter emails based on search
 const filteredMails = computed(() => {
     const query = searchQuery.value;
-    if (!query) return mails.value;
+    if (!query) return mails_data.value;
     
     const queryLower = query.toLowerCase();
     const result = [];
     
-    for (const mail of mails.value) {
+    for (const mail of mails_data.value) {
         const bodyText = mail.isHTML ? stripHtml(mail.body) : mail.body;
         if (
             mail.subject.toLowerCase().includes(queryLower) ||
@@ -144,7 +45,7 @@ const filteredMails = computed(() => {
 
 const unreadCount = computed(() => {
     let count = 0;
-    for (const mail of mails.value) {
+    for (const mail of mails_data.value) {
         if (mail.unread) count++;
     }
     return count;
@@ -198,7 +99,7 @@ const selectAll = () => {
 
 const markAsRead = () => {
     for (const id of selectedMails.value) {
-        for (const mail of mails.value) {
+        for (const mail of mails_data.value) {
             if (mail.id === id) {
                 mail.unread = false;
                 break;
@@ -210,7 +111,7 @@ const markAsRead = () => {
 
 const markAsUnread = () => {
     for (const id of selectedMails.value) {
-        for (const mail of mails.value) {
+        for (const mail of mails_data.value) {
             if (mail.id === id) {
                 mail.unread = true;
                 break;
@@ -222,12 +123,12 @@ const markAsUnread = () => {
 
 const deleteMails = () => {
     const remaining = [];
-    for (const mail of mails.value) {
+    for (const mail of mails_data.value) {
         if (!selectedMails.value.includes(mail.id)) {
             remaining.push(mail);
         }
     }
-    mails.value = remaining;
+    mails_data.value = remaining;
     selectedMails.value = [];
 };
 
