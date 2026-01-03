@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Gravatar from '~/components/Gravatar.vue';
 import { useGravatarURL } from '~/composables/useGravatarURL';
 import type { MailAccount, MailRessource } from '~/utils/types';
 type Mail = MailRessource.IMail;
@@ -253,9 +254,8 @@ const deleteMails = () => {
                         />
 
                         <!-- Avatar -->
-                        <UAvatar
-                            :src="mail.from?.address ? await useGravatarURL(mail.from?.address) : undefined"
-                            :alt="mail.from?.name"
+                        <Gravatar
+                            :email="mail.from?.address"
                             size="md"
                             class="shrink-0 mt-0.5"
                         />
