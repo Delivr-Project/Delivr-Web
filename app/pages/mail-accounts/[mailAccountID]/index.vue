@@ -261,6 +261,7 @@ async function onDeleteMailAccount() {
 				</div>
 			</div>
 
+			<!-- Backend Configuration Card -->
 			<div v-if="mailAccount.isNew" class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
 				<div class="px-6 py-4 border-b border-slate-800">
 					<div class="flex items-center gap-3">
@@ -277,40 +278,9 @@ async function onDeleteMailAccount() {
 				<div class="p-6">
 					<div class="divide-y divide-slate-800">
 
-						<UFormField 
-							name="display_name" 
-							label="Display Name"
-							description="Shown publicly. Leave empty to use username."
-							class="flex max-sm:flex-col justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
-							:ui='{
-								root: "w-full sm:w-auto",
-								container: "w-full sm:w-auto",
-							}'
-						>
-							<UInput v-model="mailAccount_data.display_name" placeholder="Enter display name" class="w-full sm:w-96" />
-						</UFormField>
+						<!-- IMAP Settings -->
 
-						<UFormField 
-							name="is_default" 
-							label="Is Default Mail Account"
-							description="Set this Mail Account as the default for sending emails."
-							required
-							class="flex justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
-						>
-							<div class="w-full sm:w-96 rounded-md border-0 appearance-none placeholder:text-dimmed focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 transition-colors py-1.5 text-sm gap-1.5 text-highlighted bg-transparent sm:flex sm:justify-center">
-								<UCheckbox v-model="mailAccount_data.is_default" />
-							</div>
-						</UFormField>
-
-						<div class="pt-4">
-							<UButton
-								label="Add Mail Account"
-								color="primary"
-								type="submit" 
-								:loading="mail_account_form_submit_loading"
-								icon="i-lucide-plus-circle"
-							/>
-						</div>
+						<!-- SMTP Settings -->
 
 					</div>
 				</div>
