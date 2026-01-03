@@ -75,6 +75,9 @@ const mailAccount_form_state = computed({
     }
 });
 
+const show_imap_password = ref(false);
+const show_smtp_password = ref(false);
+
 const mail_account_form_submit_loading = ref(false);
 
 async function onFormSubmit() {
@@ -275,13 +278,197 @@ async function onDeleteMailAccount() {
 					</div>
 				</div>
 				
-				<div class="p-6">
-					<div class="divide-y divide-slate-800">
+				<div class="p-6 space-y-8">
+					<!-- IMAP Settings -->
+					<div class="space-y-4">
+						<div class="flex items-center gap-2 pb-2 border-b border-slate-800">
+							<UIcon class="w-4 h-4 text-sky-400" name="i-lucide-inbox" />
+							<h4 class="text-sm font-medium text-slate-300">IMAP Settings</h4>
+						</div>
+						
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<UFormField 
+								name="imap_host" 
+								label="IMAP Host"
+								required
+								class="flex flex-col gap-1"
+							>
+								<UInput v-model="(mailAccount_data as NewMailAccount).imap_host" placeholder="imap.example.com" class="w-full" />
+							</UFormField>
 
-						<!-- IMAP Settings -->
+							<UFormField 
+								name="imap_port" 
+								label="IMAP Port"
+								required
+								class="flex flex-col gap-1"
+							>
+								<UInput v-model="(mailAccount_data as NewMailAccount).imap_port" type="number" placeholder="993" class="w-full" />
+							</UFormField>
+						</div>
 
-						<!-- SMTP Settings -->
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<UFormField 
+								name="imap_username" 
+								label="IMAP Username"
+								required
+								class="flex flex-col gap-1"
+							>
+								<UInput v-model="(mailAccount_data as NewMailAccount).imap_username" placeholder="user@example.com" class="w-full" />
+							</UFormField>
 
+							<UFormField 
+								name="imap_password" 
+								label="IMAP Password"
+								required
+								class="flex flex-col gap-1"
+							>
+								<UInput
+									v-model="(mailAccount_data as NewMailAccount).imap_password"
+									:type="show_imap_password ? 'text' : 'password'"
+									placeholder="••••••••"
+									class="w-full"
+									:ui="{ trailing: 'pe-1' }"
+								>
+									<template #trailing>
+										<UButton
+											color="neutral"
+											variant="link"
+											size="sm"
+											:icon="show_imap_password ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+											:aria-label="show_imap_password ? 'Hide password' : 'Show password'"
+											:aria-pressed="show_imap_password"
+											aria-controls="password"
+											autocomplete="new-password"
+											autocapitalize="off"
+											autocorrect="off"
+											spellcheck="false"
+											@click="show_imap_password = !show_imap_password"
+										/>
+									</template>
+								</UInput>
+							</UFormField>
+						</div>
+
+						<UFormField 
+							name="imap_encryption" 
+							label="IMAP Encryption"
+							required
+							class="flex flex-col gap-1"
+						>
+							<USelect 
+								v-model="(mailAccount_data as NewMailAccount).imap_encryption" 
+								:items="[
+									{ label: 'SSL/TLS', value: 'SSL' },
+									{ label: 'STARTTLS', value: 'STARTTLS' },
+									{ label: 'None', value: 'NONE' }
+								]"
+								placeholder="Select encryption"
+								class="w-full sm:w-64"
+							/>
+						</UFormField>
+					</div>
+
+					<!-- Divider -->
+					<div class="border-t border-slate-800"></div>
+
+					<!-- SMTP Settings -->
+					<div class="space-y-4">
+						<div class="flex items-center gap-2 pb-2 border-b border-slate-800">
+							<UIcon class="w-4 h-4 text-sky-400" name="i-lucide-send" />
+							<h4 class="text-sm font-medium text-slate-300">SMTP Settings</h4>
+						</div>
+						
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<UFormField 
+								name="smtp_host" 
+								label="SMTP Host"
+								required
+								class="flex flex-col gap-1"
+							>
+								<UInput v-model="(mailAccount_data as NewMailAccount).smtp_host" placeholder="smtp.example.com" class="w-full" />
+							</UFormField>
+
+							<UFormField 
+								name="smtp_port" 
+								label="SMTP Port"
+								required
+								class="flex flex-col gap-1"
+							>
+								<UInput v-model="(mailAccount_data as NewMailAccount).smtp_port" type="number" placeholder="587" class="w-full" />
+							</UFormField>
+						</div>
+
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<UFormField 
+								name="smtp_username" 
+								label="SMTP Username"
+								required
+								class="flex flex-col gap-1"
+							>
+								<UInput v-model="(mailAccount_data as NewMailAccount).smtp_username" placeholder="user@example.com" class="w-full" />
+							</UFormField>
+
+							<UFormField 
+								name="smtp_password" 
+								label="SMTP Password"
+								required
+								class="flex flex-col gap-1"
+							>
+								<UInput
+									v-model="(mailAccount_data as NewMailAccount).smtp_password"
+									:type="show_smtp_password ? 'text' : 'password'"
+									placeholder="••••••••"
+									class="w-full"
+									:ui="{ trailing: 'pe-1' }"
+								>
+									<template #trailing>
+										<UButton
+											color="neutral"
+											variant="link"
+											size="sm"
+											:icon="show_smtp_password ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+											:aria-label="show_smtp_password ? 'Hide password' : 'Show password'"
+											:aria-pressed="show_smtp_password"
+											aria-controls="password"
+											autocomplete="new-password"
+											autocapitalize="off"
+											autocorrect="off"
+											spellcheck="false"
+											@click="show_smtp_password = !show_smtp_password"
+										/>
+									</template>
+								</UInput>
+							</UFormField>
+						</div>
+
+						<UFormField 
+							name="smtp_encryption" 
+							label="SMTP Encryption"
+							required
+							class="flex flex-col gap-1"
+						>
+							<USelect 
+								v-model="(mailAccount_data as NewMailAccount).smtp_encryption" 
+								:items="[
+									{ label: 'SSL/TLS', value: 'SSL' },
+									{ label: 'STARTTLS', value: 'STARTTLS' },
+									{ label: 'None', value: 'NONE' }
+								]"
+								placeholder="Select encryption"
+								class="w-full sm:w-64"
+							/>
+						</UFormField>
+					</div>
+
+					<!-- Submit Button -->
+					<div class="pt-4 border-t border-slate-800">
+						<UButton
+							label="Create Mail Account" 
+							color="primary"
+							type="submit" 
+							:loading="mail_account_form_submit_loading"
+							icon="i-lucide-plus"
+						/>
 					</div>
 				</div>
 			</div>
@@ -370,3 +557,10 @@ async function onDeleteMailAccount() {
 
 	</div>
 </template>
+
+<style>
+/* Hide the password reveal button in Edge */
+::-ms-reveal {
+    display: none;
+}
+</style>
