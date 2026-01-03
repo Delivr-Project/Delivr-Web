@@ -94,7 +94,7 @@ const formatDate = (dateString: string) => {
 };
 
 const openEmail = (mailId: number) => {
-    navigateTo(`/inbox/${mailId}`);
+    navigateTo(`/mail/${mailAccount.data.value.id}/folder/inbox/${mailId}`);
 };
 
 const toggleSelection = (mailId: number) => {
