@@ -132,7 +132,7 @@ const routePathDynamicValues = await useAwaitedComputed(async () => {
 <template>
     <UDashboardPanel>
         <template #header>
-            <DashboardPageHeader icon="i-lucide-rocket" :breadcrumb-items="routePathDynamicValues.breadcrumbItems" />
+            <DashboardPageHeader icon="i-lucide-at-sign" :breadcrumb-items="routePathDynamicValues.breadcrumbItems" />
 
             <UDashboardToolbar>
                 <!-- NOTE: The `-mx-1` class is used to align with the `DashboardSidebarCollapse` button here. -->

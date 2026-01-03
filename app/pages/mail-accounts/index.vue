@@ -21,7 +21,7 @@ function refresh() {
 const mailAccountsTableColumns: TableColumn<MailAccount>[] = [
     { accessorKey: 'display_name', header: 'Display Name' },
     { accessorKey: 'created_at', header: 'Created At' },
-    { accessorKey: 'is_default', header: 'Default' }
+    { accessorKey: 'is_default', header: 'Is Default' }
 ]
 
 </script>
@@ -78,10 +78,10 @@ const mailAccountsTableColumns: TableColumn<MailAccount>[] = [
                     </template>
 
                     <template #is_default-cell="{ row }">
-                        <UDashboardBadge
-                            v-if="row.original.is_default"
-                            label="Default"
-                            color="success"
+                        <UBadge
+                            :label="row.original.is_default ? 'Yes' : 'No'"
+                            :color="row.original.is_default ? 'success' : 'neutral'"
+                            variant="subtle"
                         />
                     </template>
                     <template #empty-actions>
