@@ -4,6 +4,8 @@ import { useGravatarURL } from '~/composables/useGravatarURL';
 import type { MailAccount, MailRessource } from '~/utils/types';
 type Mail = MailRessource.IMail;
 
+const folderPath = decodeURIComponent(useRoute().params.folderPath as string);
+
 useSeoMeta({
     title: 'Inbox | Delivr',
     description: 'Manage your emails'
@@ -18,11 +20,11 @@ const stripHtml = (html: string) => {
 
 const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
 
-const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/INBOX/mails`, async () => {
+const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${folderPath}/mails`, async () => {
     const response = await useAPI(api => api.getMailAccountsMailAccountIdMailboxesMailboxPathMails({
         path: {
             mailAccountID: mailAccount.data.value.id,
-            mailboxPath: 'INBOX'
+            mailboxPath: folderPath
         }
     }));
     if (!response.success) {
@@ -94,11 +96,11 @@ const formatDate = (dateString: string) => {
     }
 };
 
-const openEmail = (mailId: number) => {
+function openEmail(mailId: number) {
     navigateTo(`/mail/${mailAccount.data.value.id}/folder/inbox/${mailId}`);
 };
 
-const toggleSelection = (mailId: number) => {
+function toggleSelection(mailId: number) {
     const index = selectedMails.value.indexOf(mailId);
     if (index > -1) {
         selectedMails.value.splice(index, 1);
@@ -107,7 +109,7 @@ const toggleSelection = (mailId: number) => {
     }
 };
 
-const selectAll = () => {
+function selectAll() {
     if (selectedMails.value.length === filteredMails.value.length) {
         selectedMails.value = [];
     } else {
@@ -119,7 +121,7 @@ const selectAll = () => {
     }
 };
 
-const markAsRead = () => {
+function markAsRead() {
     for (const uid of selectedMails.value) {
         for (const mail of mails_data.value) {
             if (mail.uid === uid) {
@@ -131,7 +133,7 @@ const markAsRead = () => {
     selectedMails.value = [];
 };
 
-const markAsUnread = () => {
+function markAsUnread() {
     for (const uid of selectedMails.value) {
         for (const mail of mails_data.value) {
             if (mail.uid === uid) {
@@ -143,7 +145,7 @@ const markAsUnread = () => {
     selectedMails.value = [];
 };
 
-const deleteMails = () => {
+function deleteMails() {
     const remaining = [];
     for (const mail of mails_data.value) {
         if (!selectedMails.value.includes(mail.uid)) {

@@ -807,19 +807,306 @@ export type PutMailAccountsMailAccountIdCredentialsResponses = {
 
 export type PutMailAccountsMailAccountIdCredentialsResponse = PutMailAccountsMailAccountIdCredentialsResponses[keyof PutMailAccountsMailAccountIdCredentialsResponses];
 
-export type GetMailAccountsMailAccountIdMailsData = {
+export type GetMailAccountsMailAccountIdMailboxesData = {
     body?: never;
     path: {
         mailAccountID: number;
     };
-    query?: {
-        mailbox?: string;
-        limit?: number;
-    };
-    url: '/mail-accounts/{mailAccountID}/mails';
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes';
 };
 
-export type GetMailAccountsMailAccountIdMailsResponses = {
+export type GetMailAccountsMailAccountIdMailboxesResponses = {
+    /**
+     * Mailboxes retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mailboxes retrieved successfully';
+        data: Array<{
+            name: string;
+            path: string;
+            delimiter: string;
+            parent: Array<string>;
+            parentPath: string;
+            flags: Array<string>;
+            specialUse?: string;
+        }>;
+    };
+};
+
+export type GetMailAccountsMailAccountIdMailboxesResponse = GetMailAccountsMailAccountIdMailboxesResponses[keyof GetMailAccountsMailAccountIdMailboxesResponses];
+
+export type PostMailAccountsMailAccountIdMailboxesData = {
+    body?: {
+        path: string;
+    };
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes';
+};
+
+export type PostMailAccountsMailAccountIdMailboxesErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PostMailAccountsMailAccountIdMailboxesError = PostMailAccountsMailAccountIdMailboxesErrors[keyof PostMailAccountsMailAccountIdMailboxesErrors];
+
+export type PostMailAccountsMailAccountIdMailboxesResponses = {
+    /**
+     * Mailbox created successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mailbox created successfully';
+        data: null;
+    };
+};
+
+export type PostMailAccountsMailAccountIdMailboxesResponse = PostMailAccountsMailAccountIdMailboxesResponses[keyof PostMailAccountsMailAccountIdMailboxesResponses];
+
+export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}';
+};
+
+export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathError = DeleteMailAccountsMailAccountIdMailboxesMailboxPathErrors[keyof DeleteMailAccountsMailAccountIdMailboxesMailboxPathErrors];
+
+export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
+    /**
+     * Mailbox deleted successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mailbox deleted successfully';
+        data: null;
+    };
+};
+
+export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathResponse = DeleteMailAccountsMailAccountIdMailboxesMailboxPathResponses[keyof DeleteMailAccountsMailAccountIdMailboxesMailboxPathResponses];
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}';
+};
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathErrors = {
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathError = GetMailAccountsMailAccountIdMailboxesMailboxPathErrors[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathErrors];
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
+    /**
+     * Mailbox info retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mailbox info retrieved successfully';
+        data: {
+            name: string;
+            path: string;
+            delimiter: string;
+            parent: Array<string>;
+            parentPath: string;
+            flags: Array<string>;
+            specialUse?: string;
+        };
+    };
+};
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathResponse = GetMailAccountsMailAccountIdMailboxesMailboxPathResponses[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathResponses];
+
+export type PutMailAccountsMailAccountIdMailboxesMailboxPathData = {
+    body?: {
+        name: string;
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}';
+};
+
+export type PutMailAccountsMailAccountIdMailboxesMailboxPathErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type PutMailAccountsMailAccountIdMailboxesMailboxPathError = PutMailAccountsMailAccountIdMailboxesMailboxPathErrors[keyof PutMailAccountsMailAccountIdMailboxesMailboxPathErrors];
+
+export type PutMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
+    /**
+     * Mailbox updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mailbox updated successfully';
+        data: null;
+    };
+};
+
+export type PutMailAccountsMailAccountIdMailboxesMailboxPathResponse = PutMailAccountsMailAccountIdMailboxesMailboxPathResponses[keyof PutMailAccountsMailAccountIdMailboxesMailboxPathResponses];
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/status';
+};
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusErrors = {
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusError = GetMailAccountsMailAccountIdMailboxesMailboxPathStatusErrors[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathStatusErrors];
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponses = {
+    /**
+     * Mailbox status retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mailbox status retrieved successfully';
+        data: {
+            /**
+             * Total number of messages in the mailbox
+             */
+            messages: number;
+            /**
+             * Number of recent messages in the mailbox
+             */
+            recent: number;
+            /**
+             * Number of unseen (unread) messages in the mailbox
+             */
+            unseen: number;
+        };
+    };
+};
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponse = GetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponses[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponses];
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: {
+        limit?: number;
+        offset?: number;
+        order?: 'newest' | 'oldest';
+        searchString?: string;
+    };
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails';
+};
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsErrors = {
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsError = GetMailAccountsMailAccountIdMailboxesMailboxPathMailsErrors[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathMailsErrors];
+
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses = {
     /**
      * Mails retrieved successfully
      */
@@ -871,19 +1158,23 @@ export type GetMailAccountsMailAccountIdMailsResponses = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailsResponse = GetMailAccountsMailAccountIdMailsResponses[keyof GetMailAccountsMailAccountIdMailsResponses];
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponse = GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses];
 
-export type GetMailAccountsMailAccountIdMailsMailUidData = {
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidData = {
     body?: never;
     path: {
         mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
         mailUID: number;
     };
     query?: never;
-    url: '/mail-accounts/{mailAccountID}/mails/{mailUID}';
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}';
 };
 
-export type GetMailAccountsMailAccountIdMailsMailUidErrors = {
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidErrors = {
     /**
      * Mail with specified UID not found
      */
@@ -894,9 +1185,9 @@ export type GetMailAccountsMailAccountIdMailsMailUidErrors = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailsMailUidError = GetMailAccountsMailAccountIdMailsMailUidErrors[keyof GetMailAccountsMailAccountIdMailsMailUidErrors];
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidError = GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidErrors[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidErrors];
 
-export type GetMailAccountsMailAccountIdMailsMailUidResponses = {
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponses = {
     /**
      * Mail retrieved successfully
      */
@@ -948,7 +1239,7 @@ export type GetMailAccountsMailAccountIdMailsMailUidResponses = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailsMailUidResponse = GetMailAccountsMailAccountIdMailsMailUidResponses[keyof GetMailAccountsMailAccountIdMailsMailUidResponses];
+export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponse = GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponses[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponses];
 
 export type GetMailAccountsMailAccountIdIdentitiesData = {
     body?: never;

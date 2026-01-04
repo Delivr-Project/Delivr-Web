@@ -489,21 +489,160 @@ export const zPutMailAccountsMailAccountIdCredentialsResponse = z.object({
     data: z.null()
 });
 
-export const zGetMailAccountsMailAccountIdMailsData = z.object({
+export const zGetMailAccountsMailAccountIdMailboxesData = z.object({
     body: z.optional(z.never()),
     path: z.object({
         mailAccountID: z.number().gt(0)
     }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mailboxes retrieved successfully
+ */
+export const zGetMailAccountsMailAccountIdMailboxesResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mailboxes retrieved successfully'),
+    data: z.array(z.object({
+        name: z.string(),
+        path: z.string(),
+        delimiter: z.string(),
+        parent: z.array(z.string()),
+        parentPath: z.string(),
+        flags: z.array(z.string()),
+        specialUse: z.optional(z.string())
+    }))
+});
+
+export const zPostMailAccountsMailAccountIdMailboxesData = z.object({
+    body: z.optional(z.object({
+        path: z.string()
+    })),
+    path: z.object({
+        mailAccountID: z.number().gt(0)
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mailbox created successfully
+ */
+export const zPostMailAccountsMailAccountIdMailboxesResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mailbox created successfully'),
+    data: z.null()
+});
+
+export const zDeleteMailAccountsMailAccountIdMailboxesMailboxPathData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mailbox deleted successfully
+ */
+export const zDeleteMailAccountsMailAccountIdMailboxesMailboxPathResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mailbox deleted successfully'),
+    data: z.null()
+});
+
+export const zGetMailAccountsMailAccountIdMailboxesMailboxPathData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mailbox info retrieved successfully
+ */
+export const zGetMailAccountsMailAccountIdMailboxesMailboxPathResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mailbox info retrieved successfully'),
+    data: z.object({
+        name: z.string(),
+        path: z.string(),
+        delimiter: z.string(),
+        parent: z.array(z.string()),
+        parentPath: z.string(),
+        flags: z.array(z.string()),
+        specialUse: z.optional(z.string())
+    })
+});
+
+export const zPutMailAccountsMailAccountIdMailboxesMailboxPathData = z.object({
+    body: z.optional(z.object({
+        name: z.string()
+    })),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mailbox updated successfully
+ */
+export const zPutMailAccountsMailAccountIdMailboxesMailboxPathResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mailbox updated successfully'),
+    data: z.null()
+});
+
+export const zGetMailAccountsMailAccountIdMailboxesMailboxPathStatusData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mailbox status retrieved successfully
+ */
+export const zGetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mailbox status retrieved successfully'),
+    data: z.object({
+        messages: z.number().gte(0),
+        recent: z.number().gte(0),
+        unseen: z.number().gte(0)
+    })
+});
+
+export const zGetMailAccountsMailAccountIdMailboxesMailboxPathMailsData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string()
+    }),
     query: z.optional(z.object({
-        mailbox: z.optional(z.string()).default('INBOX'),
-        limit: z.optional(z.number()).default(50)
+        limit: z.optional(z.int().gte(1).lte(100)).default(10),
+        offset: z.optional(z.int().gte(0).lte(9007199254740991)).default(0),
+        order: z.optional(z.enum(['newest', 'oldest'])),
+        searchString: z.optional(z.string())
     }))
 });
 
 /**
  * Mails retrieved successfully
  */
-export const zGetMailAccountsMailAccountIdMailsResponse = z.object({
+export const zGetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponse = z.object({
     success: z.literal(true),
     code: z.literal(200),
     message: z.literal('Mails retrieved successfully'),
@@ -551,10 +690,11 @@ export const zGetMailAccountsMailAccountIdMailsResponse = z.object({
     }))
 });
 
-export const zGetMailAccountsMailAccountIdMailsMailUidData = z.object({
+export const zGetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidData = z.object({
     body: z.optional(z.never()),
     path: z.object({
         mailAccountID: z.number().gt(0),
+        mailboxPath: z.string(),
         mailUID: z.number()
     }),
     query: z.optional(z.never())
@@ -563,7 +703,7 @@ export const zGetMailAccountsMailAccountIdMailsMailUidData = z.object({
 /**
  * Mail retrieved successfully
  */
-export const zGetMailAccountsMailAccountIdMailsMailUidResponse = z.object({
+export const zGetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponse = z.object({
     success: z.literal(true),
     code: z.literal(200),
     message: z.literal('Mail retrieved successfully'),
