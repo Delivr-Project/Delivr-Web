@@ -832,6 +832,20 @@ export type GetMailAccountsMailAccountIdMailboxesResponses = {
             parentPath: string;
             flags: Array<string>;
             specialUse?: string;
+            status: {
+                /**
+                 * Total number of messages in the mailbox
+                 */
+                messages: number;
+                /**
+                 * Number of recent messages in the mailbox
+                 */
+                recent: number;
+                /**
+                 * Number of unseen (unread) messages in the mailbox
+                 */
+                unseen: number;
+            };
         }>;
     };
 };
@@ -966,6 +980,20 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
             parentPath: string;
             flags: Array<string>;
             specialUse?: string;
+            status: {
+                /**
+                 * Total number of messages in the mailbox
+                 */
+                messages: number;
+                /**
+                 * Number of recent messages in the mailbox
+                 */
+                recent: number;
+                /**
+                 * Number of unseen (unread) messages in the mailbox
+                 */
+                unseen: number;
+            };
         };
     };
 };
@@ -974,7 +1002,7 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathResponse = GetMailAc
 
 export type PutMailAccountsMailAccountIdMailboxesMailboxPathData = {
     body?: {
-        name: string;
+        path: string;
     };
     path: {
         mailAccountID: number;
@@ -1123,15 +1151,15 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses = {
                 name?: string;
                 address: string;
             };
-            to?: Array<{
+            to: Array<{
                 name?: string;
                 address: string;
             }>;
-            cc?: Array<{
+            cc: Array<{
                 name?: string;
                 address: string;
             }>;
-            bcc?: Array<{
+            bcc: Array<{
                 name?: string;
                 address: string;
             }>;
@@ -1150,7 +1178,7 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses = {
                 contentId?: string;
                 contentDisposition?: string;
             }>;
-            body?: {
+            body: {
                 text?: string;
                 html?: string;
             };
@@ -1204,15 +1232,15 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponse
                 name?: string;
                 address: string;
             };
-            to?: Array<{
+            to: Array<{
                 name?: string;
                 address: string;
             }>;
-            cc?: Array<{
+            cc: Array<{
                 name?: string;
                 address: string;
             }>;
-            bcc?: Array<{
+            bcc: Array<{
                 name?: string;
                 address: string;
             }>;
@@ -1231,7 +1259,7 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponse
                 contentId?: string;
                 contentDisposition?: string;
             }>;
-            body?: {
+            body: {
                 text?: string;
                 html?: string;
             };

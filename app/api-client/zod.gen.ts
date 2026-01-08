@@ -511,7 +511,12 @@ export const zGetMailAccountsMailAccountIdMailboxesResponse = z.object({
         parent: z.array(z.string()),
         parentPath: z.string(),
         flags: z.array(z.string()),
-        specialUse: z.optional(z.string())
+        specialUse: z.optional(z.string()),
+        status: z.object({
+            messages: z.number().gte(0),
+            recent: z.number().gte(0),
+            unseen: z.number().gte(0)
+        })
     }))
 });
 
@@ -577,13 +582,18 @@ export const zGetMailAccountsMailAccountIdMailboxesMailboxPathResponse = z.objec
         parent: z.array(z.string()),
         parentPath: z.string(),
         flags: z.array(z.string()),
-        specialUse: z.optional(z.string())
+        specialUse: z.optional(z.string()),
+        status: z.object({
+            messages: z.number().gte(0),
+            recent: z.number().gte(0),
+            unseen: z.number().gte(0)
+        })
     })
 });
 
 export const zPutMailAccountsMailAccountIdMailboxesMailboxPathData = z.object({
     body: z.optional(z.object({
-        name: z.string()
+        path: z.string()
     })),
     path: z.object({
         mailAccountID: z.number().gt(0),
@@ -653,18 +663,18 @@ export const zGetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponse = z.
             name: z.optional(z.string()),
             address: z.string()
         })),
-        to: z.optional(z.array(z.object({
+        to: z.array(z.object({
             name: z.optional(z.string()),
             address: z.string()
-        }))),
-        cc: z.optional(z.array(z.object({
+        })),
+        cc: z.array(z.object({
             name: z.optional(z.string()),
             address: z.string()
-        }))),
-        bcc: z.optional(z.array(z.object({
+        })),
+        bcc: z.array(z.object({
             name: z.optional(z.string()),
             address: z.string()
-        }))),
+        })),
         subject: z.optional(z.string()),
         inReplyTo: z.optional(z.string()),
         replyTo: z.optional(z.object({
@@ -683,10 +693,10 @@ export const zGetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponse = z.
             contentId: z.optional(z.string()),
             contentDisposition: z.optional(z.string())
         })),
-        body: z.optional(z.object({
+        body: z.object({
             text: z.optional(z.string()),
             html: z.optional(z.string())
-        }))
+        })
     }))
 });
 
@@ -714,18 +724,18 @@ export const zGetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidRespon
             name: z.optional(z.string()),
             address: z.string()
         })),
-        to: z.optional(z.array(z.object({
+        to: z.array(z.object({
             name: z.optional(z.string()),
             address: z.string()
-        }))),
-        cc: z.optional(z.array(z.object({
+        })),
+        cc: z.array(z.object({
             name: z.optional(z.string()),
             address: z.string()
-        }))),
-        bcc: z.optional(z.array(z.object({
+        })),
+        bcc: z.array(z.object({
             name: z.optional(z.string()),
             address: z.string()
-        }))),
+        })),
         subject: z.optional(z.string()),
         inReplyTo: z.optional(z.string()),
         replyTo: z.optional(z.object({
@@ -744,10 +754,10 @@ export const zGetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidRespon
             contentId: z.optional(z.string()),
             contentDisposition: z.optional(z.string())
         })),
-        body: z.optional(z.object({
+        body: z.object({
             text: z.optional(z.string()),
             html: z.optional(z.string())
-        }))
+        })
     })
 });
 

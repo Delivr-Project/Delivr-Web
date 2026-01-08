@@ -5,7 +5,6 @@ const route = useRoute();
 const router = useRouter();
 const mailId = computed(() => parseInt(route.params.id as string));
 
-const allMails = useMailsStore().mails;
 
 const mail = computed(() => allMails.find(m => m.id === mailId.value));
 
