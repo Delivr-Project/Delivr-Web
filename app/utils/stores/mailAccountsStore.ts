@@ -81,6 +81,8 @@ export class MailAccountsStore {
     }
 
     static async getByID(mailAccountID: number) {
+        await this.fetchAndSetIfNeeded();
+
         return useAwaitedComputed(async () => {
             if (!this.isValid(this.mailAccounts.data)) {
                 return null;

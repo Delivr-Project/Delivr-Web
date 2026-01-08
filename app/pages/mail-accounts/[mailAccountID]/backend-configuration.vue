@@ -47,51 +47,33 @@ async function onFormSubmit() {
 
 	try {
 
-		if (mailAccount.isNew) {
+		const result = await useAPI((api) => api.putMailAccountsMailAccountIdCredentials({
+			path: {
+				mailAccountID: (mailAccount_data.value as MailAccount).id,
+			},
+			body: mailAccount_form_state.value
+		}));
 
-			const result = await useAPI((api) => api.postMailAccounts({
-				body: mailAccount_data.value as NewMailAccount
-			}));
+		if (result.success) {
+			toast.add({
+				title: 'Mail Account updated',
+				description: `The Mail Account has been successfully updated.`,
+				icon: 'i-lucide-check',
+				color: 'success'
+			});
 
-			if (result.success && result.data) {
-				toast.add({
-					title: 'Mail Account added',
-					description: `The Mail Account has been successfully created.`,
-					icon: 'i-lucide-check',
-					color: 'success'
-				});
+			mailAccount_data.value = {
+				...mailAccount_data.value,
+				...mailAccount_form_state.value
+			} satisfies MailAccount;
 
-				await MailAccountsStore.refresh();
+			await MailAccountsStore.refresh();
 
-				// Redirect to the new package page
-				await navigateTo(`/mail-accounts/${result.data.id}`);
-			} else {
-				throw new Error(result.message || 'Failed to create package');
-			}
 		} else {
-
-			const result = await useAPI((api) => api.putMailAccountsMailAccountId({
-				path: {
-					mailAccountID: (mailAccount_data.value as MailAccount).id,
-				},
-				body: mailAccount_data.value as MailAccount
-			}));
-
-			if (result.success && result.data) {
-				toast.add({
-					title: 'Mail Account updated',
-					description: `The Mail Account has been successfully updated.`,
-					icon: 'i-lucide-check',
-					color: 'success'
-				});
-
-				await MailAccountsStore.refresh();
-
-			} else {
-				throw new Error(result.message || 'Failed to update Mail Account');
-			}
-
+			throw new Error(result.message || 'Failed to update Mail Account');
 		}
+
+
 	} catch (error: any) {
 		toast.add({
 			title: 'Error',
@@ -105,52 +87,8 @@ async function onFormSubmit() {
 }
 
 
-const deleteLoading = ref(false);
-const deleteConfirmOpen = ref(false);
-const deleteConfirmText = ref('');
-
-async function onDeleteMailAccount() {
-
-	deleteLoading.value = true;
-	deleteConfirmOpen.value = false;
-
-
-	try {
-
-		const result = await useAPI((api) => api.deleteMailAccountsMailAccountId({
-			path: {
-				mailAccountID: (mailAccount_data.value as MailAccount).id,
-			}
-		}));
-
-		if (result.success) {
-			toast.add({
-				title: 'Mail Account deleted',
-				description: `The Mail Account has been successfully deleted.`,
-				icon: 'i-lucide-check',
-				color: 'success'
-			});
-
-			await MailAccountsStore.refresh();
-
-			// Redirect to the mail accounts list page
-			await navigateTo(`/mail-accounts`);
-		} else {
-			throw new Error(result.message || 'Failed to delete Mail Account');
-		}
-	} catch (error: any) {
-		toast.add({
-			title: 'Error',
-			description: error.message || 'An unexpected error occurred.',
-			icon: 'i-lucide-x-circle',
-			color: 'error'
-		});
-	}
-	deleteLoading.value = false;
-}
-
 async function testConfiguration() {
-	
+
 	mail_account_form_submit_loading.value = true;
 
 	try {
@@ -218,7 +156,7 @@ async function testConfiguration() {
 				</div>
 
 				<div class="p-6 space-y-8 w-full">
-					
+
 					<!-- IMAP Settings -->
 					<div class="space-y-4">
 						<div class="flex items-center gap-2 pb-2 border-b border-slate-800">
@@ -228,20 +166,20 @@ async function testConfiguration() {
 
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<UFormField name="imap_host" label="IMAP Host" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.imap_host"
-									placeholder="imap.example.com" class="w-full" />
+								<UInput v-model="mailAccount_form_state.imap_host" placeholder="imap.example.com"
+									class="w-full" />
 							</UFormField>
 
 							<UFormField name="imap_port" label="IMAP Port" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.imap_port" type="number"
-									placeholder="993" class="w-full" />
+								<UInput v-model="mailAccount_form_state.imap_port" type="number" placeholder="993"
+									class="w-full" />
 							</UFormField>
 						</div>
 
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<UFormField name="imap_username" label="IMAP Username" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.imap_username"
-									placeholder="user@example.com" class="w-full" />
+								<UInput v-model="mailAccount_form_state.imap_username" placeholder="user@example.com"
+									class="w-full" />
 							</UFormField>
 
 							<UFormField name="imap_password" label="IMAP Password" required class="flex flex-col gap-1">
@@ -281,20 +219,20 @@ async function testConfiguration() {
 
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<UFormField name="smtp_host" label="SMTP Host" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.smtp_host"
-									placeholder="smtp.example.com" class="w-full" />
+								<UInput v-model="mailAccount_form_state.smtp_host" placeholder="smtp.example.com"
+									class="w-full" />
 							</UFormField>
 
 							<UFormField name="smtp_port" label="SMTP Port" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.smtp_port" type="number"
-									placeholder="587" class="w-full" />
+								<UInput v-model="mailAccount_form_state.smtp_port" type="number" placeholder="587"
+									class="w-full" />
 							</UFormField>
 						</div>
 
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<UFormField name="smtp_username" label="SMTP Username" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.smtp_username"
-									placeholder="user@example.com" class="w-full" />
+								<UInput v-model="mailAccount_form_state.smtp_username" placeholder="user@example.com"
+									class="w-full" />
 							</UFormField>
 
 							<UFormField name="smtp_password" label="SMTP Password" required class="flex flex-col gap-1">
@@ -324,8 +262,13 @@ async function testConfiguration() {
 
 					<!-- Submit Button -->
 					<div class="pt-4 border-t border-slate-800">
-						<UButton label="Create Mail Account" color="primary" type="submit"
-							:loading="mail_account_form_submit_loading" icon="i-lucide-plus-circle" />
+						<UButton 
+							label="Update Mail Account Credentials"
+							color="primary"
+							type="submit"
+							:loading="mail_account_form_submit_loading"
+							icon="i-lucide-save"
+						/>
 						<!-- <UButton
 							label="Test Configuration" 
 							color="secondary"
