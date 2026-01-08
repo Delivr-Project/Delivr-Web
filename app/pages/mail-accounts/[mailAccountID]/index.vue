@@ -198,12 +198,10 @@ async function testConfiguration() {
 
 	try {
 
-		const result = await useAPI((api) => api.getMailAccountsMailAccountIdMails({
+		const result = await useAPI((api) => api.getMailAccountsMailAccountIdMailboxesMailboxPath({
 			path: {
 				mailAccountID: (mailAccount_data.value as MailAccount).id,
-			},
-			query: {
-				limit: 1
+				mailboxPath: 'INBOX',
 			}
 		}));
 
@@ -234,7 +232,7 @@ async function testConfiguration() {
 </script>
 
 <template>
-    <div class="space-y-6 lg:max-w-3xl mx-auto">
+    <div class="space-y-6 w-full lg:w-3xl mx-auto">
 		<!-- Header -->
 		<div>
 			<h2 class="text-xl font-semibold text-white">

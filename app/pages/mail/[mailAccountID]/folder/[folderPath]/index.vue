@@ -2,12 +2,15 @@
 import Gravatar from '~/components/Gravatar.vue';
 import { useGravatarURL } from '~/composables/useGravatarURL';
 import type { MailAccount, MailRessource } from '~/utils/types';
+
 type Mail = MailRessource.IMail;
 
 const folderPath = decodeURIComponent(useRoute().params.folderPath as string);
+const systemFolderPath = folderPath === 'inbox' ? 'INBOX' : folderPath;
+const uiFolderPath = folderPath.charAt(0).toUpperCase() + folderPath.slice(1).toLowerCase();
 
 useSeoMeta({
-    title: 'Inbox | Delivr',
+    title: `${uiFolderPath} | Delivr`,
     description: 'Manage your emails'
 });
 
@@ -20,11 +23,11 @@ const stripHtml = (html: string) => {
 
 const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
 
-const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${folderPath}/mails`, async () => {
+const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${systemFolderPath}/mails`, async () => {
     const response = await useAPI(api => api.getMailAccountsMailAccountIdMailboxesMailboxPathMails({
         path: {
             mailAccountID: mailAccount.data.value.id,
-            mailboxPath: folderPath
+            mailboxPath: systemFolderPath
         }
     }));
     if (!response.success) {

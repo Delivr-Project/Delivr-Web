@@ -1,12 +1,38 @@
 <script setup lang="ts">
-import type { MailRessource } from '~/utils/types';
+import type { MailAccount, MailRessource } from '~/utils/types';
 
-const route = useRoute();
-const router = useRouter();
-const mailId = computed(() => parseInt(route.params.id as string));
+type Mail = MailRessource.IMail;
 
+const folderPath = decodeURIComponent(useRoute().params.folderPath as string);
+const systemFolderPath = folderPath.toLowerCase() === 'inbox' ? 'INBOX' : folderPath;
+const uiFolderPath = folderPath.charAt(0).toUpperCase() + folderPath.slice(1).toLowerCase();
 
-const mail = computed(() => allMails.find(m => m.id === mailId.value));
+const toast = useToast();
+
+const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
+
+const mail = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${folderPath}/mails/`, async () => {
+    const response = await useAPI(api => api.getMailAccountsMailAccountIdMailboxesMailboxPathMails({
+        path: {
+            mailAccountID: mailAccount.data.value.id,
+            mailboxPath: folderPath
+        }
+    }));
+    if (!response.success) {
+        toast.add({
+            title: 'Error loading emails',
+            description: response.message || 'An unknown error occurred while fetching emails.',
+            color: 'error'
+        });
+        return [];
+    }
+    return response.data;
+});
+
+useSeoMeta({
+    title: `${uiFolderPath} | Delivr`,
+    description: 'Manage your emails'
+});
 
 const formatFullDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -217,7 +243,7 @@ useSeoMeta({
 </template>
 
 <style scoped>
-.html-email-content {
+/*.html-email-content {
     color: rgb(55 65 81);
 }
 
@@ -303,5 +329,5 @@ useSeoMeta({
 
 :global(.dark) .html-email-content :deep(blockquote) {
     border-left-color: rgb(55 65 81);
-}
+}*/
 </style>

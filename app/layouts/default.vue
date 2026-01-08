@@ -14,6 +14,7 @@ const user = await UserStore.use();
 const isAdmin = computed(() => user.value?.role === "admin");
 
 const currentMailAccount = MailAccountsStore.useSelected();
+const mailboxes = await MailAccountsStore.useMailboxesOfSelected();
 
 const sidebarItems = computed<NavigationMenuItem[][]>(() => {
     const basicItems: NavigationMenuItem[] = [
@@ -26,9 +27,22 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
 			label: "Inbox",
 			icon: "i-lucide-mail",
 			to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/inbox` : undefined,
+            badge: mailboxes.value?.find(mb => mb.path.toLowerCase() === 'inbox')?.status.unseen || 0,
             exact: false,
 		}
     ];
+
+    for (const mailbox of mailboxes.value || []) {
+        if (mailbox.path.toLowerCase() === 'inbox') continue;
+
+        basicItems.push({
+            label: mailbox.name,
+            icon: "i-lucide-folder",
+            to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/${encodeURIComponent(mailbox.path)}` : undefined,
+            badge: mailbox.status.unseen || 0,
+            exact: false,
+        });
+    }
 
     const adminItems: NavigationMenuItem[] = isAdmin.value ? [
         {

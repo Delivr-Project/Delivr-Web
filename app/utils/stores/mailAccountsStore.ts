@@ -1,4 +1,4 @@
-import type { MailAccount } from "~/utils/types";
+import type { MailAccount, Mailbox } from "~/utils/types";
 
 export class MailAccountsStore {
 
@@ -22,6 +22,31 @@ export class MailAccountsStore {
         }
         return accounts.find(acc => acc.id === this.currentSelectedMailAccountID.value) || null;
     });
+
+    private static readonly currentMailAccountsMailboxes = useAPILazyAsyncRequest(`/mail-accounts/mailboxes`, async () => {
+        if (!useAppCookies().sessionToken.get().value || !this.currentSelectedMailAccountID.value) {
+            return null;
+        }
+        const response = await useAPI((api) => api.getMailAccountsMailAccountIdMailboxes({
+            path: {
+                mailAccountID: this.currentSelectedMailAccountID.value as number
+            }
+        }));
+        if (!response.success) {
+            return null;
+        }
+        console.log("Fetched mailboxes for account ID", this.currentSelectedMailAccountID.value, response.data);
+        return response.data satisfies Mailbox[];
+    });
+
+    static {
+        watch(this.currentSelectedMailAccountID, async (newVal, oldVal) => {
+            if (newVal !== oldVal) {
+                this.currentMailAccountsMailboxes.data.value = null;
+                await this.currentMailAccountsMailboxes.fetchData();
+            }
+        });
+    }
 
     static async use() {
         await this.fetchAndSetIfNeeded();
@@ -89,6 +114,11 @@ export class MailAccountsStore {
 
     static setSelected(mailAccountID: number | null) {
         this.currentSelectedMailAccountID.value = mailAccountID;
+    }
+
+    static async useMailboxesOfSelected() {
+        await this.currentMailAccountsMailboxes.fetchData();
+        return this.currentMailAccountsMailboxes.data satisfies Ref<Mailbox[] | null>;
     }
 
     static get isLoading() {
