@@ -291,7 +291,6 @@ async function testConfiguration() {
 							<UButton
 								label="Save Changes" 
 								color="primary"
-								disabled
 								type="submit" 
 								:loading="mail_account_form_submit_loading"
 								icon="i-lucide-save"
