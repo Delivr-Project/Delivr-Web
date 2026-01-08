@@ -117,7 +117,7 @@ async function onFormSubmit() {
                 body: mailAccount_data.value as MailAccount
             }));
 
-            if (result.success && result.data) {
+            if (result.success) {
                 toast.add({
                     title: 'Mail Account updated',
                     description: `The Mail Account has been successfully updated.`,
