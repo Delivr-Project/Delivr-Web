@@ -65,6 +65,7 @@ export class MailAccountsStore {
         if (!this.currentSelectedMailAccountID.value) {
             this.currentSelectedMailAccountID.value = (await this.getDefaultMailAccount())?.id || null;
         }
+        await this.currentMailAccountsMailboxes.fetchData();
     }
 
     static async getDefaultMailAccount() {
@@ -117,7 +118,6 @@ export class MailAccountsStore {
     }
 
     static async useMailboxesOfSelected() {
-        await this.currentMailAccountsMailboxes.fetchData();
         return this.currentMailAccountsMailboxes.data satisfies Ref<Mailbox[] | null>;
     }
 
