@@ -25,7 +25,7 @@ export namespace UseSubrouterPathDynamics {
         [path: string]: SubrouterPathDynamicsValue;
     }
 
-    export type SubrouterPathDynamicsSettings = {
+    export interface SubrouterPathDynamicsSettings  {
         baseTitle: string;
         basebreadcrumbItems?: BreadcrumbItem[];
         /**
@@ -44,17 +44,31 @@ export namespace UseSubrouterPathDynamics {
     }
 }
 
-class SubrouterPathDynamics {
+class SubrouterPathDynamics<Settings extends UseSubrouterPathDynamics.SubrouterPathDynamicsSettings> {
 
-    readonly links: Ref<NavigationMenuItem[][]>;
+    readonly links: Settings["routes"] extends Ref<any> ? Ref<NavigationMenuItem[][]> : NavigationMenuItem[][];
 
     constructor(
-        private readonly options: UseSubrouterPathDynamics.SubrouterPathDynamicsSettings
+        private readonly options: Settings
     ) {
 
-        this.links = computed(() => {
+        if (isRef(this.options.routes)) {
+            //@ts-ignore
+            this.links = computed(() => {
+                const links: NavigationMenuItem[] = [];
+                for (const [path, dynamics] of Object.entries(this.options.routes.value)) {
+                    if (dynamics.isNavLink) {
+                        links.push({
+                            ...dynamics,
+                            to: path
+                        });
+                    }
+                }
+                return [links];
+            });
+        } else {
             const links: NavigationMenuItem[] = [];
-            for (const [path, dynamics] of Object.entries(isRef(this.options.routes) ? this.options.routes.value : this.options.routes)) {
+            for (const [path, dynamics] of Object.entries(options.routes)) {
                 if (dynamics.isNavLink) {
                     links.push({
                         ...dynamics,
@@ -62,9 +76,9 @@ class SubrouterPathDynamics {
                     });
                 }
             }
-            return [links];
-        })
-
+            //@ts-ignore
+            this.links = [links];
+        }
     }
 
     async getPathDynamicValues(path: string): Promise<Promise<UseSubrouterPathDynamics.RichPathDynamicValues>> {
@@ -89,6 +103,6 @@ class SubrouterPathDynamics {
 
 }
 
-export function useSubrouterPathDynamics(options: UseSubrouterPathDynamics.SubrouterPathDynamicsSettings) {
-    return new SubrouterPathDynamics(options);
+export function useSubrouterPathDynamics<Settings extends UseSubrouterPathDynamics.SubrouterPathDynamicsSettings>(options: Settings) {
+    return new SubrouterPathDynamics<Settings>(options);
 }
