@@ -90,10 +90,21 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
         await navigateTo(redirectUrl.toString());
         return;
     } else {
-        toast.add({
-            title: "Login Failed",
-            description: "An error occurred during login.",
-        });
+        if ((result.code as number) === 401) {
+            toast.add({
+                title: "Invalid Username or Password",
+                description: "Please check your credentials and try again.",
+                icon: "i-lucide-alert-circle",
+                color: "error",
+            });
+        } else {
+            toast.add({
+                title: "Login Failed",
+                description: result.message || "An error occurred during login. Please try again later.",
+                icon: "i-lucide-alert-circle",
+                color: "error",
+            });
+        }
     }
 }
 </script>
