@@ -35,7 +35,7 @@ export namespace UseSubrouterPathDynamics {
          *   '/dashboard/packages/[package_name]': { ... },
          *   '/dashboard/packages/[package_name]/releases': { ... },
          */
-        routes: RoutesConfig;
+        routes: Ref<RoutesConfig> | RoutesConfig;
     }
 
     export type SubrouterPathDynamicsReturn = {
@@ -46,30 +46,32 @@ export namespace UseSubrouterPathDynamics {
 
 class SubrouterPathDynamics {
 
-    readonly links: NavigationMenuItem[][];
+    readonly links: Ref<NavigationMenuItem[][]>;
 
     constructor(
         private readonly options: UseSubrouterPathDynamics.SubrouterPathDynamicsSettings
     ) {
 
-        const links: NavigationMenuItem[] = [];
-        for (const [path, dynamics] of Object.entries(options.routes)) {
-            if (dynamics.isNavLink) {
-                links.push({
-                    ...dynamics,
-                    to: path
-                });
+        this.links = computed(() => {
+            const links: NavigationMenuItem[] = [];
+            for (const [path, dynamics] of Object.entries(isRef(this.options.routes) ? this.options.routes.value : this.options.routes)) {
+                if (dynamics.isNavLink) {
+                    links.push({
+                        ...dynamics,
+                        to: path
+                    });
+                }
             }
-        }
-        this.links = [links];
+            return [links];
+        })
 
     }
 
     async getPathDynamicValues(path: string): Promise<Promise<UseSubrouterPathDynamics.RichPathDynamicValues>> {
         const breadcrumbItems: BreadcrumbItem[] = [...(this.options.basebreadcrumbItems ?? [])];
 
-        const routeSettings = await SimpleRouteMatcher.match(path, Object.keys(this.options.routes));
-        const routeDynamics = routeSettings ? this.options.routes[routeSettings.route] : undefined;
+        const routeSettings = await SimpleRouteMatcher.match(path, Object.keys(isRef(this.options.routes) ? this.options.routes.value : this.options.routes));
+        const routeDynamics = routeSettings ? (isRef(this.options.routes) ? this.options.routes.value : this.options.routes)[routeSettings.route] : undefined;
         if (!routeSettings || !routeDynamics) {
             return { breadcrumbItems, seoSettings: { title: this.options.baseTitle, description: "" } };
         }
