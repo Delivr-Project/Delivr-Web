@@ -265,7 +265,7 @@ async function testConfiguration() {
 						<UFormField 
 							name="display_name" 
 							label="Display Name"
-							description="Shown publicly. Leave empty to use username."
+							description="Display name for the mail account."
 							class="flex max-sm:flex-col justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
 							:ui='{
 								root: "w-full sm:w-auto",
