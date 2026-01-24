@@ -1,5 +1,7 @@
 <script setup lang="ts">
-interface Props {
+import type { ModalProps } from '@nuxt/ui'
+
+interface Props extends ModalProps {
     title: string
     description?: string
     icon?: string
@@ -7,7 +9,7 @@ interface Props {
     loading?: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -22,6 +24,7 @@ const iconColorClasses: Record<NonNullable<Props['iconColor']>, string> = {
 
 <template>
     <UModal
+        v-on="$attrs"
         v-model:open="open"
         :title="title"
         :description="description"
@@ -49,7 +52,11 @@ const iconColorClasses: Record<NonNullable<Props['iconColor']>, string> = {
         </template>
 
         <template #footer>
-            <slot name="footer" />
+            <slot name="footer" :ui="ui" />
+        </template>
+
+        <template #close="{ ui }">
+            <slot name="close" :ui="ui" />
         </template>
     </UModal>
 </template>
