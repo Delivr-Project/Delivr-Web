@@ -35,9 +35,20 @@ class SubrouterInjectedDataHandler<T, NewT, IncludeNew extends boolean = false> 
     }
 
     public provide<DataT extends UseSubrouterInjectedDataTypes.SubrouterInjectedDataProvideArgsUnion<T, NewT, IncludeNew>>(data: DataT) {
-        provide(this.key, data);
+        const finalData = { ...data };
+
+        if ((data as any).isNew && this.includeNew) {
+            if (!finalData.loading) {
+                finalData.loading = ref(false);
+            }
+            if (!finalData.refresh) {
+                finalData.refresh = (async () => void 0);
+            }
+        }
+        
+        provide(this.key, finalData);
     }
- 
+
 }
 
 export function useSubrouterInjectedData<T, NewT extends never = never>(key: string, includeNew?: false): SubrouterInjectedDataHandler<T, NewT, false>;
