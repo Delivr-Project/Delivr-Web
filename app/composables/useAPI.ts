@@ -50,10 +50,19 @@ class LazyRequestWrapper<TReturn> {
 
 }
 
+
 class LazyAsyncDataRequestWrapper<TReturn> {
 
-    readonly data: Ref<TReturn | null> = ref(null);
-    readonly loading: Ref<boolean> = ref(false);
+    // 1. The public read-only refs (Computed)
+    readonly data: Ref<TReturn | null>;
+    readonly loading: Ref<boolean>;
+
+    // 2. Internal pointers (Plain class properties, NOT refs themselves)
+    protected _activeDataRef: Ref<TReturn | null> | null = null;
+    protected _activeLoadingRef: Ref<boolean> | null = null;
+
+    // 3. The "Signal" - determines which pointer we are looking at
+    protected _linkSignal = ref(0);
 
     protected refreshFunction?: () => Promise<void>;
     protected clearFunction?: () => void;
@@ -63,6 +72,19 @@ class LazyAsyncDataRequestWrapper<TReturn> {
         protected readonly handler: () => Promise<TReturn>,
         immediateFNInit: boolean
     ) {
+        // Initialize the computed properties ONCE
+        this.data = computed(() => {
+            // Track the signal
+            this._linkSignal.value;
+            // Return the value of whatever ref we are currently pointing to
+            return this._activeDataRef?.value ?? null;
+        });
+
+        this.loading = computed(() => {
+            this._linkSignal.value;
+            return this._activeLoadingRef?.value ?? false;
+        });
+
         if (immediateFNInit) {
             this.init();
         }
@@ -70,24 +92,24 @@ class LazyAsyncDataRequestWrapper<TReturn> {
 
     public init() {
 
+        // Do not re-run init if already initialized to avoid replacing refs unnecessarily
+        if (this.refreshFunction) return;
+
         const { data, refresh, clear, pending } = useLazyAsyncData<TReturn>(this.name, this.handler, {
             immediate: false
         });
 
-        watch(data, (newData) => {
-            this.data.value = newData as TReturn | undefined || null;
-        }, { immediate: true });
-        
-        watch(pending, (newPending) => {
-            this.loading.value = newPending;
-        }, { immediate: true });
+        // 4. Update the internal pointers (Point to the new refs)
+        // We cast 'data' because Nuxt types can sometimes be 'TReturn | null' or just 'TReturn'
+        this._activeDataRef = data as Ref<TReturn | null>;
+        this._activeLoadingRef = pending;
 
         this.refreshFunction = refresh;
         this.clearFunction = clear;
-    }
 
-    async clearData() {
-        this.clearFunction?.();
+        // 5. Trigger the signal. The computed properties will now re-evaluate 
+        // and find the new _activeDataRef.
+        this._linkSignal.value++;
     }
 
     async fetchData() {
@@ -98,10 +120,19 @@ class LazyAsyncDataRequestWrapper<TReturn> {
         if (!this.refreshFunction) {
             throw new Error("Failed to initialize refresh function.");
         }
-        await this.refreshFunction();
+
+        await this.refreshFunction!();
+
+        // console.log("after refresh source:", this._activeDataRef?.value); 
+        // console.log("after refresh target:", this.data.value); // This will now be CORRECT
 
         return this.data;
     }
+
+    async clearData() {
+        this.clearFunction?.();
+    }
+
 }
 
 
