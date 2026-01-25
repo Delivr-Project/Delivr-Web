@@ -13,12 +13,22 @@ if (!UserStore.isValid(userinfo)) {
     throw new Error("User not found in UserMenu component");
 }
 
-const user = computed(() => ({
-    name: userinfo.value.display_name,
-    avatar: {
-        alt: userinfo.value.username,
-    },
-}));
+const user = computed(() => {
+    if (!userinfo.value) {
+        return {
+            name: "Unknown User",
+            avatar: {
+                alt: "Unknown User",
+            },
+        };
+    }
+    return {
+        name: userinfo.value.display_name,
+        avatar: {
+            alt: userinfo.value.display_name,
+        },
+    };
+});
 
 async function logout() {
     try {
