@@ -44,6 +44,7 @@ export class UserStore {
     }
 
     static clear() {
+        this.userInfo.clearData();
         this.userInfo.data.value = {} as UserInfo;
     }
 

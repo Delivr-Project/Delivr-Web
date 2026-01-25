@@ -104,6 +104,7 @@ export class MailAccountsStore {
     }
 
     static clear() {
+        this.mailAccounts.clearData();
         this.mailAccounts.data.value = [] as MailAccount[];
     }
 
