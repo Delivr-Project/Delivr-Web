@@ -56,6 +56,7 @@ class LazyAsyncDataRequestWrapper<TReturn> {
     readonly loading: Ref<boolean> = ref(false);
 
     protected refreshFunction?: () => Promise<void>;
+    protected clearFunction?: () => void;
 
     constructor(
         protected readonly name: string,
@@ -69,7 +70,7 @@ class LazyAsyncDataRequestWrapper<TReturn> {
 
     public init() {
 
-        const { data, refresh, pending } = useLazyAsyncData<TReturn>(this.name, this.handler, {
+        const { data, refresh, clear, pending } = useLazyAsyncData<TReturn>(this.name, this.handler, {
             immediate: false
         });
 
@@ -82,6 +83,11 @@ class LazyAsyncDataRequestWrapper<TReturn> {
         }, { immediate: true });
 
         this.refreshFunction = refresh;
+        this.clearFunction = clear;
+    }
+
+    async clearData() {
+        this.clearFunction?.();
     }
 
     async fetchData() {
@@ -93,7 +99,7 @@ class LazyAsyncDataRequestWrapper<TReturn> {
             throw new Error("Failed to initialize refresh function.");
         }
         await this.refreshFunction();
-        
+
         return this.data;
     }
 }
