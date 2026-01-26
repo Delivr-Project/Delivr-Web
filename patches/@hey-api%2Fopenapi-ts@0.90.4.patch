@@ -1,0 +1,15 @@
+diff --git a/dist/clients/nuxt/utils.ts b/dist/clients/nuxt/utils.ts
+index cf818c000967a83a8a2d25f6c5f636e5d04a1d7c..68073a95d228a8b2227667107a07e28813f050d1 100644
+--- a/dist/clients/nuxt/utils.ts
++++ b/dist/clients/nuxt/utils.ts
+@@ -360,6 +360,10 @@ export const unwrapRefs = <T>(value: T): UnwrapRefs<T> => {
+     return value.map((item) => unwrapRefs(item)) as UnwrapRefs<T>;
+   }
+ 
++  if (value instanceof Blob) {
++    return value as UnwrapRefs<T>;
++  }
++
+   if (isRef(value)) {
+     return unwrapRefs(unref(value) as T);
+   }
