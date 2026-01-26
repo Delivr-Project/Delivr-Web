@@ -24,7 +24,7 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
-        "@iconify-json/lucide": "^1.2.82"
+        "@iconify-json/lucide": "^1.2.86"
     },
     "patchedDependencies": {
         "@hey-api/openapi-ts@0.90.4": "patches/@hey-api%2Fopenapi-ts@0.90.4.patch"
