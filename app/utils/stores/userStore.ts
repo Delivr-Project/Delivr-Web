@@ -41,6 +41,10 @@ export class UserStore {
         for (const [key, value] of Object.entries(updates)) {
             (current.value as any)[key] = value;
         }
+        current.value = {
+            ...current.value,
+            ...updates
+        } as UserInfo;
     }
 
     static clear() {
