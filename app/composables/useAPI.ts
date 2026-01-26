@@ -73,11 +73,19 @@ class LazyAsyncDataRequestWrapper<TReturn> {
         immediateFNInit: boolean
     ) {
         // Initialize the computed properties ONCE
-        this.data = computed(() => {
-            // Track the signal
-            this._linkSignal.value;
-            // Return the value of whatever ref we are currently pointing to
-            return this._activeDataRef?.value ?? null;
+        this.data = computed({
+            get: () => {
+                // Track the signal
+                this._linkSignal.value;
+                // Return the value of whatever ref we are currently pointing to
+                return this._activeDataRef?.value ?? null;
+            },
+            set: (newValue) => {
+                if (this._activeDataRef) {
+                    // This updates the actual Ref returned by useLazyAsyncData
+                    this._activeDataRef.value = newValue;
+                }
+            }
         });
 
         this.loading = computed(() => {
