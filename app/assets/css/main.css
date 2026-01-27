@@ -2,7 +2,7 @@
 @import "@nuxt/ui";
 
 @theme {
-
+  --font-sans: 'Public Sans', sans-serif;
 }
 
 /* ===========================
@@ -15,4 +15,8 @@
 
 html {
     scroll-behavior: smooth;
+}
+
+.main-bg-color {
+    background-color: rgb(0 0 0);
 }
