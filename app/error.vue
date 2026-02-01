@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
 
-
-
 const props = defineProps<{
     error: NuxtError
 }>()
@@ -10,7 +8,7 @@ const props = defineProps<{
 </script>
 
 <template>
-    <div class="app-layout">
+    <div class="app-layout main-bg-color">
 
         <!-- Main Content -->
         <UMain class="main-content">

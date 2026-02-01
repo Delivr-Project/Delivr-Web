@@ -47,20 +47,61 @@ export default defineNuxtConfig({
 	routeRules: {
 		"/**": { ssr: false }
 	},
+	
+	app: {
+		head: {
+			// 1. Manually add the manifest link
+			link: [
+				{ rel: 'manifest', href: '/manifest.webmanifest' }, 
+			],
+			script: [
+				{
+				// We use innerHTML to insert raw JS
+				innerHTML: `
+					if ('serviceWorker' in navigator) {
+					window.addEventListener('load', () => {
+						navigator.serviceWorker.register('/sw.js', { scope: '/' })
+						.then(registration => {
+							console.log('SW registered: ', registration);
+						})
+						.catch(registrationError => {
+							console.log('SW registration failed: ', registrationError);
+						});
+					});
+					}
+				`,
+				type: 'text/javascript'
+				}
+			]
+		}
+	},
 
 	pwa: {
         registerType: 'autoUpdate',
+		injectRegister: false,
         manifest: {
             name: 'Delivr',
             short_name: 'Delivr',
             start_url: '/',
             description: 'Delivr - The Mail Client that actually delivers.',
 
+			id: "dev.delivr.app",
+
+			icons: [
+				{
+					src: "/static/logo/icon.png",
+					sizes: "1024x1024",
+					type: "image/png"
+				},
+			],
+
             display: 'standalone',
             orientation: 'portrait',
 
+			lang: 'en',
+
             theme_color: '#ffffff',
-            background_color: '#18181a',
+            background_color: '#000000',
         }
     }
 

@@ -1,31 +1,31 @@
-import { MailAccountsStore } from "~/utils/stores/mailAccountsStore";
-import { UserStore } from "~/utils/stores/userStore";
+import { useMailAccountsStore } from "~/composables/stores/useMailAccountsStore";
+import { useUserInfoStore } from "~/composables/stores/useUserStore";
 
-export default defineNuxtRouteMiddleware(async(to) => {
+export default defineNuxtRouteMiddleware(async (to) => {
 
-    const session_token = useAppCookies().sessionToken.get().value;
+    const token = useAppCookies().sessionToken.get().value;
 
-    if (to.path.startsWith('/auth')) {
-        if (!session_token) {
+    if (to.path.startsWith('/auth') || to.path.startsWith('/static') || to.path.startsWith('/.well-known') || to.path.startsWith('/favicon.ico') || to.path.startsWith('/robots.txt')) {
+        if (!token) {
             return;
         }
 
-        await UserStore.fetchAndSetIfNeeded();
-        await MailAccountsStore.fetchAndSetIfNeeded();
+        await useUserInfoStore().refreshIfNeeded();
+        await useMailAccountsStore().refreshIfNeeded();
 
         return navigateTo('/');
     }
 
-    if (!session_token) {
+    if (!token) {
         return navigateTo('/auth/login?url=' + encodeURIComponent(to.fullPath));
     }
 
-    const user = await UserStore.use();
+    const user = await useUserInfoStore().use();
 
     if (to.path.startsWith('/admin')) {
         // Check admin access
         if (!user.value || user.value.role !== 'admin') {
-            navigateTo('/')
+            return navigateTo('/');
         }
     }
 });
