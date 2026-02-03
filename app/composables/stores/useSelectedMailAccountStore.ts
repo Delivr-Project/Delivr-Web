@@ -1,25 +1,22 @@
 import { BasicAbstractStore } from "~/utils/abstractStore";
 import { useMailAccountsStore } from "./useMailAccountsStore";
 
-// class SelectMailAccountMailboxesStore extends BasicAbstractStore<Mailbox[]> {
+class SelectedMailAccountStore implements BasicAbstractStore<MailAccount | null> {
 
-//     constructor() {
-//         super(`mailAccounts_currentSelected_mailboxes`, {
-//             enableAutoFetchIfEmpty: false
-//         });
-//     }
-
-// }
-
-class SelectedMailAccountStore {
-
-    private selectedMailAccountID: Ref<number | null>;
+    private readonly selectedMailAccountID: Ref<number | null>;
+    private readonly selectedMailAccount: Ref<MailAccount | null>;
+    private readonly selectedMailAccountMailboxes: Ref<Mailbox[] | null>;
 
     constructor() {
         this.selectedMailAccountID = useState<number | null>("selectedMailAccountID", () => null);
+        this.selectedMailAccount = useState<MailAccount | null>("selectedMailAccount", () => null);
+        this.selectedMailAccountMailboxes = useState<Mailbox[] | null>("selectedMailAccountMailboxes", () => null);
     }
 
     public use() {
+
+        
+
         return useAwaitedComputed(async () => {
 
             const mailAccountsStore = useMailAccountsStore();
@@ -36,6 +33,10 @@ class SelectedMailAccountStore {
 
             return mailAccounts.value!.find(acc => acc.id === this.selectedMailAccountID.value) || null;
         });
+    }
+
+    public setMailAccountID(id: number | null) {
+        this.selectedMailAccountID.value = id;
     }
 
 }

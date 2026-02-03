@@ -29,8 +29,6 @@ class MailAccountsStore extends BasicAbstractStore<MailAccount[]> {
         }
     }
 
-
-
 }
 
 export function useMailAccountsStore() {
