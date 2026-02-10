@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { UserStore } from '~/utils/stores/userStore'
+import { useUserInfoStore } from '~/composables/stores/useUserStore';
 
 const profileSchema = z.object({
 	username: z.string().trim()
@@ -14,10 +14,11 @@ const profileSchema = z.object({
 	email: z.email('Invalid email').trim(),
 })
 
-const userInfo = await UserStore.use()
+const userInfoStore = await useUserInfoStore();
+const userInfo = await userInfoStore.use()
 const loading = ref(false)
 
-if (!UserStore.isValid(userInfo)) {
+if (!userInfoStore.isValid(userInfo)) {
 	throw new Error('User not authenticated but trying to access Profile Settings')
 }
 
@@ -51,7 +52,7 @@ async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
 				color: 'success'
 			});
 
-			UserStore.update({
+			userInfoStore.update({
 				username: event.data.username,
 				display_name: event.data.display_name || undefined,
 				email: event.data.email

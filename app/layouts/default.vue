@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import MailAccountsMenu from '~/components/dashboard/MailAccountsMenu.vue';
+import NotificationsSlideover from '~/components/dashboard/NotificationsSlideover.vue';
 import UserMenu from '~/components/dashboard/UserMenu.vue';
 import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
+import { useUserInfoStore } from '~/composables/stores/useUserStore';
 
 
 const userInfoStore = useUserInfoStore();
@@ -16,7 +18,7 @@ const currentMailAccountStore = useSelectedMailAccountStore();
 const currentMailAccount = await currentMailAccountStore.use();
 const mailboxes = computed(() => currentMailAccount.value?.mailboxes || []);
 
-const sidebarItems = computed<NavigationMenuItem[][]>(() => {
+const sidebarItems = computed(() => {
 
     const basicItems: NavigationMenuItem[] = [
         {
@@ -24,6 +26,9 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
             icon: "i-lucide-layout-dashboard",
             to: "/",
         },
+    ];
+
+    const mailItems: NavigationMenuItem[] = [
 		{
 			label: "Inbox",
 			icon: "i-lucide-mail",
@@ -36,7 +41,7 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
     for (const mailbox of mailboxes.value || []) {
         if (mailbox.path.toLowerCase() === 'inbox') continue;
 
-        basicItems.push({
+        mailItems.push({
             label: mailbox.name,
             icon: "i-lucide-folder",
             to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/${encodeURIComponent(mailbox.path)}` : undefined,
@@ -45,50 +50,46 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
         });
     }
 
-    const adminItems: NavigationMenuItem[] = isAdmin.value ? [
-        {
+    const adminItems: NavigationMenuItem[] = [
+{
             label: "Admin",
             icon: "i-lucide-shield",
-            type: "label",
-            // class: "mt-4 pt-4 border-t-2 border-default",
+            type: "label"
         },
         {
             label: "Users",
             icon: "i-lucide-users",
-            to: "/admin/users",
-        }
-    ] : [];
+            to: "/dashboard/admin/users",
+        },
+    ];
 
     const settings: NavigationMenuItem[] = [
-        {
+{
+            label: "Settings",
+            icon: "i-lucide-settings",
             type: "label",
-            class: "mt-4 pt-3 border-t-2 border-default",
         },
-
+        {
+            label: "General",
+            icon: "i-lucide-user",
+            to: "/dashboard/settings",
+            exact: true,
+        },
+        {
+            label: "Security",
+            icon: "i-lucide-shield",
+            to: "/dashboard/settings/security",
+        },
         {
             label: "Manage Mail Accounts",
             to: "/mail-accounts",
             icon: "i-lucide-at-sign",
         },
-
         {
-            label: "Settings",
-            to: "/settings",
-            icon: "i-lucide-settings",
-            defaultOpen: true,
-            type: "trigger",
-            children: [
-                {
-                    label: "General",
-                    to: "/settings",
-                    exact: true,
-                },
-                {
-                    label: "Security",
-                    to: "/settings/security",
-                },
-            ],
-        },
+            label: "API Keys",
+            to: "/apikeys",
+            icon: "i-lucide-key",
+        }
     ];
 
     const footerItems: NavigationMenuItem[] = [
@@ -105,13 +106,19 @@ const sidebarItems = computed<NavigationMenuItem[][]>(() => {
         },
     ];
 
-    return [[...basicItems], [...adminItems, ...settings, ...footerItems]];
+    return {
+        basic: basicItems,
+        mail: mailItems,
+        settings: settings,
+        admin: adminItems,
+        footer: footerItems,
+    }
 });
 
-const groups = computed(() => [{
+const searchGroups = computed(() => [{
 	id: 'links',
 	label: 'Go to',
-	items: sidebarItems.value.flat()
+	items: Object.values(sidebarItems.value).flat()
 }])
 
 
@@ -119,11 +126,22 @@ const groups = computed(() => [{
 
 <template>
 	<UDashboardGroup>
+
+        <UDashboardSearch
+            :groups="searchGroups"
+            placeholder="Search..."
+            title="Search"
+            description="Search"
+        />
+
 		<UDashboardSidebar id="default"
 			collapsible
 			resizable
 			:ui="{
-				footer: 'lg:border-t lg:border-default'
+                header: 'main-bg-color',
+                body: 'main-bg-color',
+                content: 'main-bg-color',
+                footer: 'border-t border-default main-bg-color',
 			}"
 			:min-size="18"
             :default-size="18"
@@ -141,22 +159,57 @@ const groups = computed(() => [{
 				<UDashboardSearchButton
 					:collapsed="collapsed"
 					class="bg-transparent ring-default"
+                    label="Search..."
 				/>
-
-                <MailAccountsMenu :collapsed="collapsed" />
 
                 <UNavigationMenu
                     :collapsed="collapsed"
-                    :items="sidebarItems[0]"
+                    :items="sidebarItems.basic"
                     orientation="vertical"
                 />
 
+                <div class="flex flex-col main-bg-color">
+                    <UNavigationMenu
+                        :collapsed="collapsed"
+                        :items="[{
+                            label: 'Mail',
+                            icon: 'i-lucide-mail',
+                            type: 'label'
+                        }]"
+                        orientation="vertical"
+                    />
+
+                    <MailAccountsMenu :collapsed="collapsed" />
+                    
+                    <UNavigationMenu
+                        :collapsed="collapsed"
+                        :items="sidebarItems.mail"
+                        orientation="vertical"
+                        class="mt-0"
+                    />
+                </div>
+
                 <UNavigationMenu
+                    v-if="isAdmin"
                     :collapsed="collapsed"
-                    :items="sidebarItems[1]"
+                    :items="sidebarItems.admin"
                     orientation="vertical"
                     class="mt-auto"
                 />
+
+                <UNavigationMenu
+                    :collapsed="collapsed"
+                    :items="sidebarItems.settings"
+                    orientation="vertical"
+                    :class="!isAdmin ? 'mt-auto' : ''"
+                />
+
+                <UNavigationMenu
+                    :collapsed="collapsed"
+                    :items="sidebarItems.footer"
+                    orientation="vertical"
+                />
+                
             </template>
 
 			<template #footer="{ collapsed }">
@@ -164,8 +217,6 @@ const groups = computed(() => [{
 			</template>
 
 		</UDashboardSidebar>
-
-		<UDashboardSearch :groups="groups" />
 
 		<slot />
 

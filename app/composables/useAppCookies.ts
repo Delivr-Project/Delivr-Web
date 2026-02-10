@@ -22,9 +22,9 @@ class AppCookie<T extends string | null | undefined> {
 }
 
 export function useAppCookies() {
-
     return {
-        sessionToken: new AppCookie<string | null>("dla_session_token"),
-    }
 
+        sessionToken: new AppCookie<string | null>("dla_session_token")
+
+    } as const;
 }
