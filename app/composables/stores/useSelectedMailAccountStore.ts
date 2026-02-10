@@ -5,27 +5,34 @@ import type { MailAccountWithMailboxes } from "~/utils/types";
 class SelectedMailAccountStore {
 
     protected readonly selectedMailAccountID: Ref<number | null>;
+    protected mailAccountsRef: Ref<MailAccountWithMailboxes[] | null> | null = null;
 
     constructor() {
         this.selectedMailAccountID = useState<number | null>("selectedMailAccountID", () => null);
     }
 
-    public use(): Promise<Ref<MailAccountWithMailboxes | null>> {
-        return useAwaitedComputed(async () => {
+    public async use(): Promise<Ref<MailAccountWithMailboxes | null>> {
 
+        if (!this.mailAccountsRef) {
             const mailAccountsStore = useMailAccountsStore();
-            const mailAccounts = await mailAccountsStore.use();
+            this.mailAccountsRef = await mailAccountsStore.use();
+        }
 
-            if (!this.selectedMailAccountID.value === null) {
+        return useAwaitedComputed(async () => {
+            console.log("Computing selected mail account with ID:", this.selectedMailAccountID.value);
+            console.log("Available mail accounts:", this.mailAccountsRef!.value);
 
-                if (!Array.isArray(mailAccounts.value) || mailAccounts.value.length === 0) {
-                    return null;
-                }
-                // return default account
-                return mailAccounts.value[0] || null;
+            if (!Array.isArray(this.mailAccountsRef!.value) || this.mailAccountsRef!.value.length === 0) {
+                return null;
             }
 
-            return mailAccounts.value!.find(acc => acc.id === this.selectedMailAccountID.value) || null;
+            if (this.selectedMailAccountID.value === null) {
+
+                // return default account
+                return this.mailAccountsRef!.value[0] || null;
+            }
+
+            return this.mailAccountsRef!.value.find(acc => acc.id === this.selectedMailAccountID.value) || null;
         });
     }
 
