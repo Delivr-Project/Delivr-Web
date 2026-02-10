@@ -32,14 +32,7 @@ const sidebarItems = computed(() => {
 
     const mailItems: NavigationMenuItem[] = [];
 
-    // Compose button
-    if (currentMailAccount.value) {
-        mailItems.push({
-            label: 'Compose',
-            icon: 'i-lucide-pen-square',
-            to: `/mail/${currentMailAccount.value.id}/compose`,
-        });
-    }
+    // NOTE: Compose button moved to separate prominent button in template
 
     if (mailboxes.value.length === 0) {
         mailItems.push({
@@ -201,6 +194,30 @@ const searchGroups = computed(() => [{
                     />
 
                     <MailAccountsMenu :collapsed="collapsed" />
+
+                    <!-- Compose Button - Prominent -->
+                    <div v-if="currentMailAccount" class="px-2 mb-2">
+                        <UButton
+                            v-if="!collapsed"
+                            icon="i-lucide-pen-square"
+                            color="primary"
+                            variant="solid"
+                            size="md"
+                            class="w-full justify-start"
+                            :to="`/mail/${currentMailAccount.id}/compose`"
+                        >
+                            Compose
+                        </UButton>
+                        <UTooltip v-else text="Compose">
+                            <UButton
+                                icon="i-lucide-pen-square"
+                                color="primary"
+                                variant="solid"
+                                size="md"
+                                :to="`/mail/${currentMailAccount.id}/compose`"
+                            />
+                        </UTooltip>
+                    </div>
                     
                     <UNavigationMenu
                         :collapsed="collapsed"
