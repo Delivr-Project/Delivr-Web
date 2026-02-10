@@ -1276,6 +1276,7 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses =
             rawHeaders: {
                 [key: string]: string;
             };
+            rawFlags: Array<string>;
             from?: {
                 name?: string;
                 address: string;
@@ -1293,13 +1294,23 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses =
                 address: string;
             }>;
             subject?: string;
-            inReplyTo?: string;
+            references?: string | Array<string>;
+            date?: number;
+            flags?: {
+                seen?: boolean;
+                answered?: boolean;
+                flagged?: boolean;
+                deleted?: boolean;
+                draft?: boolean;
+                recent?: boolean;
+            };
             replyTo?: {
                 name?: string;
                 address: string;
             };
-            references?: string | Array<string>;
-            date?: number;
+            messageId?: string;
+            inReplyTo?: string;
+            priority?: 'normal' | 'low' | 'high';
             attachments: Array<{
                 filename?: string;
                 contentType: string;
@@ -1357,6 +1368,7 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidRe
             rawHeaders: {
                 [key: string]: string;
             };
+            rawFlags: Array<string>;
             from?: {
                 name?: string;
                 address: string;
@@ -1374,13 +1386,23 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidRe
                 address: string;
             }>;
             subject?: string;
-            inReplyTo?: string;
+            references?: string | Array<string>;
+            date?: number;
+            flags?: {
+                seen?: boolean;
+                answered?: boolean;
+                flagged?: boolean;
+                deleted?: boolean;
+                draft?: boolean;
+                recent?: boolean;
+            };
             replyTo?: {
                 name?: string;
                 address: string;
             };
-            references?: string | Array<string>;
-            date?: number;
+            messageId?: string;
+            inReplyTo?: string;
+            priority?: 'normal' | 'low' | 'high';
             attachments: Array<{
                 filename?: string;
                 contentType: string;

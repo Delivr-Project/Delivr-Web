@@ -787,8 +787,9 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse 
     code: z.literal(200),
     message: z.literal('Mails retrieved successfully'),
     data: z.array(z.object({
-        uid: z.number(),
+        uid: z.number().gte(0),
         rawHeaders: z.record(z.string(), z.string()),
+        rawFlags: z.array(z.string()),
         from: z.optional(z.object({
             name: z.optional(z.string()),
             address: z.string()
@@ -806,16 +807,30 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse 
             address: z.string()
         })),
         subject: z.optional(z.string()),
-        inReplyTo: z.optional(z.string()),
-        replyTo: z.optional(z.object({
-            name: z.optional(z.string()),
-            address: z.string()
-        })),
         references: z.optional(z.union([
             z.string(),
             z.array(z.string())
         ])),
         date: z.optional(z.number()),
+        flags: z.optional(z.object({
+            seen: z.optional(z.boolean()),
+            answered: z.optional(z.boolean()),
+            flagged: z.optional(z.boolean()),
+            deleted: z.optional(z.boolean()),
+            draft: z.optional(z.boolean()),
+            recent: z.optional(z.boolean())
+        })),
+        replyTo: z.optional(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        messageId: z.optional(z.string()),
+        inReplyTo: z.optional(z.string()),
+        priority: z.optional(z.enum([
+            'normal',
+            'low',
+            'high'
+        ])),
         attachments: z.array(z.object({
             filename: z.optional(z.string()),
             contentType: z.string(),
@@ -848,8 +863,9 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
     code: z.literal(200),
     message: z.literal('Mail retrieved successfully'),
     data: z.object({
-        uid: z.number(),
+        uid: z.number().gte(0),
         rawHeaders: z.record(z.string(), z.string()),
+        rawFlags: z.array(z.string()),
         from: z.optional(z.object({
             name: z.optional(z.string()),
             address: z.string()
@@ -867,16 +883,30 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
             address: z.string()
         })),
         subject: z.optional(z.string()),
-        inReplyTo: z.optional(z.string()),
-        replyTo: z.optional(z.object({
-            name: z.optional(z.string()),
-            address: z.string()
-        })),
         references: z.optional(z.union([
             z.string(),
             z.array(z.string())
         ])),
         date: z.optional(z.number()),
+        flags: z.optional(z.object({
+            seen: z.optional(z.boolean()),
+            answered: z.optional(z.boolean()),
+            flagged: z.optional(z.boolean()),
+            deleted: z.optional(z.boolean()),
+            draft: z.optional(z.boolean()),
+            recent: z.optional(z.boolean())
+        })),
+        replyTo: z.optional(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        messageId: z.optional(z.string()),
+        inReplyTo: z.optional(z.string()),
+        priority: z.optional(z.enum([
+            'normal',
+            'low',
+            'high'
+        ])),
         attachments: z.array(z.object({
             filename: z.optional(z.string()),
             contentType: z.string(),
