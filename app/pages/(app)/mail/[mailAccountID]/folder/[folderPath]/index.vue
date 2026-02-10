@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailListItem } from '~/utils/types';
+import { Utils } from '~/utils';
 
 const route = useRoute();
 const toast = useToast();
@@ -34,8 +35,8 @@ function stripHtml(html: string): string {
 
 // Build preview text from mail body
 function getPreview(mail: MailListItem): string {
-    if (mail.body?.text) return truncate(stripHtml(mail.body.text), 120);
-    if (mail.body?.html) return truncate(stripHtml(mail.body.html), 120);
+    if (mail.body?.text) return Utils.truncate(stripHtml(mail.body.text), 120);
+    if (mail.body?.html) return Utils.truncate(stripHtml(mail.body.html), 120);
     return 'No preview available';
 }
 

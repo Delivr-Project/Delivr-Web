@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailData } from '~/utils/types';
 import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
+import { Utils } from '~/utils';
 
 const route = useRoute();
 const toast = useToast();
@@ -277,7 +278,7 @@ const dropdownItems = computed(() => [
                                         {{ attachment.filename || 'Unnamed file' }}
                                     </div>
                                     <div class="text-xs text-dimmed">
-                                        {{ formatFileSize(attachment.size) }}
+                                        {{ Utils.formatFileSize(attachment.size) }}
                                     </div>
                                 </div>
                             </div>
