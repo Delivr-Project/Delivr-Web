@@ -10,6 +10,9 @@ let error = null;
 const mailAccountsStore = useMailAccountsStore();
 
 const selectedMailAccountStore = useSelectedMailAccountStore();
+
+selectedMailAccountStore.set(mailAccountID);
+
 const account = await selectedMailAccountStore.use();
 
 if (!account.value) {
@@ -19,14 +22,20 @@ if (!account.value) {
         message: `The mail account with ID ${mailAccountID} could not be found. It may have been deleted.`
     });
 } else {
-
-    selectedMailAccountStore.set(mailAccountID);
     
     useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').provide({
         data: account as Ref<MailAccountWithMailboxes>,
         refresh: mailAccountsStore.refresh,
         loading: mailAccountsStore.isLoading
     });
+
+    // watch for changes in the selected mail account and update the route accordingly
+    watch(account, (newAccount) => {
+        if (newAccount && newAccount.id !== mailAccountID) {
+            navigateTo(`/mail/${newAccount.id}`);
+        }
+    });
+
 }
 </script>
 
