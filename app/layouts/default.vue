@@ -125,7 +125,7 @@ const searchGroups = computed(() => [{
 </script>
 
 <template>
-	<UDashboardGroup>
+	<UDashboardGroup class="main-bg-color">
 
         <UDashboardSearch
             :groups="searchGroups"
@@ -209,7 +209,7 @@ const searchGroups = computed(() => [{
                     :items="sidebarItems.footer"
                     orientation="vertical"
                 />
-                
+
             </template>
 
 			<template #footer="{ collapsed }">
