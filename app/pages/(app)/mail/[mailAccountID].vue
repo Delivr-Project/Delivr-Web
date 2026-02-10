@@ -32,7 +32,7 @@ if (!account.value) {
     // watch for changes in the selected mail account and update the route accordingly
     watch(account, (newAccount) => {
         if (newAccount && newAccount.id !== mailAccountID) {
-            navigateTo(`/mail/${newAccount.id}`);
+            navigateTo(`/mail/${newAccount.id}/folder/inbox`);
         }
     });
 
