@@ -1006,3 +1006,153 @@ export const zPutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse =
     message: z.literal('Mail identity updated successfully'),
     data: z.null()
 });
+
+export const zGetAdminUsersData = z.object({
+    body: z.optional(z.never()),
+    path: z.optional(z.never()),
+    query: z.optional(z.object({
+        role: z.optional(z.enum(['admin', 'user'])),
+        search: z.optional(z.string().min(1).max(64)),
+        limit: z.optional(z.int().gte(1).lte(100)),
+        offset: z.optional(z.int().gte(0).lte(9007199254740991))
+    }))
+});
+
+/**
+ * Users retrieved successfully
+ */
+export const zGetAdminUsersResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Users retrieved successfully'),
+    data: z.array(z.object({
+        id: z.int().gte(-9007199254740991).lte(9007199254740991),
+        created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
+        username: z.string(),
+        display_name: z.string(),
+        email: z.string(),
+        role: z.enum(['admin', 'user'])
+    }))
+});
+
+export const zPostAdminUsersData = z.object({
+    body: z.optional(z.object({
+        username: z.string().min(5).max(40).regex(/^(?!.*[.-]{2})(?!.*--)(?!.*\.\.)[a-z0-9](?:[a-z0-9._-]{3,38}[a-z0-9_])?$/),
+        display_name: z.string().min(1).max(64),
+        email: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+        role: z.optional(z.enum(['admin', 'user'])),
+        password: z.string().min(8).max(128)
+    })),
+    path: z.optional(z.never()),
+    query: z.optional(z.never())
+});
+
+/**
+ * User created successfully
+ */
+export const zPostAdminUsersResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(201),
+    message: z.literal('User created successfully'),
+    data: z.object({
+        id: z.int().gte(-9007199254740991).lte(9007199254740991),
+        created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
+        username: z.string(),
+        display_name: z.string(),
+        email: z.string(),
+        role: z.enum(['admin', 'user'])
+    })
+});
+
+export const zDeleteAdminUsersByUserIdData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        userId: z.int().gt(0).lte(9007199254740991)
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * User deleted successfully
+ */
+export const zDeleteAdminUsersByUserIdResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('User deleted successfully'),
+    data: z.null()
+});
+
+export const zGetAdminUsersByUserIdData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        userId: z.int().gt(0).lte(9007199254740991)
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * User retrieved successfully
+ */
+export const zGetAdminUsersByUserIdResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('User retrieved successfully'),
+    data: z.object({
+        id: z.int().gte(-9007199254740991).lte(9007199254740991),
+        created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
+        username: z.string(),
+        display_name: z.string(),
+        email: z.string(),
+        role: z.enum(['admin', 'user'])
+    })
+});
+
+export const zPutAdminUsersByUserIdData = z.object({
+    body: z.optional(z.object({
+        username: z.optional(z.string()),
+        display_name: z.optional(z.string()),
+        email: z.optional(z.string()),
+        role: z.optional(z.enum(['admin', 'user']))
+    })),
+    path: z.object({
+        userId: z.int().gt(0).lte(9007199254740991)
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * User updated successfully
+ */
+export const zPutAdminUsersByUserIdResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('User updated successfully'),
+    data: z.object({
+        id: z.int().gte(-9007199254740991).lte(9007199254740991),
+        created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
+        username: z.string(),
+        display_name: z.string(),
+        email: z.string(),
+        role: z.enum(['admin', 'user'])
+    })
+});
+
+export const zPutAdminUsersByUserIdPasswordData = z.object({
+    body: z.optional(z.object({
+        password: z.string().min(8).max(50).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
+    })),
+    path: z.object({
+        userId: z.int().gt(0).lte(9007199254740991)
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Password reset successfully
+ */
+export const zPutAdminUsersByUserIdPasswordResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Password reset successfully'),
+    data: z.null()
+});

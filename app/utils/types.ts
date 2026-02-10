@@ -1,4 +1,4 @@
-import type { GetAccountResponses, GetMailAccountsMailAccountIdMailboxesResponses, GetMailAccountsResponses, PostMailAccountsData } from '~/api-client';
+import type { GetAccountResponses, GetMailAccountsByMailAccountIdMailboxesResponses, GetMailAccountsResponses, PostMailAccountsData } from '~/api-client';
 
 export namespace UtilityTypes {
 
@@ -11,7 +11,7 @@ export type UserInfo = GetAccountResponses["200"]["data"];
 export type MailAccount = GetMailAccountsResponses["200"]["data"][number];
 export type NewMailAccount = NonNullable<PostMailAccountsData["body"]>;
 
-export type Mailbox = GetMailAccountsMailAccountIdMailboxesResponses["200"]["data"][number];
+export type Mailbox = GetMailAccountsByMailAccountIdMailboxesResponses["200"]["data"][number];
 
 export type Period = 'daily' | 'weekly' | 'monthly'
 

@@ -2,7 +2,7 @@
 
 import type { Client, Composable, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteAccountApikeysByApiKeyIdData, DeleteAccountApikeysByApiKeyIdError, DeleteAccountApikeysByApiKeyIdResponse, DeleteAccountData, DeleteAccountError, DeleteAccountResponse, DeleteMailAccountsByMailAccountIdData, DeleteMailAccountsByMailAccountIdError, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathData, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathError, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, DeleteMailAccountsByMailAccountIdResponse, GetAccountApikeysByApiKeyIdData, GetAccountApikeysByApiKeyIdError, GetAccountApikeysByApiKeyIdResponse, GetAccountApikeysData, GetAccountApikeysResponse, GetAccountData, GetAccountError, GetAccountResponse, GetAuthSessionData, GetAuthSessionError, GetAuthSessionResponse, GetMailAccountsByMailAccountIdData, GetMailAccountsByMailAccountIdError, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, GetMailAccountsByMailAccountIdIdentitiesData, GetMailAccountsByMailAccountIdIdentitiesResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusResponse, GetMailAccountsByMailAccountIdMailboxesData, GetMailAccountsByMailAccountIdMailboxesResponse, GetMailAccountsByMailAccountIdResponse, GetMailAccountsData, GetMailAccountsResponse, PostAccountApikeysData, PostAccountApikeysError, PostAccountApikeysResponse, PostAuthLoginData, PostAuthLoginError, PostAuthLoginResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthResetPasswordData, PostAuthResetPasswordError, PostAuthResetPasswordRequestData, PostAuthResetPasswordRequestError, PostAuthResetPasswordRequestResponse, PostAuthResetPasswordResponse, PostMailAccountsByMailAccountIdIdentitiesData, PostMailAccountsByMailAccountIdIdentitiesError, PostMailAccountsByMailAccountIdIdentitiesResponse, PostMailAccountsByMailAccountIdMailboxesData, PostMailAccountsByMailAccountIdMailboxesError, PostMailAccountsByMailAccountIdMailboxesResponse, PostMailAccountsData, PostMailAccountsError, PostMailAccountsResponse, PutAccountData, PutAccountError, PutAccountPasswordData, PutAccountPasswordError, PutAccountPasswordResponse, PutAccountResponse, PutMailAccountsByMailAccountIdCredentialsData, PutMailAccountsByMailAccountIdCredentialsError, PutMailAccountsByMailAccountIdCredentialsResponse, PutMailAccountsByMailAccountIdData, PutMailAccountsByMailAccountIdError, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, PutMailAccountsByMailAccountIdMailboxesByMailboxPathData, PutMailAccountsByMailAccountIdMailboxesByMailboxPathError, PutMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, PutMailAccountsByMailAccountIdResponse } from './types.gen';
+import type { DeleteAccountApikeysByApiKeyIdData, DeleteAccountApikeysByApiKeyIdError, DeleteAccountApikeysByApiKeyIdResponse, DeleteAccountData, DeleteAccountError, DeleteAccountResponse, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdError, DeleteAdminUsersByUserIdResponse, DeleteMailAccountsByMailAccountIdData, DeleteMailAccountsByMailAccountIdError, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathData, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathError, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, DeleteMailAccountsByMailAccountIdResponse, GetAccountApikeysByApiKeyIdData, GetAccountApikeysByApiKeyIdError, GetAccountApikeysByApiKeyIdResponse, GetAccountApikeysData, GetAccountApikeysResponse, GetAccountData, GetAccountError, GetAccountResponse, GetAdminUsersByUserIdData, GetAdminUsersByUserIdError, GetAdminUsersByUserIdResponse, GetAdminUsersData, GetAdminUsersResponse, GetAuthSessionData, GetAuthSessionError, GetAuthSessionResponse, GetMailAccountsByMailAccountIdData, GetMailAccountsByMailAccountIdError, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, GetMailAccountsByMailAccountIdIdentitiesData, GetMailAccountsByMailAccountIdIdentitiesResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusResponse, GetMailAccountsByMailAccountIdMailboxesData, GetMailAccountsByMailAccountIdMailboxesResponse, GetMailAccountsByMailAccountIdResponse, GetMailAccountsData, GetMailAccountsResponse, PostAccountApikeysData, PostAccountApikeysError, PostAccountApikeysResponse, PostAdminUsersData, PostAdminUsersError, PostAdminUsersResponse, PostAuthLoginData, PostAuthLoginError, PostAuthLoginResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthResetPasswordData, PostAuthResetPasswordError, PostAuthResetPasswordRequestData, PostAuthResetPasswordRequestError, PostAuthResetPasswordRequestResponse, PostAuthResetPasswordResponse, PostMailAccountsByMailAccountIdIdentitiesData, PostMailAccountsByMailAccountIdIdentitiesError, PostMailAccountsByMailAccountIdIdentitiesResponse, PostMailAccountsByMailAccountIdMailboxesData, PostMailAccountsByMailAccountIdMailboxesError, PostMailAccountsByMailAccountIdMailboxesResponse, PostMailAccountsData, PostMailAccountsError, PostMailAccountsResponse, PutAccountData, PutAccountError, PutAccountPasswordData, PutAccountPasswordError, PutAccountPasswordResponse, PutAccountResponse, PutAdminUsersByUserIdData, PutAdminUsersByUserIdError, PutAdminUsersByUserIdPasswordData, PutAdminUsersByUserIdPasswordError, PutAdminUsersByUserIdPasswordResponse, PutAdminUsersByUserIdResponse, PutMailAccountsByMailAccountIdCredentialsData, PutMailAccountsByMailAccountIdCredentialsError, PutMailAccountsByMailAccountIdCredentialsResponse, PutMailAccountsByMailAccountIdData, PutMailAccountsByMailAccountIdError, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, PutMailAccountsByMailAccountIdMailboxesByMailboxPathData, PutMailAccountsByMailAccountIdMailboxesByMailboxPathError, PutMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, PutMailAccountsByMailAccountIdResponse } from './types.gen';
 
 export type Options<TComposable extends Composable = '$fetch', TData extends TDataShape = TDataShape, ResT = unknown, DefaultT = undefined> = Options2<TComposable, TData, ResT, DefaultT> & {
     /**
@@ -412,6 +412,84 @@ export const getMailAccountsByMailAccountIdIdentitiesByMailIdentityId = <TCompos
 export const putMailAccountsByMailAccountIdIdentitiesByMailIdentityId = <TComposable extends Composable = '$fetch', DefaultT extends PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse = PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse>(options: Options<TComposable, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse | DefaultT, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List users
+ *
+ * Retrieve Delivr accounts with optional role and search filters.
+ */
+export const getAdminUsers = <TComposable extends Composable = '$fetch', DefaultT extends GetAdminUsersResponse = GetAdminUsersResponse>(options: Options<TComposable, GetAdminUsersData, GetAdminUsersResponse, DefaultT>) => (options.client ?? client).get<TComposable, GetAdminUsersResponse | DefaultT, unknown, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/users',
+    ...options
+});
+
+/**
+ * Create user
+ *
+ * Provision a new Delivr account with the desired role.
+ */
+export const postAdminUsers = <TComposable extends Composable = '$fetch', DefaultT extends PostAdminUsersResponse = PostAdminUsersResponse>(options: Options<TComposable, PostAdminUsersData, PostAdminUsersResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostAdminUsersResponse | DefaultT, PostAdminUsersError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/users',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete user
+ *
+ * Permanently remove a Delivr account after verifying it has no owned packages.
+ */
+export const deleteAdminUsersByUserId = <TComposable extends Composable = '$fetch', DefaultT extends DeleteAdminUsersByUserIdResponse = DeleteAdminUsersByUserIdResponse>(options: Options<TComposable, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdResponse, DefaultT>) => (options.client ?? client).delete<TComposable, DeleteAdminUsersByUserIdResponse | DefaultT, DeleteAdminUsersByUserIdError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/users/{userId}',
+    ...options
+});
+
+/**
+ * Get user
+ *
+ * Retrieve details for a specific Delivr account.
+ */
+export const getAdminUsersByUserId = <TComposable extends Composable = '$fetch', DefaultT extends GetAdminUsersByUserIdResponse = GetAdminUsersByUserIdResponse>(options: Options<TComposable, GetAdminUsersByUserIdData, GetAdminUsersByUserIdResponse, DefaultT>) => (options.client ?? client).get<TComposable, GetAdminUsersByUserIdResponse | DefaultT, GetAdminUsersByUserIdError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/users/{userId}',
+    ...options
+});
+
+/**
+ * Update user
+ *
+ * Modify profile fields or role for a Delivr account.
+ */
+export const putAdminUsersByUserId = <TComposable extends Composable = '$fetch', DefaultT extends PutAdminUsersByUserIdResponse = PutAdminUsersByUserIdResponse>(options: Options<TComposable, PutAdminUsersByUserIdData, PutAdminUsersByUserIdResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutAdminUsersByUserIdResponse | DefaultT, PutAdminUsersByUserIdError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/users/{userId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Reset user password
+ *
+ * Set a new password for a Delivr account and revoke active sessions.
+ */
+export const putAdminUsersByUserIdPassword = <TComposable extends Composable = '$fetch', DefaultT extends PutAdminUsersByUserIdPasswordResponse = PutAdminUsersByUserIdPasswordResponse>(options: Options<TComposable, PutAdminUsersByUserIdPasswordData, PutAdminUsersByUserIdPasswordResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutAdminUsersByUserIdPasswordResponse | DefaultT, PutAdminUsersByUserIdPasswordError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/admin/users/{userId}/password',
     ...options,
     headers: {
         'Content-Type': 'application/json',

@@ -1606,3 +1606,294 @@ export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses = 
 };
 
 export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse = PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses[keyof PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses];
+
+export type GetAdminUsersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        role?: 'admin' | 'user';
+        search?: string;
+        limit?: number;
+        offset?: number;
+    };
+    url: '/admin/users';
+};
+
+export type GetAdminUsersResponses = {
+    /**
+     * Users retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Users retrieved successfully';
+        data: Array<{
+            id: number;
+            created_at: number;
+            username: string;
+            display_name: string;
+            email: string;
+            role: 'admin' | 'user';
+        }>;
+    };
+};
+
+export type GetAdminUsersResponse = GetAdminUsersResponses[keyof GetAdminUsersResponses];
+
+export type PostAdminUsersData = {
+    body?: {
+        /**
+         * Username for the account
+         */
+        username: string;
+        display_name: string;
+        email: string;
+        role?: 'admin' | 'user';
+        password: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/admin/users';
+};
+
+export type PostAdminUsersErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Conflict: Username or email already exists
+     */
+    409: {
+        success: false;
+        code: 409;
+        message: 'Conflict: Username or email already exists';
+    };
+};
+
+export type PostAdminUsersError = PostAdminUsersErrors[keyof PostAdminUsersErrors];
+
+export type PostAdminUsersResponses = {
+    /**
+     * User created successfully
+     */
+    201: {
+        success: true;
+        code: 201;
+        message: 'User created successfully';
+        data: {
+            id: number;
+            created_at: number;
+            username: string;
+            display_name: string;
+            email: string;
+            role: 'admin' | 'user';
+        };
+    };
+};
+
+export type PostAdminUsersResponse = PostAdminUsersResponses[keyof PostAdminUsersResponses];
+
+export type DeleteAdminUsersByUserIdData = {
+    body?: never;
+    path: {
+        userId: number;
+    };
+    query?: never;
+    url: '/admin/users/{userId}';
+};
+
+export type DeleteAdminUsersByUserIdErrors = {
+    /**
+     * Cannot delete user while packages are assigned
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Cannot delete user while packages are assigned';
+    };
+    /**
+     * User not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'User not found';
+    };
+};
+
+export type DeleteAdminUsersByUserIdError = DeleteAdminUsersByUserIdErrors[keyof DeleteAdminUsersByUserIdErrors];
+
+export type DeleteAdminUsersByUserIdResponses = {
+    /**
+     * User deleted successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'User deleted successfully';
+        data: null;
+    };
+};
+
+export type DeleteAdminUsersByUserIdResponse = DeleteAdminUsersByUserIdResponses[keyof DeleteAdminUsersByUserIdResponses];
+
+export type GetAdminUsersByUserIdData = {
+    body?: never;
+    path: {
+        userId: number;
+    };
+    query?: never;
+    url: '/admin/users/{userId}';
+};
+
+export type GetAdminUsersByUserIdErrors = {
+    /**
+     * User not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'User not found';
+    };
+};
+
+export type GetAdminUsersByUserIdError = GetAdminUsersByUserIdErrors[keyof GetAdminUsersByUserIdErrors];
+
+export type GetAdminUsersByUserIdResponses = {
+    /**
+     * User retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'User retrieved successfully';
+        data: {
+            id: number;
+            created_at: number;
+            username: string;
+            display_name: string;
+            email: string;
+            role: 'admin' | 'user';
+        };
+    };
+};
+
+export type GetAdminUsersByUserIdResponse = GetAdminUsersByUserIdResponses[keyof GetAdminUsersByUserIdResponses];
+
+export type PutAdminUsersByUserIdData = {
+    body?: {
+        username?: string;
+        display_name?: string;
+        email?: string;
+        role?: 'admin' | 'user';
+    };
+    path: {
+        userId: number;
+    };
+    query?: never;
+    url: '/admin/users/{userId}';
+};
+
+export type PutAdminUsersByUserIdErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * User not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'User not found';
+    };
+    /**
+     * Conflict: Username or email already exists
+     */
+    409: {
+        success: false;
+        code: 409;
+        message: 'Conflict: Username or email already exists';
+    };
+};
+
+export type PutAdminUsersByUserIdError = PutAdminUsersByUserIdErrors[keyof PutAdminUsersByUserIdErrors];
+
+export type PutAdminUsersByUserIdResponses = {
+    /**
+     * User updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'User updated successfully';
+        data: {
+            id: number;
+            created_at: number;
+            username: string;
+            display_name: string;
+            email: string;
+            role: 'admin' | 'user';
+        };
+    };
+};
+
+export type PutAdminUsersByUserIdResponse = PutAdminUsersByUserIdResponses[keyof PutAdminUsersByUserIdResponses];
+
+export type PutAdminUsersByUserIdPasswordData = {
+    body?: {
+        /**
+         * New password for the account
+         */
+        password: string;
+    };
+    path: {
+        userId: number;
+    };
+    query?: never;
+    url: '/admin/users/{userId}/password';
+};
+
+export type PutAdminUsersByUserIdPasswordErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * User not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'User not found';
+    };
+};
+
+export type PutAdminUsersByUserIdPasswordError = PutAdminUsersByUserIdPasswordErrors[keyof PutAdminUsersByUserIdPasswordErrors];
+
+export type PutAdminUsersByUserIdPasswordResponses = {
+    /**
+     * Password reset successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Password reset successfully';
+        data: null;
+    };
+};
+
+export type PutAdminUsersByUserIdPasswordResponse = PutAdminUsersByUserIdPasswordResponses[keyof PutAdminUsersByUserIdPasswordResponses];

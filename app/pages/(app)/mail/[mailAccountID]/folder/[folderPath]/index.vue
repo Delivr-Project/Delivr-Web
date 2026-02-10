@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import Gravatar from '~/components/Gravatar.vue';
 import { useGravatarURL } from '~/composables/useGravatarURL';
-import type { MailAccount, MailRessource } from '~/utils/types';
-
-type Mail = MailRessource.IMail;
+import type { MailAccount } from '~/utils/types';
 
 const folderPath = decodeURIComponent(useRoute().params.folderPath as string);
 const systemFolderPath = folderPath === 'inbox' ? 'INBOX' : folderPath;
@@ -24,7 +22,7 @@ const stripHtml = (html: string) => {
 const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
 
 const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${systemFolderPath}/mails`, async () => {
-    const response = await useAPI(api => api.getMailAccountsMailAccountIdMailboxesMailboxPathMails({
+    const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
         path: {
             mailAccountID: mailAccount.data.value.id,
             mailboxPath: systemFolderPath

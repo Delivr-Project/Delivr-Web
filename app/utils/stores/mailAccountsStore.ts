@@ -27,7 +27,7 @@ export class MailAccountsStore {
         if (!useAppCookies().sessionToken.get().value || !this.currentSelectedMailAccountID.value) {
             return null;
         }
-        const response = await useAPI((api) => api.getMailAccountsMailAccountIdMailboxes({
+        const response = await useAPI((api) => api.getMailAccountsByMailAccountIdMailboxes({
             path: {
                 mailAccountID: this.currentSelectedMailAccountID.value as number
             }

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type z from 'zod';
-import { zPutMailAccountsMailAccountIdCredentialsData } from '~/api-client/zod.gen';
+import { zPutMailAccountsByMailAccountIdCredentialsData } from '~/api-client/zod.gen';
 import { useDefaultOnFormError } from '~/composables/useDefaultOnFormError';
 import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
 
@@ -19,7 +19,7 @@ const headerTexts = computed(() => {
 });
 
 
-const mailAccount_form_schema = zPutMailAccountsMailAccountIdCredentialsData.shape.body;
+const mailAccount_form_schema = zPutMailAccountsByMailAccountIdCredentialsData.shape.body;
 type MailAccountFormSchema = NonNullable<z.infer<typeof mailAccount_form_schema>>;
 
 const mailAccount_form_state = ref<MailAccountFormSchema>({
@@ -47,7 +47,7 @@ async function onFormSubmit() {
 
 	try {
 
-		const result = await useAPI((api) => api.putMailAccountsMailAccountIdCredentials({
+		const result = await useAPI((api) => api.putMailAccountsByMailAccountIdCredentials({
 			path: {
 				mailAccountID: (mailAccount_data.value as MailAccount).id,
 			},
@@ -93,7 +93,7 @@ async function testConfiguration() {
 
 	try {
 
-		const result = await useAPI((api) => api.getMailAccountsMailAccountIdMailboxesMailboxPath({
+		const result = await useAPI((api) => api.getMailAccountsByMailAccountIdMailboxesByMailboxPath({
 			path: {
 				mailAccountID: (mailAccount_data.value as MailAccount).id,
 				mailboxPath: 'INBOX',
