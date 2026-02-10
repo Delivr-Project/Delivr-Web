@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
+import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 
 defineProps<{
     collapsed?: boolean
 }>()
 
-const mailAccountsList = await MailAccountsStore.use();
+const mailAccountsStore = useMailAccountsStore();
+const mailAccountsList = await mailAccountsStore.use();
 
-const selectedMailAccount = MailAccountsStore.useSelected();
+const selectedMailAccountStore = useSelectedMailAccountStore();
+const selectedMailAccount = await selectedMailAccountStore.use();
 
 const baseItems: DropdownMenuItem[] = [{
     label: 'Add new Account',
@@ -40,7 +43,7 @@ const items = computed<DropdownMenuItem[][]>(() => {
                 alt: account.display_name,
             },
             onSelect() {
-                MailAccountsStore.setSelected(account.id);
+                selectedMailAccountStore.set(account.id);
             }
         } satisfies DropdownMenuItem)),
         baseItems
@@ -49,11 +52,15 @@ const items = computed<DropdownMenuItem[][]>(() => {
 </script>
 
 <template>
-    <UDropdownMenu :items="items" :content="{
-        align: 'center',
-        collisionPadding: 12
-    }" :ui="{
-            content: collapsed ? 'w-40' : 'w-(--reka-dropdown-menu-trigger-width)'
+    <UDropdownMenu
+        :items="items"
+        :content="{
+            align: 'center',
+            collisionPadding: 12
+        }"
+        :ui="{
+            viewport: 'main-bg-color',
+			content: collapsed ? 'w-40' : 'w-(--reka-dropdown-menu-trigger-width)'
         }">
         <UButton
             v-bind="{
@@ -64,13 +71,14 @@ const items = computed<DropdownMenuItem[][]>(() => {
                 trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
             }"
             color="neutral"
-            variant="ghost"
-            block
-            :square="collapsed"
-            class="data-[state=open]:bg-elevated"
-            :class="[!collapsed && 'py-2']" :ui="{
-                trailingIcon: 'text-dimmed'
-            }"
-            />
+			variant="ghost"
+			block
+			:square="collapsed"
+			class="data-[state=open]:bg-elevated"
+			:class="[!collapsed && 'py-2']"
+			:ui="{
+				trailingIcon: 'text-dimmed'
+			}"
+		/>
     </UDropdownMenu>
 </template>

@@ -1,33 +1,37 @@
 <script setup lang="ts">
-import type { MailAccount, MailRessource } from '~/utils/types';
-
-type Mail = MailRessource.IMail;
+import type { MailAccountWithMailboxes, MailData } from '~/utils/types';
 
 const folderPath = decodeURIComponent(useRoute().params.folderPath as string);
 const systemFolderPath = folderPath.toLowerCase() === 'inbox' ? 'INBOX' : folderPath;
 const uiFolderPath = folderPath.charAt(0).toUpperCase() + folderPath.slice(1).toLowerCase();
 
+const mailUID = parseInt(useRoute().params.mailUID as string);
+
 const toast = useToast();
 
-const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
+const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
 
-const mail = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${folderPath}/mails/`, async () => {
-    const response = await useAPI(api => api.getMailAccountsMailAccountIdMailboxesMailboxPathMails({
+const mail = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${systemFolderPath}/mails/${mailUID}`, async () => {
+    const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid({
         path: {
             mailAccountID: mailAccount.data.value.id,
-            mailboxPath: folderPath
+            mailboxPath: systemFolderPath,
+            mailUID: mailUID
         }
     }));
     if (!response.success) {
         toast.add({
-            title: 'Error loading emails',
+            title: `Failed to load email with UID ${mailUID}`,
             description: response.message || 'An unknown error occurred while fetching emails.',
             color: 'error'
         });
-        return [];
+        navigateTo(`/mail/${mailAccount.data.value.id}/folder/${encodeURIComponent(folderPath)}`);
+        return {} as MailData;
     }
     return response.data;
 });
+
+const mailData = mail.data;
 
 useSeoMeta({
     title: `${uiFolderPath} | Delivr`,
@@ -52,43 +56,45 @@ const goBack = () => {
 
 const reply = () => {
     // TODO: Implement reply functionality
-    console.log('Reply to:', mail.value?.id);
+    console.log('Reply to:', mailData.value?.uid);
 };
 
 const forward = () => {
     // TODO: Implement forward functionality
-    console.log('Forward:', mail.value?.id);
+    console.log('Forward:', mailData.value?.uid);
 };
 
 const deleteMail = () => {
     // TODO: Implement delete functionality
-    console.log('Delete:', mail.value?.id);
+    console.log('Delete:', mailData.value?.uid);
     goBack();
 };
 
 const markAsUnread = () => {
     // TODO: Implement mark as unread
-    console.log('Mark as unread:', mail.value?.id);
+    console.log('Mark as unread:', mailData.value?.uid);
     goBack();
 };
 
-if (!mail.value) {
+if (!mailData.value) {
     // Email not found, redirect to inbox
     navigateTo('/inbox');
 }
 
+const finalSubject = mailData.value?.subject || 'Email with Unknown Subject';
+
 useSeoMeta({
-    title: mail.value?.subject ? `${mail.value.subject} | Delivr` : 'Email | Delivr',
+    title: `${finalSubject} | Delivr`,
     description: 'View email details'
 });
 
 </script>
 
 <template>
-    <UDashboardPanel v-if="mail">
+    <UDashboardPanel v-if="mailData">
         <template #header>
             <DashboardPageHeader
-                title="Email"
+                :title="finalSubject"
                 icon="i-lucide-mail"
             >
                 <template #leading>
@@ -113,13 +119,13 @@ useSeoMeta({
                     <div class="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
                         <div class="flex items-start justify-between gap-4 mb-4">
                             <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                                {{ mail.subject }}
+                                {{ finalSubject }}
                             </h1>
                             <div class="flex items-center gap-2 shrink-0">
-                                <UBadge v-if="mail.unread" color="primary" size="sm">
+                                <UBadge v-if="mailData.unread" color="primary" size="sm">
                                     Unread
                                 </UBadge>
-                                <UBadge v-if="mail.hasAttachment" color="neutral" variant="outline" size="sm">
+                                <UBadge v-if="mailData.hasAttachment" color="neutral" variant="outline" size="sm">
                                     <UIcon name="i-lucide-paperclip" class="w-3 h-3 mr-1" />
                                     Attachment
                                 </UBadge>

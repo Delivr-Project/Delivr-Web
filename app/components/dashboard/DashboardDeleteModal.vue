@@ -45,7 +45,7 @@ async function onDeleteWrapper() {
 <template>
     <DashboardModal
         v-model:open="props.open"
-        @update:open="(value) => emit('update:open', value)"
+        @update:open="(value: boolean) => emit('update:open', value)"
         :title="title"
         description="This action is permanent"
         icon="i-lucide-alert-triangle"

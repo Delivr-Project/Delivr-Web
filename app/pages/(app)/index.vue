@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn } from '#ui/types';
-import { UserStore } from '~/utils/stores/userStore';
+import { useUserInfoStore } from '~/composables/stores/useUserStore';
+
 useSeoMeta({
     title: 'Dashboard | Delivr',
     description: 'Overview of your emails'
@@ -8,8 +9,10 @@ useSeoMeta({
 
 const toast = useToast();
 
-const user = await UserStore.use();
-if (!UserStore.isValid(user)) {
+const userInfoStore = await useUserInfoStore();
+
+const user = await userInfoStore.use();
+if (!userInfoStore.isValid(user)) {
     throw new Error('User not authenticated but trying to access Dashboard')
 }
 

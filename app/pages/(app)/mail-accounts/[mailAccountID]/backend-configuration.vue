@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import type z from 'zod';
-import { zPutMailAccountsMailAccountIdCredentialsData } from '~/api-client/zod.gen';
+import { zPutMailAccountsByMailAccountIdCredentialsData } from '~/api-client/zod.gen';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useDefaultOnFormError } from '~/composables/useDefaultOnFormError';
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
 
 const toast = useToast();
 const route = useRoute();
 
+const mailAccountsStore = useMailAccountsStore();
 
 const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
 const mailAccount_data = mailAccount.data;
@@ -19,7 +20,7 @@ const headerTexts = computed(() => {
 });
 
 
-const mailAccount_form_schema = zPutMailAccountsMailAccountIdCredentialsData.shape.body;
+const mailAccount_form_schema = zPutMailAccountsByMailAccountIdCredentialsData.shape.body;
 type MailAccountFormSchema = NonNullable<z.infer<typeof mailAccount_form_schema>>;
 
 const mailAccount_form_state = ref<MailAccountFormSchema>({
@@ -47,7 +48,7 @@ async function onFormSubmit() {
 
 	try {
 
-		const result = await useAPI((api) => api.putMailAccountsMailAccountIdCredentials({
+		const result = await useAPI((api) => api.putMailAccountsByMailAccountIdCredentials({
 			path: {
 				mailAccountID: (mailAccount_data.value as MailAccount).id,
 			},
@@ -67,7 +68,7 @@ async function onFormSubmit() {
 				...mailAccount_form_state.value
 			} satisfies MailAccount;
 
-			await MailAccountsStore.refresh();
+			await mailAccountsStore.refresh();
 
 		} else {
 			throw new Error(result.message || 'Failed to update Mail Account');
@@ -93,7 +94,7 @@ async function testConfiguration() {
 
 	try {
 
-		const result = await useAPI((api) => api.getMailAccountsMailAccountIdMailboxesMailboxPath({
+		const result = await useAPI((api) => api.getMailAccountsByMailAccountIdMailboxesByMailboxPath({
 			path: {
 				mailAccountID: (mailAccount_data.value as MailAccount).id,
 				mailboxPath: 'INBOX',

@@ -469,7 +469,7 @@ export type PostAccountApikeysResponses = {
 
 export type PostAccountApikeysResponse = PostAccountApikeysResponses[keyof PostAccountApikeysResponses];
 
-export type DeleteAccountApikeysApiKeyIdData = {
+export type DeleteAccountApikeysByApiKeyIdData = {
     body?: never;
     path: {
         apiKeyID: string;
@@ -478,7 +478,7 @@ export type DeleteAccountApikeysApiKeyIdData = {
     url: '/account/apikeys/{apiKeyID}';
 };
 
-export type DeleteAccountApikeysApiKeyIdErrors = {
+export type DeleteAccountApikeysByApiKeyIdErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -497,9 +497,9 @@ export type DeleteAccountApikeysApiKeyIdErrors = {
     };
 };
 
-export type DeleteAccountApikeysApiKeyIdError = DeleteAccountApikeysApiKeyIdErrors[keyof DeleteAccountApikeysApiKeyIdErrors];
+export type DeleteAccountApikeysByApiKeyIdError = DeleteAccountApikeysByApiKeyIdErrors[keyof DeleteAccountApikeysByApiKeyIdErrors];
 
-export type DeleteAccountApikeysApiKeyIdResponses = {
+export type DeleteAccountApikeysByApiKeyIdResponses = {
     /**
      * API key deleted successfully
      */
@@ -511,12 +511,55 @@ export type DeleteAccountApikeysApiKeyIdResponses = {
     };
 };
 
-export type DeleteAccountApikeysApiKeyIdResponse = DeleteAccountApikeysApiKeyIdResponses[keyof DeleteAccountApikeysApiKeyIdResponses];
+export type DeleteAccountApikeysByApiKeyIdResponse = DeleteAccountApikeysByApiKeyIdResponses[keyof DeleteAccountApikeysByApiKeyIdResponses];
+
+export type GetAccountApikeysByApiKeyIdData = {
+    body?: never;
+    path: {
+        apiKeyID: string;
+    };
+    query?: never;
+    url: '/account/apikeys/{apiKeyID}';
+};
+
+export type GetAccountApikeysByApiKeyIdErrors = {
+    /**
+     * API key not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'API key not found';
+    };
+};
+
+export type GetAccountApikeysByApiKeyIdError = GetAccountApikeysByApiKeyIdErrors[keyof GetAccountApikeysByApiKeyIdErrors];
+
+export type GetAccountApikeysByApiKeyIdResponses = {
+    /**
+     * API key retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'API key retrieved successfully';
+        data: {
+            id: string;
+            description: string;
+            created_at: number;
+            expires_at: number | null;
+        };
+    };
+};
+
+export type GetAccountApikeysByApiKeyIdResponse = GetAccountApikeysByApiKeyIdResponses[keyof GetAccountApikeysByApiKeyIdResponses];
 
 export type GetMailAccountsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        withMailboxes?: boolean;
+    };
     url: '/mail-accounts';
 };
 
@@ -532,21 +575,63 @@ export type GetMailAccountsResponses = {
             id: number;
             created_at: number;
             display_name: string;
+            is_default: boolean;
             smtp_host: string | string | string;
             /**
              * Port
              */
             smtp_port: number;
-            smtp_username: string;
             smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            smtp_username: string;
             imap_host: string | string | string;
             /**
              * Port
              */
             imap_port: number;
-            imap_username: string;
             imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            imap_username: string;
+        }> | Array<{
+            id: number;
+            created_at: number;
+            display_name: string;
             is_default: boolean;
+            smtp_host: string | string | string;
+            /**
+             * Port
+             */
+            smtp_port: number;
+            smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            smtp_username: string;
+            imap_host: string | string | string;
+            /**
+             * Port
+             */
+            imap_port: number;
+            imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            imap_username: string;
+            mailboxes: Array<{
+                name: string;
+                path: string;
+                delimiter: string;
+                parent: Array<string>;
+                parentPath: string;
+                flags: Array<string>;
+                specialUse?: string;
+                status: {
+                    /**
+                     * Total number of messages in the mailbox
+                     */
+                    messages: number;
+                    /**
+                     * Number of recent messages in the mailbox
+                     */
+                    recent: number;
+                    /**
+                     * Number of unseen (unread) messages in the mailbox
+                     */
+                    unseen: number;
+                };
+            }>;
         }>;
     };
 };
@@ -556,23 +641,23 @@ export type GetMailAccountsResponse = GetMailAccountsResponses[keyof GetMailAcco
 export type PostMailAccountsData = {
     body?: {
         display_name: string;
+        is_default?: boolean;
         smtp_host: string | string | string;
         /**
          * Port
          */
         smtp_port: number;
+        smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
         smtp_username: string;
         smtp_password: string;
-        smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
         imap_host: string | string | string;
         /**
          * Port
          */
         imap_port: number;
+        imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
         imap_username: string;
         imap_password: string;
-        imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
-        is_default?: boolean;
     };
     path?: never;
     query?: never;
@@ -608,7 +693,7 @@ export type PostMailAccountsResponses = {
 
 export type PostMailAccountsResponse = PostMailAccountsResponses[keyof PostMailAccountsResponses];
 
-export type DeleteMailAccountsMailAccountIdData = {
+export type DeleteMailAccountsByMailAccountIdData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -617,7 +702,7 @@ export type DeleteMailAccountsMailAccountIdData = {
     url: '/mail-accounts/{mailAccountID}';
 };
 
-export type DeleteMailAccountsMailAccountIdErrors = {
+export type DeleteMailAccountsByMailAccountIdErrors = {
     /**
      * Mail account with the specified ID not found
      */
@@ -628,9 +713,9 @@ export type DeleteMailAccountsMailAccountIdErrors = {
     };
 };
 
-export type DeleteMailAccountsMailAccountIdError = DeleteMailAccountsMailAccountIdErrors[keyof DeleteMailAccountsMailAccountIdErrors];
+export type DeleteMailAccountsByMailAccountIdError = DeleteMailAccountsByMailAccountIdErrors[keyof DeleteMailAccountsByMailAccountIdErrors];
 
-export type DeleteMailAccountsMailAccountIdResponses = {
+export type DeleteMailAccountsByMailAccountIdResponses = {
     /**
      * Mail account deleted successfully
      */
@@ -642,18 +727,20 @@ export type DeleteMailAccountsMailAccountIdResponses = {
     };
 };
 
-export type DeleteMailAccountsMailAccountIdResponse = DeleteMailAccountsMailAccountIdResponses[keyof DeleteMailAccountsMailAccountIdResponses];
+export type DeleteMailAccountsByMailAccountIdResponse = DeleteMailAccountsByMailAccountIdResponses[keyof DeleteMailAccountsByMailAccountIdResponses];
 
-export type GetMailAccountsMailAccountIdData = {
+export type GetMailAccountsByMailAccountIdData = {
     body?: never;
     path: {
         mailAccountID: number;
     };
-    query?: never;
+    query?: {
+        withMailboxes?: boolean;
+    };
     url: '/mail-accounts/{mailAccountID}';
 };
 
-export type GetMailAccountsMailAccountIdErrors = {
+export type GetMailAccountsByMailAccountIdErrors = {
     /**
      * Mail Account with the specified ID not found
      */
@@ -664,9 +751,9 @@ export type GetMailAccountsMailAccountIdErrors = {
     };
 };
 
-export type GetMailAccountsMailAccountIdError = GetMailAccountsMailAccountIdErrors[keyof GetMailAccountsMailAccountIdErrors];
+export type GetMailAccountsByMailAccountIdError = GetMailAccountsByMailAccountIdErrors[keyof GetMailAccountsByMailAccountIdErrors];
 
-export type GetMailAccountsMailAccountIdResponses = {
+export type GetMailAccountsByMailAccountIdResponses = {
     /**
      * Mail account retrieved successfully
      */
@@ -678,28 +765,70 @@ export type GetMailAccountsMailAccountIdResponses = {
             id: number;
             created_at: number;
             display_name: string;
+            is_default: boolean;
             smtp_host: string | string | string;
             /**
              * Port
              */
             smtp_port: number;
-            smtp_username: string;
             smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            smtp_username: string;
             imap_host: string | string | string;
             /**
              * Port
              */
             imap_port: number;
-            imap_username: string;
             imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            imap_username: string;
+        } | {
+            id: number;
+            created_at: number;
+            display_name: string;
             is_default: boolean;
+            smtp_host: string | string | string;
+            /**
+             * Port
+             */
+            smtp_port: number;
+            smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            smtp_username: string;
+            imap_host: string | string | string;
+            /**
+             * Port
+             */
+            imap_port: number;
+            imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+            imap_username: string;
+            mailboxes: Array<{
+                name: string;
+                path: string;
+                delimiter: string;
+                parent: Array<string>;
+                parentPath: string;
+                flags: Array<string>;
+                specialUse?: string;
+                status: {
+                    /**
+                     * Total number of messages in the mailbox
+                     */
+                    messages: number;
+                    /**
+                     * Number of recent messages in the mailbox
+                     */
+                    recent: number;
+                    /**
+                     * Number of unseen (unread) messages in the mailbox
+                     */
+                    unseen: number;
+                };
+            }>;
         };
     };
 };
 
-export type GetMailAccountsMailAccountIdResponse = GetMailAccountsMailAccountIdResponses[keyof GetMailAccountsMailAccountIdResponses];
+export type GetMailAccountsByMailAccountIdResponse = GetMailAccountsByMailAccountIdResponses[keyof GetMailAccountsByMailAccountIdResponses];
 
-export type PutMailAccountsMailAccountIdData = {
+export type PutMailAccountsByMailAccountIdData = {
     body?: {
         display_name?: string;
         is_default?: boolean;
@@ -711,7 +840,7 @@ export type PutMailAccountsMailAccountIdData = {
     url: '/mail-accounts/{mailAccountID}';
 };
 
-export type PutMailAccountsMailAccountIdErrors = {
+export type PutMailAccountsByMailAccountIdErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -730,9 +859,9 @@ export type PutMailAccountsMailAccountIdErrors = {
     };
 };
 
-export type PutMailAccountsMailAccountIdError = PutMailAccountsMailAccountIdErrors[keyof PutMailAccountsMailAccountIdErrors];
+export type PutMailAccountsByMailAccountIdError = PutMailAccountsByMailAccountIdErrors[keyof PutMailAccountsByMailAccountIdErrors];
 
-export type PutMailAccountsMailAccountIdResponses = {
+export type PutMailAccountsByMailAccountIdResponses = {
     /**
      * Mail account updated successfully
      */
@@ -744,9 +873,9 @@ export type PutMailAccountsMailAccountIdResponses = {
     };
 };
 
-export type PutMailAccountsMailAccountIdResponse = PutMailAccountsMailAccountIdResponses[keyof PutMailAccountsMailAccountIdResponses];
+export type PutMailAccountsByMailAccountIdResponse = PutMailAccountsByMailAccountIdResponses[keyof PutMailAccountsByMailAccountIdResponses];
 
-export type PutMailAccountsMailAccountIdCredentialsData = {
+export type PutMailAccountsByMailAccountIdCredentialsData = {
     body?: {
         smtp_host: string | string | string;
         /**
@@ -772,7 +901,7 @@ export type PutMailAccountsMailAccountIdCredentialsData = {
     url: '/mail-accounts/{mailAccountID}/credentials';
 };
 
-export type PutMailAccountsMailAccountIdCredentialsErrors = {
+export type PutMailAccountsByMailAccountIdCredentialsErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -791,9 +920,9 @@ export type PutMailAccountsMailAccountIdCredentialsErrors = {
     };
 };
 
-export type PutMailAccountsMailAccountIdCredentialsError = PutMailAccountsMailAccountIdCredentialsErrors[keyof PutMailAccountsMailAccountIdCredentialsErrors];
+export type PutMailAccountsByMailAccountIdCredentialsError = PutMailAccountsByMailAccountIdCredentialsErrors[keyof PutMailAccountsByMailAccountIdCredentialsErrors];
 
-export type PutMailAccountsMailAccountIdCredentialsResponses = {
+export type PutMailAccountsByMailAccountIdCredentialsResponses = {
     /**
      * Mail account credentials updated successfully
      */
@@ -805,9 +934,9 @@ export type PutMailAccountsMailAccountIdCredentialsResponses = {
     };
 };
 
-export type PutMailAccountsMailAccountIdCredentialsResponse = PutMailAccountsMailAccountIdCredentialsResponses[keyof PutMailAccountsMailAccountIdCredentialsResponses];
+export type PutMailAccountsByMailAccountIdCredentialsResponse = PutMailAccountsByMailAccountIdCredentialsResponses[keyof PutMailAccountsByMailAccountIdCredentialsResponses];
 
-export type GetMailAccountsMailAccountIdMailboxesData = {
+export type GetMailAccountsByMailAccountIdMailboxesData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -816,7 +945,7 @@ export type GetMailAccountsMailAccountIdMailboxesData = {
     url: '/mail-accounts/{mailAccountID}/mailboxes';
 };
 
-export type GetMailAccountsMailAccountIdMailboxesResponses = {
+export type GetMailAccountsByMailAccountIdMailboxesResponses = {
     /**
      * Mailboxes retrieved successfully
      */
@@ -850,9 +979,9 @@ export type GetMailAccountsMailAccountIdMailboxesResponses = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailboxesResponse = GetMailAccountsMailAccountIdMailboxesResponses[keyof GetMailAccountsMailAccountIdMailboxesResponses];
+export type GetMailAccountsByMailAccountIdMailboxesResponse = GetMailAccountsByMailAccountIdMailboxesResponses[keyof GetMailAccountsByMailAccountIdMailboxesResponses];
 
-export type PostMailAccountsMailAccountIdMailboxesData = {
+export type PostMailAccountsByMailAccountIdMailboxesData = {
     body?: {
         path: string;
     };
@@ -863,7 +992,7 @@ export type PostMailAccountsMailAccountIdMailboxesData = {
     url: '/mail-accounts/{mailAccountID}/mailboxes';
 };
 
-export type PostMailAccountsMailAccountIdMailboxesErrors = {
+export type PostMailAccountsByMailAccountIdMailboxesErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -874,9 +1003,9 @@ export type PostMailAccountsMailAccountIdMailboxesErrors = {
     };
 };
 
-export type PostMailAccountsMailAccountIdMailboxesError = PostMailAccountsMailAccountIdMailboxesErrors[keyof PostMailAccountsMailAccountIdMailboxesErrors];
+export type PostMailAccountsByMailAccountIdMailboxesError = PostMailAccountsByMailAccountIdMailboxesErrors[keyof PostMailAccountsByMailAccountIdMailboxesErrors];
 
-export type PostMailAccountsMailAccountIdMailboxesResponses = {
+export type PostMailAccountsByMailAccountIdMailboxesResponses = {
     /**
      * Mailbox created successfully
      */
@@ -888,9 +1017,9 @@ export type PostMailAccountsMailAccountIdMailboxesResponses = {
     };
 };
 
-export type PostMailAccountsMailAccountIdMailboxesResponse = PostMailAccountsMailAccountIdMailboxesResponses[keyof PostMailAccountsMailAccountIdMailboxesResponses];
+export type PostMailAccountsByMailAccountIdMailboxesResponse = PostMailAccountsByMailAccountIdMailboxesResponses[keyof PostMailAccountsByMailAccountIdMailboxesResponses];
 
-export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathData = {
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -903,7 +1032,7 @@ export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathData = {
     url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}';
 };
 
-export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathErrors = {
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -922,9 +1051,9 @@ export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathErrors = {
     };
 };
 
-export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathError = DeleteMailAccountsMailAccountIdMailboxesMailboxPathErrors[keyof DeleteMailAccountsMailAccountIdMailboxesMailboxPathErrors];
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathError = DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathErrors[keyof DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathErrors];
 
-export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathResponses = {
     /**
      * Mailbox deleted successfully
      */
@@ -936,9 +1065,9 @@ export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
     };
 };
 
-export type DeleteMailAccountsMailAccountIdMailboxesMailboxPathResponse = DeleteMailAccountsMailAccountIdMailboxesMailboxPathResponses[keyof DeleteMailAccountsMailAccountIdMailboxesMailboxPathResponses];
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathResponse = DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathResponses[keyof DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathResponses];
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathData = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -951,7 +1080,7 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathData = {
     url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}';
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathErrors = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathErrors = {
     /**
      * Mailbox with specified path not found
      */
@@ -962,9 +1091,9 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathErrors = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathError = GetMailAccountsMailAccountIdMailboxesMailboxPathErrors[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathErrors];
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathError = GetMailAccountsByMailAccountIdMailboxesByMailboxPathErrors[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathErrors];
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponses = {
     /**
      * Mailbox info retrieved successfully
      */
@@ -998,9 +1127,9 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathResponse = GetMailAccountsMailAccountIdMailboxesMailboxPathResponses[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathResponses];
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponses];
 
-export type PutMailAccountsMailAccountIdMailboxesMailboxPathData = {
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathData = {
     body?: {
         path: string;
     };
@@ -1015,7 +1144,7 @@ export type PutMailAccountsMailAccountIdMailboxesMailboxPathData = {
     url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}';
 };
 
-export type PutMailAccountsMailAccountIdMailboxesMailboxPathErrors = {
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -1034,9 +1163,9 @@ export type PutMailAccountsMailAccountIdMailboxesMailboxPathErrors = {
     };
 };
 
-export type PutMailAccountsMailAccountIdMailboxesMailboxPathError = PutMailAccountsMailAccountIdMailboxesMailboxPathErrors[keyof PutMailAccountsMailAccountIdMailboxesMailboxPathErrors];
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathError = PutMailAccountsByMailAccountIdMailboxesByMailboxPathErrors[keyof PutMailAccountsByMailAccountIdMailboxesByMailboxPathErrors];
 
-export type PutMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathResponses = {
     /**
      * Mailbox updated successfully
      */
@@ -1048,9 +1177,9 @@ export type PutMailAccountsMailAccountIdMailboxesMailboxPathResponses = {
     };
 };
 
-export type PutMailAccountsMailAccountIdMailboxesMailboxPathResponse = PutMailAccountsMailAccountIdMailboxesMailboxPathResponses[keyof PutMailAccountsMailAccountIdMailboxesMailboxPathResponses];
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathResponse = PutMailAccountsByMailAccountIdMailboxesByMailboxPathResponses[keyof PutMailAccountsByMailAccountIdMailboxesByMailboxPathResponses];
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusData = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -1063,7 +1192,7 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusData = {
     url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/status';
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusErrors = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusErrors = {
     /**
      * Mailbox with specified path not found
      */
@@ -1074,9 +1203,9 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusErrors = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusError = GetMailAccountsMailAccountIdMailboxesMailboxPathStatusErrors[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathStatusErrors];
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusError = GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusErrors[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusErrors];
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponses = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusResponses = {
     /**
      * Mailbox status retrieved successfully
      */
@@ -1101,9 +1230,9 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponses = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponse = GetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponses[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathStatusResponses];
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusResponses];
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsData = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -1121,7 +1250,7 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsData = {
     url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails';
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsErrors = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsErrors = {
     /**
      * Mailbox with specified path not found
      */
@@ -1132,9 +1261,9 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsErrors = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsError = GetMailAccountsMailAccountIdMailboxesMailboxPathMailsErrors[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathMailsErrors];
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsErrors[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsErrors];
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses = {
     /**
      * Mails retrieved successfully
      */
@@ -1147,6 +1276,7 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses = {
             rawHeaders: {
                 [key: string]: string;
             };
+            rawFlags: Array<string>;
             from?: {
                 name?: string;
                 address: string;
@@ -1164,13 +1294,23 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses = {
                 address: string;
             }>;
             subject?: string;
-            inReplyTo?: string;
+            references?: string | Array<string>;
+            date?: number;
+            flags?: {
+                seen?: boolean;
+                answered?: boolean;
+                flagged?: boolean;
+                deleted?: boolean;
+                draft?: boolean;
+                recent?: boolean;
+            };
             replyTo?: {
                 name?: string;
                 address: string;
             };
-            references?: string | Array<string>;
-            date?: number;
+            messageId?: string;
+            inReplyTo?: string;
+            priority?: 'normal' | 'low' | 'high';
             attachments: Array<{
                 filename?: string;
                 contentType: string;
@@ -1186,9 +1326,9 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses = {
     };
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponse = GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathMailsResponses];
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses];
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidData = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -1202,7 +1342,7 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidData = {
     url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}';
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidErrors = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors = {
     /**
      * Mail with specified UID not found
      */
@@ -1213,9 +1353,9 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidErrors =
     };
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidError = GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidErrors[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidErrors];
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors];
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponses = {
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses = {
     /**
      * Mail retrieved successfully
      */
@@ -1228,6 +1368,7 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponse
             rawHeaders: {
                 [key: string]: string;
             };
+            rawFlags: Array<string>;
             from?: {
                 name?: string;
                 address: string;
@@ -1245,13 +1386,23 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponse
                 address: string;
             }>;
             subject?: string;
-            inReplyTo?: string;
+            references?: string | Array<string>;
+            date?: number;
+            flags?: {
+                seen?: boolean;
+                answered?: boolean;
+                flagged?: boolean;
+                deleted?: boolean;
+                draft?: boolean;
+                recent?: boolean;
+            };
             replyTo?: {
                 name?: string;
                 address: string;
             };
-            references?: string | Array<string>;
-            date?: number;
+            messageId?: string;
+            inReplyTo?: string;
+            priority?: 'normal' | 'low' | 'high';
             attachments: Array<{
                 filename?: string;
                 contentType: string;
@@ -1267,9 +1418,9 @@ export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponse
     };
 };
 
-export type GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponse = GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponses[keyof GetMailAccountsMailAccountIdMailboxesMailboxPathMailsMailUidResponses];
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses];
 
-export type GetMailAccountsMailAccountIdIdentitiesData = {
+export type GetMailAccountsByMailAccountIdIdentitiesData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -1278,7 +1429,7 @@ export type GetMailAccountsMailAccountIdIdentitiesData = {
     url: '/mail-accounts/{mailAccountID}/identities';
 };
 
-export type GetMailAccountsMailAccountIdIdentitiesResponses = {
+export type GetMailAccountsByMailAccountIdIdentitiesResponses = {
     /**
      * Mail identities retrieved successfully
      */
@@ -1297,9 +1448,9 @@ export type GetMailAccountsMailAccountIdIdentitiesResponses = {
     };
 };
 
-export type GetMailAccountsMailAccountIdIdentitiesResponse = GetMailAccountsMailAccountIdIdentitiesResponses[keyof GetMailAccountsMailAccountIdIdentitiesResponses];
+export type GetMailAccountsByMailAccountIdIdentitiesResponse = GetMailAccountsByMailAccountIdIdentitiesResponses[keyof GetMailAccountsByMailAccountIdIdentitiesResponses];
 
-export type PostMailAccountsMailAccountIdIdentitiesData = {
+export type PostMailAccountsByMailAccountIdIdentitiesData = {
     body?: {
         display_name: string;
         email_address: string;
@@ -1312,7 +1463,7 @@ export type PostMailAccountsMailAccountIdIdentitiesData = {
     url: '/mail-accounts/{mailAccountID}/identities';
 };
 
-export type PostMailAccountsMailAccountIdIdentitiesErrors = {
+export type PostMailAccountsByMailAccountIdIdentitiesErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -1323,9 +1474,9 @@ export type PostMailAccountsMailAccountIdIdentitiesErrors = {
     };
 };
 
-export type PostMailAccountsMailAccountIdIdentitiesError = PostMailAccountsMailAccountIdIdentitiesErrors[keyof PostMailAccountsMailAccountIdIdentitiesErrors];
+export type PostMailAccountsByMailAccountIdIdentitiesError = PostMailAccountsByMailAccountIdIdentitiesErrors[keyof PostMailAccountsByMailAccountIdIdentitiesErrors];
 
-export type PostMailAccountsMailAccountIdIdentitiesResponses = {
+export type PostMailAccountsByMailAccountIdIdentitiesResponses = {
     /**
      * Mail identity created successfully
      */
@@ -1339,9 +1490,9 @@ export type PostMailAccountsMailAccountIdIdentitiesResponses = {
     };
 };
 
-export type PostMailAccountsMailAccountIdIdentitiesResponse = PostMailAccountsMailAccountIdIdentitiesResponses[keyof PostMailAccountsMailAccountIdIdentitiesResponses];
+export type PostMailAccountsByMailAccountIdIdentitiesResponse = PostMailAccountsByMailAccountIdIdentitiesResponses[keyof PostMailAccountsByMailAccountIdIdentitiesResponses];
 
-export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdData = {
+export type DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -1351,7 +1502,7 @@ export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdData = {
     url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}';
 };
 
-export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors = {
+export type DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -1370,9 +1521,9 @@ export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors = {
     };
 };
 
-export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdError = DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors[keyof DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors];
+export type DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError = DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors[keyof DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors];
 
-export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses = {
+export type DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses = {
     /**
      * Mail identity deleted successfully
      */
@@ -1384,9 +1535,9 @@ export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses = {
     };
 };
 
-export type DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse = DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses[keyof DeleteMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses];
+export type DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse = DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses[keyof DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses];
 
-export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdData = {
+export type GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData = {
     body?: never;
     path: {
         mailAccountID: number;
@@ -1396,7 +1547,7 @@ export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdData = {
     url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}';
 };
 
-export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors = {
+export type GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors = {
     /**
      * Mail identity with the specified ID does not exist
      */
@@ -1407,9 +1558,9 @@ export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors = {
     };
 };
 
-export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdError = GetMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors[keyof GetMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors];
+export type GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError = GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors[keyof GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors];
 
-export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses = {
+export type GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses = {
     /**
      * Mail identity retrieved successfully
      */
@@ -1427,9 +1578,9 @@ export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses = {
     };
 };
 
-export type GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse = GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses[keyof GetMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses];
+export type GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse = GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses[keyof GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses];
 
-export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdData = {
+export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData = {
     body?: {
         display_name?: string;
         email_address?: string;
@@ -1443,7 +1594,7 @@ export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdData = {
     url: '/mail-accounts/{mailAccountID}/identities/{mailIdentityID}';
 };
 
-export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors = {
+export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors = {
     /**
      * Bad Request: Syntax or validation error in request
      */
@@ -1462,9 +1613,9 @@ export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors = {
     };
 };
 
-export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdError = PutMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors[keyof PutMailAccountsMailAccountIdIdentitiesMailIdentityIdErrors];
+export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError = PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors[keyof PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors];
 
-export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses = {
+export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses = {
     /**
      * Mail identity updated successfully
      */
@@ -1476,4 +1627,295 @@ export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses = {
     };
 };
 
-export type PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponse = PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses[keyof PutMailAccountsMailAccountIdIdentitiesMailIdentityIdResponses];
+export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse = PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses[keyof PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses];
+
+export type GetAdminUsersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        role?: 'admin' | 'user';
+        search?: string;
+        limit?: number;
+        offset?: number;
+    };
+    url: '/admin/users';
+};
+
+export type GetAdminUsersResponses = {
+    /**
+     * Users retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Users retrieved successfully';
+        data: Array<{
+            id: number;
+            created_at: number;
+            username: string;
+            display_name: string;
+            email: string;
+            role: 'admin' | 'user';
+        }>;
+    };
+};
+
+export type GetAdminUsersResponse = GetAdminUsersResponses[keyof GetAdminUsersResponses];
+
+export type PostAdminUsersData = {
+    body?: {
+        /**
+         * Username for the account
+         */
+        username: string;
+        display_name: string;
+        email: string;
+        role?: 'admin' | 'user';
+        password: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/admin/users';
+};
+
+export type PostAdminUsersErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Conflict: Username or email already exists
+     */
+    409: {
+        success: false;
+        code: 409;
+        message: 'Conflict: Username or email already exists';
+    };
+};
+
+export type PostAdminUsersError = PostAdminUsersErrors[keyof PostAdminUsersErrors];
+
+export type PostAdminUsersResponses = {
+    /**
+     * User created successfully
+     */
+    201: {
+        success: true;
+        code: 201;
+        message: 'User created successfully';
+        data: {
+            id: number;
+            created_at: number;
+            username: string;
+            display_name: string;
+            email: string;
+            role: 'admin' | 'user';
+        };
+    };
+};
+
+export type PostAdminUsersResponse = PostAdminUsersResponses[keyof PostAdminUsersResponses];
+
+export type DeleteAdminUsersByUserIdData = {
+    body?: never;
+    path: {
+        userId: number;
+    };
+    query?: never;
+    url: '/admin/users/{userId}';
+};
+
+export type DeleteAdminUsersByUserIdErrors = {
+    /**
+     * Cannot delete user while packages are assigned
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Cannot delete user while packages are assigned';
+    };
+    /**
+     * User not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'User not found';
+    };
+};
+
+export type DeleteAdminUsersByUserIdError = DeleteAdminUsersByUserIdErrors[keyof DeleteAdminUsersByUserIdErrors];
+
+export type DeleteAdminUsersByUserIdResponses = {
+    /**
+     * User deleted successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'User deleted successfully';
+        data: null;
+    };
+};
+
+export type DeleteAdminUsersByUserIdResponse = DeleteAdminUsersByUserIdResponses[keyof DeleteAdminUsersByUserIdResponses];
+
+export type GetAdminUsersByUserIdData = {
+    body?: never;
+    path: {
+        userId: number;
+    };
+    query?: never;
+    url: '/admin/users/{userId}';
+};
+
+export type GetAdminUsersByUserIdErrors = {
+    /**
+     * User not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'User not found';
+    };
+};
+
+export type GetAdminUsersByUserIdError = GetAdminUsersByUserIdErrors[keyof GetAdminUsersByUserIdErrors];
+
+export type GetAdminUsersByUserIdResponses = {
+    /**
+     * User retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'User retrieved successfully';
+        data: {
+            id: number;
+            created_at: number;
+            username: string;
+            display_name: string;
+            email: string;
+            role: 'admin' | 'user';
+        };
+    };
+};
+
+export type GetAdminUsersByUserIdResponse = GetAdminUsersByUserIdResponses[keyof GetAdminUsersByUserIdResponses];
+
+export type PutAdminUsersByUserIdData = {
+    body?: {
+        username?: string;
+        display_name?: string;
+        email?: string;
+        role?: 'admin' | 'user';
+    };
+    path: {
+        userId: number;
+    };
+    query?: never;
+    url: '/admin/users/{userId}';
+};
+
+export type PutAdminUsersByUserIdErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * User not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'User not found';
+    };
+    /**
+     * Conflict: Username or email already exists
+     */
+    409: {
+        success: false;
+        code: 409;
+        message: 'Conflict: Username or email already exists';
+    };
+};
+
+export type PutAdminUsersByUserIdError = PutAdminUsersByUserIdErrors[keyof PutAdminUsersByUserIdErrors];
+
+export type PutAdminUsersByUserIdResponses = {
+    /**
+     * User updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'User updated successfully';
+        data: {
+            id: number;
+            created_at: number;
+            username: string;
+            display_name: string;
+            email: string;
+            role: 'admin' | 'user';
+        };
+    };
+};
+
+export type PutAdminUsersByUserIdResponse = PutAdminUsersByUserIdResponses[keyof PutAdminUsersByUserIdResponses];
+
+export type PutAdminUsersByUserIdPasswordData = {
+    body?: {
+        /**
+         * New password for the account
+         */
+        password: string;
+    };
+    path: {
+        userId: number;
+    };
+    query?: never;
+    url: '/admin/users/{userId}/password';
+};
+
+export type PutAdminUsersByUserIdPasswordErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * User not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'User not found';
+    };
+};
+
+export type PutAdminUsersByUserIdPasswordError = PutAdminUsersByUserIdPasswordErrors[keyof PutAdminUsersByUserIdPasswordErrors];
+
+export type PutAdminUsersByUserIdPasswordResponses = {
+    /**
+     * Password reset successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Password reset successfully';
+        data: null;
+    };
+};
+
+export type PutAdminUsersByUserIdPasswordResponse = PutAdminUsersByUserIdPasswordResponses[keyof PutAdminUsersByUserIdPasswordResponses];

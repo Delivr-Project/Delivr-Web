@@ -1,11 +1,14 @@
 <script lang="ts" setup>
 import type { FormError, FormErrorEvent, NavigationMenuItem } from '@nuxt/ui';
-import { zPostMailAccountsData, zPutMailAccountsMailAccountIdData } from '~/api-client/zod.gen';
+import { zPostMailAccountsData, zPutMailAccountsByMailAccountIdData } from '~/api-client/zod.gen';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useDefaultOnFormError } from '~/composables/useDefaultOnFormError';
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
 
 const toast = useToast();
 const route = useRoute();
+
+
+const mailAccountsStore = useMailAccountsStore();
 
 
 const mailAccount = useSubrouterInjectedData<MailAccount, NewMailAccount>('mail_account', true).inject();
@@ -26,7 +29,7 @@ const headerTexts = computed(() => {
 });
 
 
-const mailAccount_form_schema = mailAccount.isNew ? zPostMailAccountsData.shape.body : zPutMailAccountsMailAccountIdData.shape.body;
+const mailAccount_form_schema = mailAccount.isNew ? zPostMailAccountsData.shape.body : zPutMailAccountsByMailAccountIdData.shape.body;
 const mailAccount_form_state = computed({
     get: () => {
 		if (mailAccount.isNew) {
@@ -101,7 +104,7 @@ async function onFormSubmit() {
 					color: 'success'
 				});
 
-                await MailAccountsStore.refresh();
+                await mailAccountsStore.refresh();
 
 				// Redirect to the new package page
 				await navigateTo(`/mail-accounts/${result.data.id}`);
@@ -110,7 +113,7 @@ async function onFormSubmit() {
 			}
 		} else {
 			
-            const result = await useAPI((api) => api.putMailAccountsMailAccountId({
+            const result = await useAPI((api) => api.putMailAccountsByMailAccountId({
                 path: {
                     mailAccountID: (mailAccount_data.value as MailAccount).id,
                 },
@@ -125,7 +128,7 @@ async function onFormSubmit() {
                     color: 'success'
                 });
 
-                await MailAccountsStore.refresh();
+                await mailAccountsStore.refresh();
 
             } else {
                 throw new Error(result.message || 'Failed to update Mail Account');
@@ -160,7 +163,7 @@ async function onDeleteMailAccount() {
 
     try {
 
-        const result = await useAPI((api) => api.deleteMailAccountsMailAccountId({
+        const result = await useAPI((api) => api.deleteMailAccountsByMailAccountId({
             path: {
                 mailAccountID: (mailAccount_data.value as MailAccount).id,
             }
@@ -174,7 +177,7 @@ async function onDeleteMailAccount() {
                 color: 'success'
             });
 
-            await MailAccountsStore.refresh();
+            await mailAccountsStore.refresh();
 
             // Redirect to the mail accounts list page
             await navigateTo(`/mail-accounts`);
@@ -198,7 +201,7 @@ async function testConfiguration() {
 
 	try {
 
-		const result = await useAPI((api) => api.getMailAccountsMailAccountIdMailboxesMailboxPath({
+		const result = await useAPI((api) => api.getMailAccountsByMailAccountIdMailboxesByMailboxPath({
 			path: {
 				mailAccountID: (mailAccount_data.value as MailAccount).id,
 				mailboxPath: 'INBOX',

@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
+import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
+import type { MailAccountWithMailboxes } from '~/utils/types';
 
-const mailAccountID = useRoute().params.mailAccountID as string;
+const mailAccountID = parseInt(useRoute().params.mailAccountID as string);
 
 let error = null;
 
-await MailAccountsStore.fetchAndSetIfNeeded();
-const account = await MailAccountsStore.getByID(parseInt(mailAccountID));
+const mailAccountsStore = useMailAccountsStore();
+
+const selectedMailAccountStore = useSelectedMailAccountStore();
+
+selectedMailAccountStore.set(mailAccountID);
+
+const account = await selectedMailAccountStore.use();
 
 if (!account.value) {
     error = createError({
@@ -15,14 +22,20 @@ if (!account.value) {
         message: `The mail account with ID ${mailAccountID} could not be found. It may have been deleted.`
     });
 } else {
-
-    MailAccountsStore.setSelected(account.value.id);
     
-    useSubrouterInjectedData<MailAccount>('mail_account').provide({
-        data: account as Ref<MailAccount>,
-        refresh: MailAccountsStore.refresh,
-        loading: MailAccountsStore.isLoading,
+    useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').provide({
+        data: account as Ref<MailAccountWithMailboxes>,
+        refresh: mailAccountsStore.refresh,
+        loading: mailAccountsStore.isLoading
     });
+
+    // watch for changes in the selected mail account and update the route accordingly
+    watch(account, (newAccount) => {
+        if (newAccount && newAccount.id !== mailAccountID) {
+            navigateTo(`/mail/${newAccount.id}/folder/inbox`);
+        }
+    });
+
 }
 </script>
 

@@ -1,4 +1,12 @@
-import type { GetAccountResponses, GetMailAccountsMailAccountIdMailboxesResponses, GetMailAccountsResponses, PostMailAccountsData } from '~/api-client';
+import type {
+    GetAccountApikeysResponses,
+    GetAccountResponses,
+    GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses,
+    GetMailAccountsByMailAccountIdMailboxesResponses,
+    GetMailAccountsResponses,
+    PostAccountApikeysData,
+    PostMailAccountsData
+} from '~/api-client';
 
 export namespace UtilityTypes {
 
@@ -8,10 +16,39 @@ export namespace UtilityTypes {
 
 export type UserInfo = GetAccountResponses["200"]["data"];
 
-export type MailAccount = GetMailAccountsResponses["200"]["data"][number];
+// export type MailAccount = GetMailAccountsResponses["200"]["data"][number];
+export type MailAccount = {
+    id: number;
+    created_at: number;
+    display_name: string;
+    is_default: boolean;
+    smtp_host: string | string | string;
+    /**
+     * Port
+     */
+    smtp_port: number;
+    smtp_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+    smtp_username: string;
+    imap_host: string | string | string;
+    /**
+     * Port
+     */
+    imap_port: number;
+    imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
+    imap_username: string;
+}
+export type MailAccountWithMailboxes = MailAccount & {
+    mailboxes: Mailbox[];
+}
 export type NewMailAccount = NonNullable<PostMailAccountsData["body"]>;
 
-export type Mailbox = GetMailAccountsMailAccountIdMailboxesResponses["200"]["data"][number];
+export type Mailbox = GetMailAccountsByMailAccountIdMailboxesResponses["200"]["data"][number];
+
+export type MailData = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses["200"]["data"];
+
+export type APIKey = GetAccountApikeysResponses["200"]["data"][number];
+export type NewAPIKey = NonNullable<PostAccountApikeysData["body"]>;
+
 
 export type Period = 'daily' | 'weekly' | 'monthly'
 

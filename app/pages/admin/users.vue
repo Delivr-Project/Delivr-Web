@@ -3,7 +3,7 @@ import type { DropdownMenuItem, TableColumn } from "#ui/types";
 import type { GetAdminUsersResponses } from "@/api-client/types.gen";
 import * as z from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
-import { UserStore } from "~/utils/stores/userStore";
+import { useUserInfoStore } from "~/composables/stores/useUserStore";
 
 type AdminUser = GetAdminUsersResponses[200]["data"][number];
 
@@ -16,8 +16,9 @@ useSeoMeta({
 const toast = useToast();
 
 // Check admin access
-const currentUser = await UserStore.use();
-if (!UserStore.isValid(currentUser)) {
+const userInfoStore = useUserInfoStore();
+const currentUser = await userInfoStore.use();
+if (!userInfoStore.isValid(currentUser)) {
     throw new Error('User not authenticated but trying to access Admin Users');
 }
 
@@ -135,7 +136,7 @@ async function submitEdit() {
     if (!selectedUser.value) return;
 
     const res = await useAPI((api) =>
-        api.putAdminUsersUserId({
+        api.putAdminUsersByUserId({
             path: { userId: selectedUser.value!.id },
             body: {
                 display_name: editForm.display_name,
@@ -172,7 +173,7 @@ async function submitPassword() {
     if (!selectedUser.value) return;
 
     const res = await useAPI((api) =>
-        api.putAdminUsersUserIdPassword({
+        api.putAdminUsersByUserIdPassword({
             path: { userId: selectedUser.value!.id },
             body: { password: passwordForm.password },
         })
@@ -195,7 +196,7 @@ async function deleteUser(user: AdminUser) {
         return;
 
     const res = await useAPI((api) =>
-        api.deleteAdminUsersUserId({
+        api.deleteAdminUsersByUserId({
             path: { userId: user.id },
         })
     );

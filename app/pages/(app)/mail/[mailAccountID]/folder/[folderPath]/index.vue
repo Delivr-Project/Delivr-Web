@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import Gravatar from '~/components/Gravatar.vue';
 import { useGravatarURL } from '~/composables/useGravatarURL';
-import type { MailAccount, MailRessource } from '~/utils/types';
-
-type Mail = MailRessource.IMail;
+import type { MailAccountWithMailboxes, MailData } from '~/utils/types';
 
 const folderPath = decodeURIComponent(useRoute().params.folderPath as string);
 const systemFolderPath = folderPath === 'inbox' ? 'INBOX' : folderPath;
@@ -21,10 +19,10 @@ const stripHtml = (html: string) => {
     return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 };
 
-const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
+const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
 
 const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${systemFolderPath}/mails`, async () => {
-    const response = await useAPI(api => api.getMailAccountsMailAccountIdMailboxesMailboxPathMails({
+    const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
         path: {
             mailAccountID: mailAccount.data.value.id,
             mailboxPath: systemFolderPath
@@ -36,7 +34,7 @@ const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}
             description: response.message || 'An unknown error occurred while fetching emails.',
             color: 'error'
         });
-        return [];
+        return [] as MailData[];
     }
     return response.data;
 });
