@@ -30,28 +30,47 @@ const sidebarItems = computed(() => {
 
     const inbox = mailboxes.value?.find(mb => mb.path.toLowerCase() === 'inbox');
 
-    const mailItems: NavigationMenuItem[] = mailboxes.value.length === 0 ? [
-		{
-			label: "No Folders to show",
-			icon: "i-lucide-mail",
+    const mailItems: NavigationMenuItem[] = [];
+
+    // Compose button
+    if (currentMailAccount.value) {
+        mailItems.push({
+            label: 'Compose',
+            icon: 'i-lucide-pen-square',
+            to: `/mail/${currentMailAccount.value.id}/compose`,
+        });
+    }
+
+    if (mailboxes.value.length === 0) {
+        mailItems.push({
+            label: 'No Folders to show',
+            icon: 'i-lucide-mail',
             exact: false,
-		}
-    ] : inbox ? [
-        {
-			label: "Inbox",
-			icon: "i-lucide-mail",
-			to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/inbox` : undefined,
+        });
+    } else if (inbox) {
+        mailItems.push({
+            label: 'Inbox',
+            icon: 'i-lucide-inbox',
+            to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/inbox` : undefined,
             badge: inbox.status.unseen > 0 ? inbox.status.unseen : undefined,
-            exact: false
-		}
-    ] : [];
+            exact: false,
+        });
+    }
 
     for (const mailbox of mailboxes.value) {
         if (mailbox.path.toLowerCase() === 'inbox') continue;
 
+        const lowerPath = mailbox.path.toLowerCase();
+        let icon = 'i-lucide-folder';
+        if (lowerPath === 'sent' || lowerPath === 'sent mail' || lowerPath === 'sent messages') icon = 'i-lucide-send';
+        else if (lowerPath === 'drafts') icon = 'i-lucide-file-edit';
+        else if (lowerPath === 'trash' || lowerPath === 'deleted' || lowerPath === 'deleted messages') icon = 'i-lucide-trash-2';
+        else if (lowerPath === 'spam' || lowerPath === 'junk') icon = 'i-lucide-shield-alert';
+        else if (lowerPath === 'archive') icon = 'i-lucide-archive';
+
         mailItems.push({
             label: mailbox.name,
-            icon: "i-lucide-folder",
+            icon,
             to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/${encodeURIComponent(mailbox.path)}` : undefined,
             badge: mailbox.status.unseen > 0 ? mailbox.status.unseen : undefined,
             exact: false,

@@ -1,161 +1,162 @@
 <script setup lang="ts">
-import Gravatar from '~/components/Gravatar.vue';
-import { useGravatarURL } from '~/composables/useGravatarURL';
-import type { MailAccountWithMailboxes, MailData } from '~/utils/types';
+import type { MailAccountWithMailboxes, MailListItem } from '~/utils/types';
 
-const folderPath = decodeURIComponent(useRoute().params.folderPath as string);
-const systemFolderPath = folderPath === 'inbox' ? 'INBOX' : folderPath;
+const route = useRoute();
+const toast = useToast();
+
+const folderPath = decodeURIComponent(route.params.folderPath as string);
+const systemFolderPath = folderPath.toLowerCase() === 'inbox' ? 'INBOX' : folderPath;
 const uiFolderPath = folderPath.charAt(0).toUpperCase() + folderPath.slice(1).toLowerCase();
+
+const folderIcon = computed(() => {
+    const lower = folderPath.toLowerCase();
+    if (lower === 'inbox') return 'i-lucide-inbox';
+    if (lower === 'sent' || lower === 'sent mail' || lower === 'sent messages') return 'i-lucide-send';
+    if (lower === 'drafts') return 'i-lucide-file-edit';
+    if (lower === 'trash' || lower === 'deleted' || lower === 'deleted messages') return 'i-lucide-trash-2';
+    if (lower === 'spam' || lower === 'junk') return 'i-lucide-shield-alert';
+    if (lower === 'archive') return 'i-lucide-archive';
+    return 'i-lucide-folder';
+});
 
 useSeoMeta({
     title: `${uiFolderPath} | Delivr`,
-    description: 'Manage your emails'
+    description: `Manage your ${uiFolderPath} emails`
 });
-
-const toast = useToast();
-
-// Helper to strip HTML tags for preview
-const stripHtml = (html: string) => {
-    return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-};
 
 const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
+const accountId = mailAccount.data.value.id;
 
-const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${systemFolderPath}/mails`, async () => {
-    const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
-        path: {
-            mailAccountID: mailAccount.data.value.id,
-            mailboxPath: systemFolderPath
-        }
-    }));
-    if (!response.success) {
-        toast.add({
-            title: 'Error loading emails',
-            description: response.message || 'An unknown error occurred while fetching emails.',
-            color: 'error'
-        });
-        return [] as MailData[];
-    }
-    return response.data;
-});
+// Strip HTML for text preview
+function stripHtml(html: string): string {
+    return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
+}
 
-const mails_data = mails.data;
+// Build preview text from mail body
+function getPreview(mail: MailListItem): string {
+    if (mail.body?.text) return truncate(stripHtml(mail.body.text), 120);
+    if (mail.body?.html) return truncate(stripHtml(mail.body.html), 120);
+    return 'No preview available';
+}
 
-const selectedMails = ref<number[]>([]);
-const searchQuery = ref<string>('');
-
-// Filter emails based on search
-const filteredMails = computed(() => {
-    const query = searchQuery.value;
-    if (!query) return mails_data.value;
-    
-    const queryLower = query.toLowerCase();
-    const result = [];
-    
-    for (const mail of mails_data.value) {
-        const bodyText = mail.body?.text || (mail.body?.html ? stripHtml(mail.body.html) : '');
-        if (
-            mail.subject?.toLowerCase().includes(queryLower) ||
-            mail.from?.name?.toLowerCase().includes(queryLower) ||
-            mail.from?.address?.toLowerCase().includes(queryLower) ||
-            bodyText?.toLowerCase().includes(queryLower)
-        ) {
-            result.push(mail);
-        }
-    }
-    
-    return result;
-});
-
-const unreadCount = computed(() => {
-    let count = 0;
-    for (const mail of mails_data.value) {
-        // @TODO: add unred flag
-        if ((mail as any).unread) count++;
-    }
-    return count;
-});
-
-const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+// Format dates relative to now
+function formatRelativeDate(timestamp: number): string {
+    const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffHours < 1) {
-        const diffMins = Math.floor(diffMs / (1000 * 60));
-        return `${diffMins}m`;
-    } else if (diffHours < 24) {
-        return `${diffHours}h`;
-    } else if (diffDays === 1) {
-        return 'Yesterday';
-    } else if (diffDays < 7) {
-        return `${diffDays}d`;
-    } else {
-        return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
-    }
-};
 
-function openEmail(mailId: number) {
-    navigateTo(`/mail/${mailAccount.data.value.id}/folder/inbox/${mailId}`);
-};
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d`;
+    return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+}
 
-function toggleSelection(mailId: number) {
-    const index = selectedMails.value.indexOf(mailId);
-    if (index > -1) {
-        selectedMails.value.splice(index, 1);
-    } else {
-        selectedMails.value.push(mailId);
-    }
-};
+// Check mail flag helpers
+function isUnread(mail: MailListItem): boolean {
+    return !mail.flags?.seen;
+}
 
-function selectAll() {
-    if (selectedMails.value.length === filteredMails.value.length) {
-        selectedMails.value = [];
-    } else {
-        const uids: number[] = [];
-        for (const mail of filteredMails.value) {
-            uids.push(mail.uid);
-        }
-        selectedMails.value = uids;
-    }
-};
+function isFlagged(mail: MailListItem): boolean {
+    return !!mail.flags?.flagged;
+}
 
-function markAsRead() {
-    for (const uid of selectedMails.value) {
-        for (const mail of mails_data.value) {
-            if (mail.uid === uid) {
-                (mail as any).unread = false;
-                break;
+function hasAttachments(mail: MailListItem): boolean {
+    return mail.attachments.length > 0;
+}
+
+// ── Data fetching ──
+
+const searchQuery = ref('');
+const searchDebounced = ref('');
+
+let _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+watch(searchQuery, (val) => {
+    if (_debounceTimer) clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(() => {
+        searchDebounced.value = val;
+    }, 400);
+});
+
+const mails = await useAPIAsyncData<MailListItem[]>(
+    `/mail-accounts/${accountId}/mailboxes/${systemFolderPath}/mails`,
+    async () => {
+        const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
+            path: {
+                mailAccountID: accountId,
+                mailboxPath: systemFolderPath,
+            },
+            query: {
+                order: 'newest',
+                ...(searchDebounced.value ? { searchString: searchDebounced.value } : {}),
             }
+        }));
+        if (!response.success) {
+            toast.add({
+                title: 'Error loading emails',
+                description: response.message || 'An unknown error occurred while fetching emails.',
+                color: 'error'
+            });
+            return [] as MailListItem[];
         }
+        return response.data;
     }
-    selectedMails.value = [];
-};
+);
 
-function markAsUnread() {
-    for (const uid of selectedMails.value) {
-        for (const mail of mails_data.value) {
-            if (mail.uid === uid) {
-                (mail as any).unread = true;
-                break;
-            }
-        }
-    }
-    selectedMails.value = [];
-};
+// Re-fetch when search changes
+watch(searchDebounced, () => {
+    mails.refresh();
+});
 
-function deleteMails() {
-    const remaining = [];
-    for (const mail of mails_data.value) {
-        if (!selectedMails.value.includes(mail.uid)) {
-            remaining.push(mail);
-        }
+const mailList = mails.data;
+
+// ── Selection state ──
+
+const selectedUids = ref<Set<number>>(new Set());
+
+function isSelected(uid: number): boolean {
+    return selectedUids.value.has(uid);
+}
+
+function toggleSelection(uid: number) {
+    const newSet = new Set(selectedUids.value);
+    if (newSet.has(uid)) {
+        newSet.delete(uid);
+    } else {
+        newSet.add(uid);
     }
-    mails_data.value = remaining;
-    selectedMails.value = [];
-};
+    selectedUids.value = newSet;
+}
+
+function toggleSelectAll() {
+    if (selectedUids.value.size === mailList.value.length) {
+        selectedUids.value = new Set();
+    } else {
+        selectedUids.value = new Set(mailList.value.map(m => m.uid));
+    }
+}
+
+function clearSelection() {
+    selectedUids.value = new Set();
+}
+
+const hasSelection = computed(() => selectedUids.value.size > 0);
+const allSelected = computed(() => mailList.value.length > 0 && selectedUids.value.size === mailList.value.length);
+const someSelected = computed(() => selectedUids.value.size > 0 && selectedUids.value.size < mailList.value.length);
+
+// ── Unread count ──
+
+const unreadCount = computed(() => mailList.value.filter(m => isUnread(m)).length);
+
+// ── Navigation ──
+
+function openMail(uid: number) {
+    navigateTo(`/mail/${accountId}/folder/${encodeURIComponent(folderPath)}/${uid}`);
+}
 
 </script>
 
@@ -163,15 +164,15 @@ function deleteMails() {
     <UDashboardPanel>
         <template #header>
             <DashboardPageHeader
-                title="Inbox"
-                icon="i-lucide-inbox"
-                :description="unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'"
+                :title="uiFolderPath"
+                :icon="folderIcon"
+                :description="unreadCount > 0 ? `${unreadCount} unread` : mailList.length > 0 ? `${mailList.length} emails` : 'No emails'"
             />
         </template>
 
         <template #body>
             <DashboardPageBody>
-                <!-- Search and Actions Bar -->
+                <!-- Toolbar: Search + Actions -->
                 <div class="flex items-center gap-3 mb-4">
                     <UInput
                         v-model="searchQuery"
@@ -180,83 +181,100 @@ function deleteMails() {
                         class="flex-1"
                         size="md"
                     />
-                    <UButton
-                        icon="i-lucide-refresh-cw"
-                        color="neutral"
-                        variant="outline"
-                        size="md"
-                        aria-label="Refresh"
-                        @click="mails.refresh()"
-                    />
+                    <UTooltip text="Refresh">
+                        <UButton
+                            icon="i-lucide-refresh-cw"
+                            color="neutral"
+                            variant="outline"
+                            size="md"
+                            :loading="mails.loading.value"
+                            @click="mails.refresh()"
+                        />
+                    </UTooltip>
                 </div>
 
-                <!-- Bulk Actions Toolbar -->
-                <div v-if="selectedMails.length > 0" class="flex items-center gap-2 mb-4 p-3 bg-primary-50 dark:bg-primary-950 rounded-lg border border-primary-200 dark:border-primary-800">
+                <!-- Bulk Actions Bar -->
+                <div
+                    v-if="hasSelection"
+                    class="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-lg border border-accented bg-elevated"
+                >
                     <UCheckbox
-                        :model-value="selectedMails.length === filteredMails.length"
-                        :indeterminate="selectedMails.length > 0 && selectedMails.length < filteredMails.length"
-                        @update:model-value="selectAll"
+                        :model-value="allSelected"
+                        :indeterminate="someSelected"
+                        @update:model-value="toggleSelectAll"
                     />
-                    <span class="text-sm text-gray-700 dark:text-gray-300 font-medium">
-                        {{ selectedMails.length }} selected
+                    <span class="text-sm font-medium text-muted">
+                        {{ selectedUids.size }} selected
                     </span>
-                    <div class="flex-1"></div>
+                    <div class="flex-1" />
                     <UButton
-                        icon="i-lucide-mail-open"
+                        icon="i-lucide-x"
                         color="neutral"
                         variant="ghost"
-                        size="sm"
-                        @click="markAsRead"
+                        size="xs"
+                        @click="clearSelection"
                     >
-                        Mark as read
-                    </UButton>
-                    <UButton
-                        icon="i-lucide-mail"
-                        color="neutral"
-                        variant="ghost"
-                        size="sm"
-                        @click="markAsUnread"
-                    >
-                        Mark as unread
-                    </UButton>
-                    <UButton
-                        icon="i-lucide-trash-2"
-                        color="error"
-                        variant="ghost"
-                        size="sm"
-                        @click="deleteMails"
-                    >
-                        Delete
+                        Clear
                     </UButton>
                 </div>
 
-                <!-- Email List -->
-                <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-                    <div v-if="filteredMails.length === 0" class="p-12 text-center">
-                        <UIcon name="i-lucide-inbox" class="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                        <p class="text-gray-500 dark:text-gray-400">
-                            {{ searchQuery ? 'No emails found' : 'Your inbox is empty' }}
+                <!-- Mail List -->
+                <div class="rounded-lg border border-default overflow-hidden">
+                    <!-- Select All row -->
+                    <div
+                        v-if="mailList.length > 0 && !hasSelection"
+                        class="flex items-center gap-3 px-4 py-2 border-b border-default bg-elevated"
+                    >
+                        <UCheckbox
+                            :model-value="false"
+                            @update:model-value="toggleSelectAll"
+                        />
+                        <span class="text-xs text-muted">Select all</span>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div v-if="mailList.length === 0 && !mails.loading.value" class="flex flex-col items-center justify-center py-16 px-4">
+                        <UIcon :name="folderIcon" class="size-12 mb-4 text-dimmed" />
+                        <p class="text-muted text-sm">
+                            {{ searchQuery ? 'No emails match your search' : `No emails in ${uiFolderPath}` }}
                         </p>
                     </div>
 
+                    <!-- Loading skeleton -->
+                    <div v-else-if="mails.loading.value && mailList.length === 0" class="divide-y divide-default">
+                        <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-4 py-3.5">
+                            <USkeleton class="size-5 rounded" />
+                            <USkeleton class="size-9 rounded-full" />
+                            <div class="flex-1 space-y-2">
+                                <USkeleton class="h-4 w-1/3" />
+                                <USkeleton class="h-3.5 w-2/3" />
+                                <USkeleton class="h-3 w-1/2" />
+                            </div>
+                            <USkeleton class="h-3 w-10" />
+                        </div>
+                    </div>
+
+                    <!-- Mail rows -->
                     <div
-                        v-for="mail in filteredMails"
+                        v-for="mail in mailList"
                         :key="mail.uid"
-                        class="group flex items-start gap-3 p-4 border-b border-gray-200 dark:border-gray-800 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer transition-colors"
-                        :class="{
-                            'bg-white dark:bg-gray-950': !(mail as any).unread,
-                            'bg-blue-50 dark:bg-blue-950/30': (mail as any).unread,
-                            'bg-primary-50 dark:bg-primary-950/50': selectedMails.includes(mail.uid)
-                        }"
-                        @click="openEmail(mail.uid)"
+                        class="group flex items-start gap-3 px-4 py-3.5 border-b border-default last:border-b-0 cursor-pointer transition-colors"
+                        :class="[
+                            isSelected(mail.uid)
+                                ? 'bg-accented'
+                                : isUnread(mail)
+                                    ? 'bg-elevated hover:bg-accented'
+                                    : 'hover:bg-elevated'
+                        ]"
+                        @click="openMail(mail.uid)"
                     >
                         <!-- Checkbox -->
-                        <UCheckbox
-                            :model-value="selectedMails.includes(mail.uid)"
-                            class="mt-1"
-                            @click.stop
-                            @update:model-value="toggleSelection(mail.uid)"
-                        />
+                        <div class="pt-0.5" @click.stop>
+                            <UCheckbox
+                                :model-value="isSelected(mail.uid)"
+                                @update:model-value="toggleSelection(mail.uid)"
+                            />
+                        </div>
 
                         <!-- Avatar -->
                         <Gravatar
@@ -265,44 +283,44 @@ function deleteMails() {
                             class="shrink-0 mt-0.5"
                         />
 
-                        <!-- Email Content -->
+                        <!-- Content -->
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-start justify-between gap-2 mb-1">
-                                <div class="flex items-center gap-2 min-w-0 flex-1">
-                                    <span 
-                                        class="font-semibold text-gray-900 dark:text-gray-100 truncate"
-                                        :class="{ 'font-bold': (mail as any).unread }"
+                            <div class="flex items-center justify-between gap-2 mb-0.5">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span
+                                        class="truncate text-sm"
+                                        :class="isUnread(mail) ? 'font-semibold text-default' : 'text-muted'"
                                     >
-                                        {{ mail.from?.name || "Unknown" }}
+                                        {{ mail.from?.name || mail.from?.address || 'Unknown' }}
                                     </span>
-                                    <UBadge
-                                        v-if="(mail as any).unread"
-                                        color="primary"
-                                        size="xs"
-                                        class="shrink-0"
-                                    >
+                                    <UBadge v-if="isUnread(mail)" color="primary" size="xs" class="shrink-0">
                                         New
                                     </UBadge>
-                                </div>
-                                <div class="flex items-center gap-2 shrink-0">
                                     <UIcon
-                                        v-if="(mail as any).hasAttachment"
-                                        name="i-lucide-paperclip"
-                                        class="w-4 h-4 text-gray-400"
+                                        v-if="isFlagged(mail)"
+                                        name="i-lucide-star"
+                                        class="size-3.5 shrink-0 text-amber-500"
                                     />
-                                    <span class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ mail.date ? formatDate(mail.date.toString()) : "Unknown" }}
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <UIcon
+                                        v-if="hasAttachments(mail)"
+                                        name="i-lucide-paperclip"
+                                        class="size-3.5 text-dimmed"
+                                    />
+                                    <span class="text-xs text-muted">
+                                        {{ mail.date ? formatRelativeDate(mail.date) : '' }}
                                     </span>
                                 </div>
                             </div>
-                            <div 
-                                class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 truncate"
-                                :class="{ 'font-semibold': (mail as any).unread }"
+                            <div
+                                class="text-sm truncate mb-0.5"
+                                :class="isUnread(mail) ? 'font-medium text-default' : 'text-muted'"
                             >
-                                {{ mail.subject }}
+                                {{ mail.subject || '(No subject)' }}
                             </div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {{ mail.body?.text ? stripHtml(mail.body.text) : (mail.body?.html ? stripHtml(mail.body.html) : 'No preview available.') }}
+                            <div class="text-xs text-dimmed truncate">
+                                {{ getPreview(mail) }}
                             </div>
                         </div>
                     </div>
