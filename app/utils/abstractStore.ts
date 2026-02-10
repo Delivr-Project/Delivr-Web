@@ -60,8 +60,7 @@ export abstract class BasicAbstractStore<T> {
 
 export abstract class BasicAbstractStoreWithMetadata<T, MetaT> extends BasicAbstractStore<T> {
 
-    //@ts-ignore
-    protected override readonly options: BasicAbstractStore.OptionsWithMetadata<MetaT>;
+    protected declare readonly options: BasicAbstractStore.OptionsWithMetadata<MetaT>;
 
     protected readonly metadataState: Ref<MetaT>;
 
