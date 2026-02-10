@@ -28,24 +28,32 @@ const sidebarItems = computed(() => {
         },
     ];
 
-    const mailItems: NavigationMenuItem[] = [
+    const inbox = mailboxes.value?.find(mb => mb.path.toLowerCase() === 'inbox');
+
+    const mailItems: NavigationMenuItem[] = mailboxes.value.length === 0 ? [
 		{
+			label: "No Folders to show",
+			icon: "i-lucide-mail",
+            exact: false,
+		}
+    ] : inbox ? [
+        {
 			label: "Inbox",
 			icon: "i-lucide-mail",
 			to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/inbox` : undefined,
-            badge: mailboxes.value?.find(mb => mb.path.toLowerCase() === 'inbox')?.status.unseen || 0,
-            exact: false,
+            badge: inbox.status.unseen > 0 ? inbox.status.unseen : undefined,
+            exact: false
 		}
-    ];
+    ] : [];
 
-    for (const mailbox of mailboxes.value || []) {
+    for (const mailbox of mailboxes.value) {
         if (mailbox.path.toLowerCase() === 'inbox') continue;
 
         mailItems.push({
             label: mailbox.name,
             icon: "i-lucide-folder",
             to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/${encodeURIComponent(mailbox.path)}` : undefined,
-            badge: mailbox.status.unseen || 0,
+            badge: mailbox.status.unseen > 0 ? mailbox.status.unseen : undefined,
             exact: false,
         });
     }
@@ -93,17 +101,11 @@ const sidebarItems = computed(() => {
     ];
 
     const footerItems: NavigationMenuItem[] = [
-        {
-            label: "Explorer",
-            icon: "i-lucide-compass",
-            to: "/explorer",
-            class: "mt-4 pt-4 border-t-2 border-default",
-        },
-        {
-            label: "Back to Home",
-            icon: "i-lucide-home",
-            to: "/",
-        },
+        // {
+        //     label: "Back to Home",
+        //     icon: "i-lucide-home",
+        //     to: "/",
+        // },
     ];
 
     return {
@@ -204,11 +206,11 @@ const searchGroups = computed(() => [{
                     :class="!isAdmin ? 'mt-auto' : ''"
                 />
 
-                <UNavigationMenu
+                <!-- <UNavigationMenu
                     :collapsed="collapsed"
                     :items="sidebarItems.footer"
                     orientation="vertical"
-                />
+                /> -->
 
             </template>
 
