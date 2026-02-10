@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { MailAccount, MailData } from '~/utils/types';
+import type { MailAccountWithMailboxes, MailData } from '~/utils/types';
 
 const folderPath = decodeURIComponent(useRoute().params.folderPath as string);
 const systemFolderPath = folderPath.toLowerCase() === 'inbox' ? 'INBOX' : folderPath;
@@ -9,7 +9,7 @@ const mailUID = parseInt(useRoute().params.mailUID as string);
 
 const toast = useToast();
 
-const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
+const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
 
 const mail = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${systemFolderPath}/mails/${mailUID}`, async () => {
     const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid({

@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import type z from 'zod';
 import { zPutMailAccountsByMailAccountIdCredentialsData } from '~/api-client/zod.gen';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useDefaultOnFormError } from '~/composables/useDefaultOnFormError';
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
 
 const toast = useToast();
 const route = useRoute();
 
+const mailAccountsStore = useMailAccountsStore();
 
 const mailAccount = useSubrouterInjectedData<MailAccount>('mail_account').inject();
 const mailAccount_data = mailAccount.data;
@@ -67,7 +68,7 @@ async function onFormSubmit() {
 				...mailAccount_form_state.value
 			} satisfies MailAccount;
 
-			await MailAccountsStore.refresh();
+			await mailAccountsStore.refresh();
 
 		} else {
 			throw new Error(result.message || 'Failed to update Mail Account');

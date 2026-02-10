@@ -1,11 +1,14 @@
 <script lang="ts" setup>
 import type { FormError, FormErrorEvent, NavigationMenuItem } from '@nuxt/ui';
 import { zPostMailAccountsData, zPutMailAccountsByMailAccountIdData } from '~/api-client/zod.gen';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useDefaultOnFormError } from '~/composables/useDefaultOnFormError';
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
 
 const toast = useToast();
 const route = useRoute();
+
+
+const mailAccountsStore = useMailAccountsStore();
 
 
 const mailAccount = useSubrouterInjectedData<MailAccount, NewMailAccount>('mail_account', true).inject();
@@ -101,7 +104,7 @@ async function onFormSubmit() {
 					color: 'success'
 				});
 
-                await MailAccountsStore.refresh();
+                await mailAccountsStore.refresh();
 
 				// Redirect to the new package page
 				await navigateTo(`/mail-accounts/${result.data.id}`);
@@ -125,7 +128,7 @@ async function onFormSubmit() {
                     color: 'success'
                 });
 
-                await MailAccountsStore.refresh();
+                await mailAccountsStore.refresh();
 
             } else {
                 throw new Error(result.message || 'Failed to update Mail Account');
@@ -174,7 +177,7 @@ async function onDeleteMailAccount() {
                 color: 'success'
             });
 
-            await MailAccountsStore.refresh();
+            await mailAccountsStore.refresh();
 
             // Redirect to the mail accounts list page
             await navigateTo(`/mail-accounts`);

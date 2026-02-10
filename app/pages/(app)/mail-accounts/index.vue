@@ -3,7 +3,7 @@ import type { MailAccount } from '~/utils/types';
 import type { TableColumn } from '@nuxt/ui'
 import type DashboardPageHeaderVue from '~/components/dashboard/DashboardPageHeader.vue';
 import DashboardPageBody from '~/components/dashboard/DashboardPageBody.vue';
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 
 const toast = useToast();
 
@@ -12,10 +12,12 @@ useSeoMeta({
     description: 'Manage all your mail accounts used for sending and receiving emails.'
 });
 
-const mailAccounts = await MailAccountsStore.use();
-const loading = MailAccountsStore.isLoading;
+const mailAccountsStore = useMailAccountsStore();
+
+const mailAccounts = await mailAccountsStore.use();
+const loading = mailAccountsStore.isLoading;
 function refresh() {
-    return MailAccountsStore.refresh()
+    return mailAccountsStore.refresh()
 }
 
 const mailAccountsTableColumns: TableColumn<MailAccount>[] = [

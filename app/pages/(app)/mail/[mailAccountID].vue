@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
+import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
+import type { MailAccountWithMailboxes } from '~/utils/types';
 
-const mailAccountID = useRoute().params.mailAccountID as string;
+const mailAccountID = parseInt(useRoute().params.mailAccountID as string);
 
 let error = null;
 
-await MailAccountsStore.fetchAndSetIfNeeded();
-const account = await MailAccountsStore.getByID(parseInt(mailAccountID));
+const mailAccountsStore = useMailAccountsStore();
+
+const selectedMailAccountStore = useSelectedMailAccountStore();
+const account = await selectedMailAccountStore.use();
 
 if (!account.value) {
     error = createError({
@@ -16,12 +20,12 @@ if (!account.value) {
     });
 } else {
 
-    MailAccountsStore.setSelected(account.value.id);
+    selectedMailAccountStore.set(mailAccountID);
     
-    useSubrouterInjectedData<MailAccount>('mail_account').provide({
-        data: account as Ref<MailAccount>,
-        refresh: MailAccountsStore.refresh,
-        loading: MailAccountsStore.isLoading,
+    useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').provide({
+        data: account as Ref<MailAccountWithMailboxes>,
+        refresh: mailAccountsStore.refresh,
+        loading: mailAccountsStore.isLoading
     });
 }
 </script>

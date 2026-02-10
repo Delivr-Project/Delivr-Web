@@ -4,7 +4,7 @@ import MailAccountsMenu from '~/components/dashboard/MailAccountsMenu.vue';
 import UserMenu from '~/components/dashboard/UserMenu.vue';
 import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
+import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 
 
 const userInfoStore = useUserInfoStore();
@@ -12,8 +12,9 @@ const user = await userInfoStore.use();
 
 const isAdmin = computed(() => user.value?.role === "admin");
 
-const currentMailAccount = MailAccountsStore.useSelected();
-const mailboxes = await MailAccountsStore.useMailboxesOfSelected();
+const currentMailAccountStore = useSelectedMailAccountStore();
+const currentMailAccount = await currentMailAccountStore.use();
+const mailboxes = computed(() => currentMailAccount.value?.mailboxes || []);
 
 const sidebarItems = computed<NavigationMenuItem[][]>(() => {
 

@@ -1,9 +1,13 @@
 <script lang="ts" setup>
-import type { MailAccount, NewMailAccount } from '~/utils/types';
+import type { MailAccount, MailAccountWithMailboxes, NewMailAccount } from '~/utils/types';
 import type { UseSubrouterPathDynamics } from '~/composables/useSubrouterPathDynamics';
-import { MailAccountsStore } from '~/utils/stores/mailAccountsStore';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 
 const route = useRoute();
+
+
+const mailAccountsStore = useMailAccountsStore();
+
 
 const mailAccountID = route.params.mailAccountID as string;
 
@@ -26,11 +30,11 @@ const account = mailAccountID === "new" ? ref({
 
     is_default: false
 
-}) : await MailAccountsStore.getByID(parseInt(mailAccountID));
+}) : await mailAccountsStore.getByID(parseInt(mailAccountID));
 
 if (mailAccountID === "new") {
 
-    useSubrouterInjectedData<number, NewMailAccount>('mail_account', true).provide({
+    useSubrouterInjectedData<MailAccountWithMailboxes, NewMailAccount>('mail_account', true).provide({
         data: account as Ref<NewMailAccount>,
         isNew: true
     });
@@ -45,10 +49,10 @@ if (mailAccountID === "new") {
         });
     }
 
-    useSubrouterInjectedData<MailAccount, NewMailAccount>('mail_account', true).provide({
-        data: account as Ref<MailAccount>,
-        refresh: MailAccountsStore.refresh,
-        loading: MailAccountsStore.isLoading,
+    useSubrouterInjectedData<MailAccountWithMailboxes, NewMailAccount>('mail_account', true).provide({
+        data: account as Ref<MailAccountWithMailboxes>,
+        refresh: mailAccountsStore.refresh,
+        loading: mailAccountsStore.isLoading,
         isNew: false
     });
 
