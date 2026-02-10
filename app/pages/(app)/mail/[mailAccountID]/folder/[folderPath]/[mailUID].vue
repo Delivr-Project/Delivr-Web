@@ -394,7 +394,7 @@ const moreActions = computed(() => [
                     </div>
 
                     <!-- Body -->
-                    <div class="rounded-lg border border-default overflow-hidden grow">
+                    <div class="rounded-lg border border-default overflow-y-auto grow">
                         <!-- HTML body rendered in sandboxed iframe for maximum isolation -->
                         <div v-if="hasHtmlBody" class="bg-default h-full">
                             <ClientOnly>
