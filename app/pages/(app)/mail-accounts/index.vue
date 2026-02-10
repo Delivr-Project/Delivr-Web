@@ -21,7 +21,7 @@ function refresh() {
 }
 
 const mailAccountsTableColumns: TableColumn<MailAccount>[] = [
-    { accessorKey: 'display_name', header: 'Display Name' },
+    { accessorKey: 'display_name', header: 'Name' },
     { accessorKey: 'created_at', header: 'Created At' },
     { accessorKey: 'is_default', header: 'Is Default' }
 ]
@@ -49,6 +49,14 @@ const mailAccountsTableColumns: TableColumn<MailAccount>[] = [
                     :data="mailAccounts || []"
                     :columns="mailAccountsTableColumns"
                     :loading="loading"
+                    :filters="[
+                        { 
+                            column: 'display_name', 
+                            type: 'text',
+                            placeholder: 'Search Accounts...', 
+                            icon: 'i-lucide-search' 
+                        }
+                    ]"
                     empty-title="No Mail Accounts Connected"
                     empty-description="Connect an email account to start sending emails."
                     empty-icon="i-lucide-mail"

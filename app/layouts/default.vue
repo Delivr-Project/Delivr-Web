@@ -59,7 +59,7 @@ const sidebarItems = computed(() => {
         {
             label: "Users",
             icon: "i-lucide-users",
-            to: "/dashboard/admin/users",
+            to: "/admin/users",
         },
     ];
 
@@ -72,13 +72,13 @@ const sidebarItems = computed(() => {
         {
             label: "General",
             icon: "i-lucide-user",
-            to: "/dashboard/settings",
+            to: "/settings",
             exact: true,
         },
         {
             label: "Security",
             icon: "i-lucide-shield",
-            to: "/dashboard/settings/security",
+            to: "/settings/security",
         },
         {
             label: "Manage Mail Accounts",
