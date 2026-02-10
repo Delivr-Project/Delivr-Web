@@ -34,7 +34,7 @@ const mails = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}
             description: response.message || 'An unknown error occurred while fetching emails.',
             color: 'error'
         });
-        return [];
+        return [] as ;
     }
     return response.data;
 });
