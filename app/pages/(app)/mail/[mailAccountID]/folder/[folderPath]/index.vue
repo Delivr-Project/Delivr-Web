@@ -310,7 +310,7 @@ function openMail(uid: number) {
                             :to="`/mail/${accountId}/compose`"
                         />
                     </div>
-                    <div class="hidden md<:block">
+                    <div class="hidden md:block">
                         <UButton
                             label="Compose"
                             icon="i-lucide-pen-square"
