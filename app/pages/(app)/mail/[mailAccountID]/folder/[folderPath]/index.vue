@@ -233,11 +233,97 @@ function openMail(uid: number) {
 <template>
     <UDashboardPanel>
         <template #header>
-            <DashboardPageHeader
+            <!-- <UDashboardNavbar :ui='{
+                center: "w-full",
+            }'>
+            
+                <div class="grid grid-cols-[1fr_minmax(4rem,auto)_1fr] items-center w-full">
+
+                    <div class="justify-self-start flex items-center gap-1.5 min-w-0">
+
+                        <UIcon
+                            :name="folderIcon"
+                            class="iconify i-lucide:settings shrink-0 size-5 self-center me-1.5"
+                            data-slot="icon"
+                        />
+
+                        <h1
+                            class="flex items-center gap-1.5 font-semibold text-highlighted truncate"
+                            data-slot="title"
+                        >
+                            {{ uiFolderPath }}
+                        </h1>
+                    </div>
+
+                    <div class="justify-self-center">
+
+                        <UDashboardSearchButton
+                            class="bg-transparent ring-default"
+                            label="Search..."
+                        />
+                        
+                    </div>
+
+                    <div class="justify-self-end">
+                        <div class="px-2 mb-2">
+                            <UButton
+                                label="Compose"
+                                icon="i-lucide-pen-square"
+                                color="primary"
+                                variant="solid"
+                                size="md"
+                                class="w-full justify-start"
+                                :to="`/mail/${accountId}/compose`"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+            </UDashboardNavbar> -->
+            <UDashboardNavbar
                 :title="uiFolderPath"
                 :icon="folderIcon"
-                :description="unreadCount > 0 ? `${unreadCount} unread` : mailList.length > 0 ? `${mailList.length} emails` : 'No emails'"
-            />
+                :ui='{
+                    root: "grid grid-cols-[1fr_50%_1fr] sm:grid-cols-[1fr_20%_1fr] items-center",
+                    left: "justify-self-start",
+                    center: "justify-self-center w-full",
+                    right: "justify-self-end",
+
+                }'
+                
+            >
+                <template #default>
+                    <UDashboardSearchButton
+                        class="bg-transparent ring-default w-full"
+                        label="Search..."
+                    />
+                </template>
+
+                <template #right>
+                    <div class="block md:hidden">
+                        <UButton
+                            icon="i-lucide-pen-square"
+                            color="primary"
+                            variant="solid"
+                            size="md"
+                            class="w-full justify-start"
+                            :to="`/mail/${accountId}/compose`"
+                        />
+                    </div>
+                    <div class="hidden md<:block">
+                        <UButton
+                            label="Compose"
+                            icon="i-lucide-pen-square"
+                            color="primary"
+                            variant="solid"
+                            size="md"
+                            class="w-full justify-start"
+                            :to="`/mail/${accountId}/compose`"
+                        />
+                    </div>
+                </template>
+
+            </UDashboardNavbar>
         </template>
 
         <template #body>

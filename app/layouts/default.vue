@@ -169,12 +169,6 @@ const searchGroups = computed(() => [{
 			</template>
 
 			<template #default="{ collapsed }">
-				
-				<UDashboardSearchButton
-					:collapsed="collapsed"
-					class="bg-transparent ring-default"
-                    label="Search..."
-				/>
 
                 <UNavigationMenu
                     :collapsed="collapsed"
@@ -196,7 +190,7 @@ const searchGroups = computed(() => [{
                     <MailAccountsMenu :collapsed="collapsed" />
 
                     <!-- Compose Button - Prominent -->
-                    <div v-if="currentMailAccount" class="px-2 mb-2">
+                    <!-- <div v-if="currentMailAccount" class="px-2 mb-2">
                         <UButton
                             v-if="!collapsed"
                             icon="i-lucide-pen-square"
@@ -217,7 +211,7 @@ const searchGroups = computed(() => [{
                                 :to="`/mail/${currentMailAccount.id}/compose`"
                             />
                         </UTooltip>
-                    </div>
+                    </div> -->
                     
                     <UNavigationMenu
                         :collapsed="collapsed"
