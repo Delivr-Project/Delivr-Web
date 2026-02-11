@@ -31,7 +31,9 @@ const isAdmin = computed(() => user.value.role === 'admin')
         </template>
 
         <template #body>
-            <DashboardPageBody></DashboardPageBody>
+            <DashboardPageBody>
+                not used for now
+            </DashboardPageBody>
         </template>
     </UDashboardPanel>
 </template>
