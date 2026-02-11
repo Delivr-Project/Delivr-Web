@@ -224,9 +224,21 @@ function getRoleColor(role: AdminUser["role"]) {
 </script>
 
 <template>
-    <UDashboardPanel>
+    <UDashboardPanel class="flex-1">
         <template #header>
             <UDashboardNavbar title="Users" icon="i-lucide-users">
+                <template #leading>
+                    <UButton
+                        icon="i-lucide-arrow-left"
+                        color="neutral"
+                        variant="ghost"
+                        to="/"
+                        class="mr-2"
+                    />
+                </template>
+                <template #trailing>
+                    <UBadge color="primary" variant="subtle">Admin</UBadge>
+                </template>
                 <template #right>
                     <UButton
                         label="New User"

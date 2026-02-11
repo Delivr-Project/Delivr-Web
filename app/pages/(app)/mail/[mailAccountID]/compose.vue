@@ -179,7 +179,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <UDashboardPanel>
+    <UDashboardPanel class="flex-1">
         <template #header>
             <DashboardPageHeader
                 title="New Message"

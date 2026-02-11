@@ -29,18 +29,23 @@ const mailAccountsTableColumns: TableColumn<MailAccount>[] = [
 </script>
 
 <template>
-    <UDashboardPanel>
+    <UDashboardPanel class="flex-1">
         <template #header>
-            <!-- <UDashboardNavbar title="OS Releases" icon="i-lucide-rocket">
-                <template #trailing>
-                    <span class="text-slate-400 hidden sm:inline"> | Manage all OS releases</span>
-                </template>
-            </UDashboardNavbar> -->
             <DashboardPageHeader
                 title="Manage Mail Accounts"
                 icon="i-lucide-at-sign"
                 description="Manage Mail Accounts"
-            />
+            >
+                <template #leading>
+                    <UButton
+                        icon="i-lucide-arrow-left"
+                        color="neutral"
+                        variant="ghost"
+                        to="/"
+                        class="mr-2"
+                    />
+                </template>
+            </DashboardPageHeader>
         </template>
 
         <template #body>

@@ -103,13 +103,23 @@ async function onDeleteApiKey() {
 </script>
 
 <template>
-    <UDashboardPanel>
+    <UDashboardPanel class="flex-1">
         <template #header>
             <DashboardPageHeader
                 title="API Keys"
                 icon="i-lucide-key"
                 description="Manage your API keys"
-            />
+            >
+                <template #leading>
+                    <UButton
+                        icon="i-lucide-arrow-left"
+                        color="neutral"
+                        variant="ghost"
+                        to="/"
+                        class="mr-2"
+                    />
+                </template>
+            </DashboardPageHeader>
         </template>
 
         <template #body>

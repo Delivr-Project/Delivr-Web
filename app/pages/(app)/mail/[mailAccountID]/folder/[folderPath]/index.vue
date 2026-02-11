@@ -231,15 +231,7 @@ function openMail(uid: number) {
 </script>
 
 <template>
-    <UDashboardPanel>
-        <template #header>
-            <DashboardPageHeader
-                :title="uiFolderPath"
-                :icon="folderIcon"
-                :description="unreadCount > 0 ? `${unreadCount} unread` : mailList.length > 0 ? `${mailList.length} emails` : 'No emails'"
-            />
-        </template>
-
+    <UDashboardPanel class="flex-1">
         <template #body>
             <DashboardPageBody>
                 <!-- Toolbar: Search + Actions -->

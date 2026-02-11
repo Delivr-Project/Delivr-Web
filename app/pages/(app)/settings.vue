@@ -15,18 +15,34 @@ const links = [[{
 	label: 'Security',
 	icon: 'i-lucide-shield',
 	to: '/settings/security'
+}, {
+	label: 'Mail Accounts',
+	icon: 'i-lucide-at-sign',
+	to: '/mail-accounts'
+}, {
+	label: 'API Keys',
+	icon: 'i-lucide-key',
+	to: '/apikeys'
 }]] satisfies NavigationMenuItem[][]
 
 </script>
 
 <template>
-	<UDashboardPanel id="settings" :ui="{ body: 'lg:py-12' }">
+	<UDashboardPanel id="settings" :ui="{ body: 'lg:py-12' }" class="flex-1">
 		<template #header>
 			<UDashboardNavbar title="Settings" icon="i-lucide-settings">
+				<template #leading>
+					<UButton
+						icon="i-lucide-arrow-left"
+						color="neutral"
+						variant="ghost"
+						to="/"
+						class="mr-2"
+					/>
+				</template>
             </UDashboardNavbar>
 
 			<UDashboardToolbar>
-				<!-- NOTE: The `-mx-1` class is used to align with the `DashboardSidebarCollapse` button here. -->
 				<UNavigationMenu :items="links" highlight class="-mx-1 flex-1" />
 			</UDashboardToolbar>
 		</template>

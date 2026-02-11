@@ -197,7 +197,7 @@ const moreActions = computed(() => [
 </script>
 
 <template>
-    <UDashboardPanel v-if="mailData">
+    <UDashboardPanel v-if="mailData" class="flex-1">
         <template #header>
             <DashboardPageHeader
                 :title="subject"
