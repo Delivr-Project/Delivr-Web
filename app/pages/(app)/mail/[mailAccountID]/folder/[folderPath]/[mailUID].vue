@@ -400,7 +400,7 @@ const moreActions = computed(() => [
                             <ClientOnly>
                                 <iframe
                                     :srcdoc="sanitizedHtml"
-                                    sandbox="allow-popups allow-popups-to-escape-sandbox"
+                                    sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
                                     referrerpolicy="no-referrer"
                                     class="w-full border-0 block h-full"
                                     style="background: transparent;"

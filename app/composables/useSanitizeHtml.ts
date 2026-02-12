@@ -24,6 +24,9 @@ export function useSanitizeHtml(html: string, options?: { wrapForDarkMode?: bool
     });
 
     const sanitized = DOMPurify.sanitize(html, {
+
+        
+
         USE_PROFILES: { html: true },
         // Allow only safe tags for email rendering
         // ALLOWED_TAGS: [
