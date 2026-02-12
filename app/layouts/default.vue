@@ -170,11 +170,12 @@ const searchGroups = computed(() => [{
 
 			<template #default="{ collapsed }">
 
-                <UNavigationMenu
+                <!-- NOTE: Basic items removed for now, can be added back if needed in the future -->
+                <!-- <UNavigationMenu
                     :collapsed="collapsed"
                     :items="sidebarItems.basic"
                     orientation="vertical"
-                />
+                /> -->
 
                 <div class="flex flex-col main-bg-color">
                     <UNavigationMenu
