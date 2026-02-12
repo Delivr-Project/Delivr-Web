@@ -1,14 +1,47 @@
 import DOMPurify, { type Config } from 'dompurify';
 
 /**
- * Shared DOMPurify configuration for email HTML sanitization.
- * Must match backend config in Delivr-API/src/utils/mails/purify-config.ts
+ * Regex patterns for dangerous CSS that must be removed.
+ * These can be used for tracking, data exfiltration, or code execution.
+ */
+const DANGEROUS_CSS_PATTERNS = [
+    // External resource loading (tracking pixels, data exfiltration)
+    /@import\s*(?:url\s*\()?[^;]+/gi,
+    /url\s*\([^)]*\)/gi,
+    
+    // JavaScript execution vectors
+    /expression\s*\([^)]*\)/gi,  // IE expression()
+    /-moz-binding\s*:[^;]+/gi,   // Firefox XBL
+    /behavior\s*:[^;]+/gi,       // IE HTC behaviors
+    
+    // Other potentially dangerous patterns
+    /-o-link\s*:[^;]+/gi,        // Opera link
+    /-o-link-source\s*:[^;]+/gi, // Opera link source
+];
+
+/**
+ * Sanitizes CSS content by removing dangerous patterns.
+ */
+function sanitizeCss(css: string): string {
+    let sanitized = css;
+    for (const pattern of DANGEROUS_CSS_PATTERNS) {
+        sanitized = sanitized.replace(pattern, '/* removed */');
+    }
+    return sanitized;
+}
+
+/**
+ * DOMPurify configuration for email HTML sanitization.
  * 
- * Strategy: Backend does full sanitization on parse/store,
- * client does lightweight verify + client-specific transforms (target="_blank").
+ * This is the ONLY sanitization layer - backend passes raw HTML,
+ * client sanitizes before rendering using the browser's native DOM parser.
+ * This approach is safer as browser DOM parsing matches rendering behavior exactly.
  */
 const EMAIL_PURIFY_CONFIG: Config = {
     USE_PROFILES: { html: true },
+
+    // Allow <style> tags for email styling (CSS is sanitized via hook)
+    ADD_TAGS: ['style'],
 
     // Forbid dangerous URI schemes
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
@@ -27,13 +60,15 @@ const EMAIL_PURIFY_CONFIG: Config = {
  * Sanitizes HTML content to prevent XSS attacks.
  * Uses DOMPurify with strict settings suitable for rendering email HTML.
  * 
- * This is the client-side "verify" layer - backend already sanitized the content,
- * but we re-sanitize for defense in depth plus client-specific transforms.
+ * This is the ONLY sanitization layer - raw HTML from backend is sanitized
+ * here before rendering. Using browser's native DOM parser ensures parsing
+ * behavior matches rendering exactly (no JSDOM quirks).
  * 
  * - Strips all JavaScript (scripts, event handlers, javascript: URIs)
+ * - Sanitizes CSS (removes url(), @import, expression(), etc.)
  * - Allows safe HTML tags and attributes for email rendering
  * - Removes dangerous elements like `<form>`, `<object>`, `<embed>`, etc.
- * - Forces all links to open in new tabs
+ * - Forces all links to open in new tabs with noopener noreferrer
  */
 export function useSanitizeHtml(html: string, options?: { wrapForDarkMode?: boolean }): string {
     if (!import.meta.client) {
@@ -41,17 +76,35 @@ export function useSanitizeHtml(html: string, options?: { wrapForDarkMode?: bool
         return '';
     }
 
-    // Add hook to force target="_blank" on all links (client-specific transform)
+    // Hook to sanitize CSS in <style> tags and force safe link attributes
+    DOMPurify.addHook('uponSanitizeElement', (node) => {
+        // Sanitize CSS content in <style> tags
+        const el = node as Element;
+        if (el.tagName === 'STYLE' && node.textContent) {
+            node.textContent = sanitizeCss(node.textContent);
+        }
+    });
+
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-        if (node.tagName === 'A') {
-            node.setAttribute('target', '_blank');
-            node.setAttribute('rel', 'noopener noreferrer');
+        const el = node as Element;
+        // Force safe link behavior
+        if (el.tagName === 'A') {
+            el.setAttribute('target', '_blank');
+            el.setAttribute('rel', 'noopener noreferrer');
+        }
+        // Sanitize inline styles
+        if (el.hasAttribute('style')) {
+            const style = el.getAttribute('style');
+            if (style) {
+                el.setAttribute('style', sanitizeCss(style));
+            }
         }
     });
 
     const sanitized = DOMPurify.sanitize(html, EMAIL_PURIFY_CONFIG);
 
-    // Remove the hook to avoid affecting other sanitizations
+    // Remove hooks to avoid affecting other sanitizations
+    DOMPurify.removeHook('uponSanitizeElement');
     DOMPurify.removeHook('afterSanitizeAttributes');
 
     // Wrap in dark-mode compatible HTML if requested
