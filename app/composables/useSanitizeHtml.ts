@@ -1,8 +1,34 @@
-import DOMPurify from 'dompurify';
+import DOMPurify, { type Config } from 'dompurify';
+
+/**
+ * Shared DOMPurify configuration for email HTML sanitization.
+ * Must match backend config in Delivr-API/src/utils/mails/purify-config.ts
+ * 
+ * Strategy: Backend does full sanitization on parse/store,
+ * client does lightweight verify + client-specific transforms (target="_blank").
+ */
+const EMAIL_PURIFY_CONFIG: Config = {
+    USE_PROFILES: { html: true },
+
+    // Forbid dangerous URI schemes
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+
+    // Forbid forms, iframes, scripts etc.
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button', 'meta', 'link', 'base'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onsubmit', 'onreset', 'onselect', 'onchange', 'onkeydown', 'onkeypress', 'onkeyup'],
+
+    // Remove contents of dangerous elements (not just the tags)
+    KEEP_CONTENT: true,
+    // Allow ARIA attributes
+    ALLOW_ARIA_ATTR: true,
+};
 
 /**
  * Sanitizes HTML content to prevent XSS attacks.
  * Uses DOMPurify with strict settings suitable for rendering email HTML.
+ * 
+ * This is the client-side "verify" layer - backend already sanitized the content,
+ * but we re-sanitize for defense in depth plus client-specific transforms.
  * 
  * - Strips all JavaScript (scripts, event handlers, javascript: URIs)
  * - Allows safe HTML tags and attributes for email rendering
@@ -15,7 +41,7 @@ export function useSanitizeHtml(html: string, options?: { wrapForDarkMode?: bool
         return '';
     }
 
-    // Add hook to force target="_blank" on all links
+    // Add hook to force target="_blank" on all links (client-specific transform)
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
         if (node.tagName === 'A') {
             node.setAttribute('target', '_blank');
@@ -23,50 +49,7 @@ export function useSanitizeHtml(html: string, options?: { wrapForDarkMode?: bool
         }
     });
 
-    const sanitized = DOMPurify.sanitize(html, {
-
-        
-
-        USE_PROFILES: { html: true },
-        // Allow only safe tags for email rendering
-        // ALLOWED_TAGS: [
-        //     // Structure
-        //     'div', 'span', 'p', 'br', 'hr',
-        //     // Headings
-        //     'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        //     // Text formatting
-        //     'b', 'i', 'u', 'em', 'strong', 'small', 'sub', 'sup', 's', 'strike', 'del', 'ins', 'mark',
-        //     // Lists
-        //     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-        //     // Links & images
-        //     'a', 'img',
-        //     // Tables
-        //     'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col',
-        //     // Semantic
-        //     'blockquote', 'pre', 'code', 'abbr', 'address', 'cite', 'q',
-        //     // Layout (common in email HTML)
-        //     'center', 'font',
-        // ],
-        // ALLOWED_ATTR: [
-        //     'href', 'src', 'alt', 'title', 'width', 'height',
-        //     'style', 'class', 'id', 'dir', 'lang',
-        //     'colspan', 'rowspan', 'cellpadding', 'cellspacing', 'border',
-        //     'align', 'valign', 'bgcolor', 'color', 'size', 'face',
-        //     'target', 'rel',
-        // ],
-
-        // Forbid dangerous URI schemes
-        ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-
-        // Forbid forms, iframes, scripts etc.
-        FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button', 'meta', 'link', 'base'],
-        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onsubmit', 'onreset', 'onselect', 'onchange', 'onkeydown', 'onkeypress', 'onkeyup'],
-
-        // Remove contents of dangerous elements (not just the tags)
-        KEEP_CONTENT: true,
-        // Allow ARIA attributes
-        ALLOW_ARIA_ATTR: true,
-    });
+    const sanitized = DOMPurify.sanitize(html, EMAIL_PURIFY_CONFIG);
 
     // Remove the hook to avoid affecting other sanitizations
     DOMPurify.removeHook('afterSanitizeAttributes');
