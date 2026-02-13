@@ -41,7 +41,7 @@ if (currentMailAccount.value) {
 
         <template #body>
             <DashboardPageBody>
-                not used for now
+                <!-- not used for now -->
             </DashboardPageBody>
         </template>
     </UDashboardPanel>
