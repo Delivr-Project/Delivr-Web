@@ -4,6 +4,7 @@ import { Utils } from '~/utils';
 
 const route = useRoute();
 const toast = useToast();
+const { isMailSearchOpen } = useDashboard();
 
 const folderPath = decodeURIComponent(route.params.folderPath as string);
 const systemFolderPath = folderPath.toLowerCase() === 'inbox' ? 'INBOX' : folderPath;
@@ -293,10 +294,19 @@ function openMail(uid: number) {
                 
             >
                 <template #default>
-                    <UDashboardSearchButton
-                        class="bg-transparent ring-default w-full"
-                        label="Search..."
-                    />
+                    <UButton
+                        class="bg-transparent ring-default w-full justify-start text-muted"
+                        color="neutral"
+                        variant="outline"
+                        icon="i-lucide-search"
+                        @click="isMailSearchOpen = true"
+                    >
+                        <span class="flex-1 text-left">Search emails...</span>
+                        <span class="flex items-center gap-1 text-xs">
+                            <UKbd value="meta" size="sm" />
+                            <UKbd value="K" size="sm" />
+                        </span>
+                    </UButton>
                 </template>
 
                 <template #right>

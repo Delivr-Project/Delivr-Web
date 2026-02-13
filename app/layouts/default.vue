@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import MailAccountsMenu from '~/components/dashboard/MailAccountsMenu.vue';
+import MailSearch from '~/components/dashboard/MailSearch.vue';
 import NotificationsSlideover from '~/components/dashboard/NotificationsSlideover.vue';
 import UserMenu from '~/components/dashboard/UserMenu.vue';
 import DelivrIcon from '~/components/img/DelivrIcon.vue';
@@ -18,6 +19,8 @@ const isAdmin = computed(() => user.value?.role === "admin");
 const currentMailAccountStore = useSelectedMailAccountStore();
 const currentMailAccount = await currentMailAccountStore.use();
 const mailboxes = computed(() => currentMailAccount.value?.mailboxes || []);
+
+const { isMailSearchOpen } = useDashboard();
 
 const sidebarItems = computed(() => {
 
@@ -130,14 +133,6 @@ const sidebarItems = computed(() => {
     }
 });
 
-const searchGroups = computed(() => [{
-    id: 'links',
-    label: 'Go to',
-    items: Object.values(sidebarItems.value).flat()
-}]);
-
-
-
 const displaySidebars = computed(() => {
 
     const settingsSidebar = route.path.startsWith('/settings');
@@ -155,12 +150,7 @@ const displaySidebars = computed(() => {
 <template>
     <UDashboardGroup class="main-bg-color">
 
-        <UDashboardSearch
-            :groups="searchGroups"
-            placeholder="Search..."
-            title="Search"
-            description="Search"
-        />
+        <MailSearch v-model:open="isMailSearchOpen" />
 
 
         <UDashboardSidebar
