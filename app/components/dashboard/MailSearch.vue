@@ -3,6 +3,7 @@ import type { PostMailAccountsByMailAccountIdSearchResponse, GetMailAccountsByMa
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import Gravatar from '~/components/Gravatar.vue';
 import { useDebounceFn } from '@vueuse/core';
+import { CalendarDate } from '@internationalized/date';
 
 // ── Types ──
 
@@ -22,6 +23,10 @@ const currentMailAccount = await currentMailAccountStore.use();
 const searchMode = ref<'quick' | 'advanced'>('quick');
 const quickSearchQuery = ref('');
 const isSearching = ref(false);
+
+// Date picker popover states
+const sinceDateOpen = ref(false);
+const beforeDateOpen = ref(false);
 
 // Advanced search filters
 const filters = reactive({
@@ -47,6 +52,138 @@ const totalResults = ref(0);
 const currentPage = ref(1);
 const PAGE_SIZE = 20;
 const hasMoreResults = computed(() => searchResults.value.length < totalResults.value);
+
+// ── Calendar value converters ──
+
+const sinceCalendarValue = computed({
+    get: () => filters.since ? new CalendarDate(filters.since.getFullYear(), filters.since.getMonth() + 1, filters.since.getDate()) : undefined,
+    set: (val) => {
+        if (val) {
+            filters.since = new Date(val.year, val.month - 1, val.day);
+            sinceDateOpen.value = false;
+        } else {
+            filters.since = null;
+        }
+    }
+});
+
+const beforeCalendarValue = computed({
+    get: () => filters.before ? new CalendarDate(filters.before.getFullYear(), filters.before.getMonth() + 1, filters.before.getDate()) : undefined,
+    set: (val) => {
+        if (val) {
+            filters.before = new Date(val.year, val.month - 1, val.day);
+            beforeDateOpen.value = false;
+        } else {
+            filters.before = null;
+        }
+    }
+});
+
+// ── Quick Search Filter Parsing ──
+
+const FILTER_PREFIXES = ['from:', 'to:', 'subject:', 'body:', 'has:', 'is:', 'after:', 'before:'] as const;
+
+function parseQuickSearch(query: string): { filters: Partial<typeof filters>; remainingText: string } {
+    const parsedFilters: Partial<typeof filters> = {};
+    let remaining = query;
+    
+    // Parse from:
+    const fromMatch = remaining.match(/\bfrom:(\S+)/i);
+    if (fromMatch?.[1]) {
+        parsedFilters.from = fromMatch[1].replace(/^["']|["']$/g, '');
+        remaining = remaining.replace(fromMatch[0], '').trim();
+    }
+    
+    // Parse to:
+    const toMatch = remaining.match(/\bto:(\S+)/i);
+    if (toMatch?.[1]) {
+        parsedFilters.to = toMatch[1].replace(/^["']|["']$/g, '');
+        remaining = remaining.replace(toMatch[0], '').trim();
+    }
+    
+    // Parse subject: (supports quoted strings)
+    const subjectMatch = remaining.match(/\bsubject:(?:"([^"]+)"|'([^']+)'|(\S+))/i);
+    if (subjectMatch) {
+        parsedFilters.subject = subjectMatch[1] || subjectMatch[2] || subjectMatch[3];
+        remaining = remaining.replace(subjectMatch[0], '').trim();
+    }
+    
+    // Parse body:
+    const bodyMatch = remaining.match(/\bbody:(?:"([^"]+)"|'([^']+)'|(\S+))/i);
+    if (bodyMatch) {
+        parsedFilters.body = bodyMatch[1] || bodyMatch[2] || bodyMatch[3];
+        remaining = remaining.replace(bodyMatch[0], '').trim();
+    }
+    
+    // Parse has:attachment
+    if (/\bhas:attachment/i.test(remaining)) {
+        parsedFilters.hasAttachment = true;
+        remaining = remaining.replace(/\bhas:attachment/i, '').trim();
+    }
+    
+    // Parse is:unread / is:read
+    if (/\bis:unread/i.test(remaining)) {
+        parsedFilters.seen = false;
+        remaining = remaining.replace(/\bis:unread/i, '').trim();
+    } else if (/\bis:read/i.test(remaining)) {
+        parsedFilters.seen = true;
+        remaining = remaining.replace(/\bis:read/i, '').trim();
+    }
+    
+    // Parse is:flagged / is:starred
+    if (/\bis:(flagged|starred)/i.test(remaining)) {
+        parsedFilters.flagged = true;
+        remaining = remaining.replace(/\bis:(flagged|starred)/i, '').trim();
+    }
+    
+    // Parse is:draft
+    if (/\bis:draft/i.test(remaining)) {
+        parsedFilters.draft = true;
+        remaining = remaining.replace(/\bis:draft/i, '').trim();
+    }
+    
+    // Parse after:date (YYYY-MM-DD or natural language)
+    const afterMatch = remaining.match(/\bafter:(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/i);
+    if (afterMatch?.[1]) {
+        const date = new Date(afterMatch[1]);
+        if (!isNaN(date.getTime())) {
+            parsedFilters.since = date;
+        }
+        remaining = remaining.replace(afterMatch[0], '').trim();
+    }
+    
+    // Parse before:date
+    const beforeMatch = remaining.match(/\bbefore:(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/i);
+    if (beforeMatch?.[1]) {
+        const date = new Date(beforeMatch[1]);
+        if (!isNaN(date.getTime())) {
+            parsedFilters.before = date;
+        }
+        remaining = remaining.replace(beforeMatch[0], '').trim();
+    }
+    
+    return { filters: parsedFilters, remainingText: remaining.trim() };
+}
+
+// Quick search filter hints shown below input
+const quickSearchHints = computed(() => {
+    const hints: string[] = [];
+    const query = quickSearchQuery.value.toLowerCase();
+    
+    // Show relevant hints based on what user is typing
+    if (query.endsWith('from:') || query.includes('from:')) return [];
+    if (query.endsWith('to:') || query.includes('to:')) return [];
+    
+    if (!query.includes('from:')) hints.push('from:');
+    if (!query.includes('to:')) hints.push('to:');
+    if (!query.includes('subject:')) hints.push('subject:');
+    if (!query.includes('has:')) hints.push('has:attachment');
+    if (!query.includes('is:')) hints.push('is:unread');
+    if (!query.includes('after:')) hints.push('after:');
+    if (!query.includes('before:')) hints.push('before:');
+    
+    return hints.slice(0, 5);
+});
 
 // ── Computed ──
 
@@ -144,6 +281,10 @@ function hasAttachments(item: SearchResultItem): boolean {
     return item.mail.attachments && item.mail.attachments.length > 0;
 }
 
+function addFilterHint(hint: string) {
+    quickSearchQuery.value = (quickSearchQuery.value.trim() + ' ' + hint).trim();
+}
+
 // ── Search Actions ──
 
 async function performSearch(append = false) {
@@ -159,25 +300,58 @@ async function performSearch(append = false) {
         const offset = (currentPage.value - 1) * PAGE_SIZE;
         
         if (searchMode.value === 'quick' && quickSearchQuery.value.trim()) {
-            // Quick search
-            const result = await useAPI((api) => api.getMailAccountsByMailAccountIdSearch({
-                composable: '$fetch',
-                path: { mailAccountID: currentMailAccount.value!.id },
-                query: {
-                    q: quickSearchQuery.value.trim(),
-                    limit: PAGE_SIZE,
-                    offset,
-                    order: 'newest',
-                }
-            }));
+            // Parse quick search for filters
+            const { filters: parsedFilters, remainingText } = parseQuickSearch(quickSearchQuery.value);
             
-            if (result.success && result.data) {
-                if (append) {
-                    searchResults.value = [...searchResults.value, ...result.data.results];
-                } else {
-                    searchResults.value = result.data.results;
+            // If we have parsed filters, use advanced search
+            if (Object.keys(parsedFilters).length > 0) {
+                const body: Record<string, unknown> = { ...parsedFilters };
+                if (remainingText) body.text = remainingText;
+                
+                // Convert dates to ISO strings
+                if (body.since instanceof Date) body.since = (body.since as Date).toISOString();
+                if (body.before instanceof Date) body.before = (body.before as Date).toISOString();
+                
+                const result = await useAPI((api) => api.postMailAccountsByMailAccountIdSearch({
+                    composable: '$fetch',
+                    path: { mailAccountID: currentMailAccount.value!.id },
+                    query: {
+                        limit: PAGE_SIZE,
+                        offset,
+                        order: 'newest',
+                    },
+                    body
+                }));
+                
+                if (result.success && result.data) {
+                    if (append) {
+                        searchResults.value = [...searchResults.value, ...result.data.results];
+                    } else {
+                        searchResults.value = result.data.results;
+                    }
+                    totalResults.value = result.data.total;
                 }
-                totalResults.value = result.data.total;
+            } else {
+                // Simple quick search
+                const result = await useAPI((api) => api.getMailAccountsByMailAccountIdSearch({
+                    composable: '$fetch',
+                    path: { mailAccountID: currentMailAccount.value!.id },
+                    query: {
+                        q: quickSearchQuery.value.trim(),
+                        limit: PAGE_SIZE,
+                        offset,
+                        order: 'newest',
+                    }
+                }));
+                
+                if (result.success && result.data) {
+                    if (append) {
+                        searchResults.value = [...searchResults.value, ...result.data.results];
+                    } else {
+                        searchResults.value = result.data.results;
+                    }
+                    totalResults.value = result.data.total;
+                }
             }
         } else if (searchMode.value === 'advanced' && hasActiveFilters.value) {
             // Advanced search
@@ -235,7 +409,7 @@ function removeFilter(key: string) {
         (filters as Record<string, unknown>)[key] = 
             key === 'hasAttachment' || key === 'seen' || key === 'flagged' || key === 'answered' || key === 'draft' 
                 ? null 
-                : '';
+                : key === 'since' || key === 'before' ? null : '';
     }
     if (searchResults.value.length > 0 || hasActiveFilters.value || quickSearchQuery.value) {
         performSearch();
@@ -354,13 +528,35 @@ watch(isOpen, (open) => {
                         </div>
                     </div>
                     
-                    <!-- Mode indicator -->
+                    <!-- Mode indicator + Filter hints -->
                     <div class="flex items-center gap-2 mt-2 text-xs text-muted">
                         <UKbd value="meta" />
                         <UKbd value="K" />
                         <span class="mx-1">to toggle</span>
                         <span class="text-primary font-medium">{{ searchMode === 'quick' ? 'Quick Search' : 'Advanced Search' }}</span>
                     </div>
+                    
+                    <!-- Quick search filter hints -->
+                    <Transition
+                        enter-active-class="transition-all duration-150"
+                        enter-from-class="opacity-0"
+                        enter-to-class="opacity-100"
+                        leave-active-class="transition-all duration-100"
+                        leave-from-class="opacity-100"
+                        leave-to-class="opacity-0"
+                    >
+                        <div v-if="searchMode === 'quick' && quickSearchHints.length > 0" class="flex flex-wrap items-center gap-1.5 mt-2">
+                            <span class="text-xs text-dimmed">Filters:</span>
+                            <button
+                                v-for="hint in quickSearchHints"
+                                :key="hint"
+                                class="px-1.5 py-0.5 text-xs rounded border border-dashed border-muted text-muted hover:border-primary hover:text-primary transition-colors"
+                                @click="addFilterHint(hint)"
+                            >
+                                {{ hint }}
+                            </button>
+                        </div>
+                    </Transition>
                 </div>
 
                 <!-- Advanced Filters Panel -->
@@ -407,28 +603,72 @@ watch(isOpen, (open) => {
                             />
                             
                             <!-- Date Since -->
-                            <div class="flex items-center gap-2">
-                                <UIcon name="i-lucide-calendar" class="size-4 text-muted shrink-0" />
-                                <input
-                                    type="date"
-                                    class="flex-1 bg-transparent border border-default rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    :value="filters.since ? filters.since.toISOString().split('T')[0] : ''"
-                                    placeholder="After date..."
-                                    @input="(e) => filters.since = (e.target as HTMLInputElement).value ? new Date((e.target as HTMLInputElement).value) : null"
-                                />
-                            </div>
+                            <UPopover v-model:open="sinceDateOpen">
+                                <UButton
+                                    variant="outline"
+                                    color="neutral"
+                                    icon="i-lucide-calendar"
+                                    size="sm"
+                                    class="w-full justify-start font-normal"
+                                    :class="{ 'text-muted': !filters.since }"
+                                >
+                                    {{ filters.since ? filters.since.toLocaleDateString() : 'After date...' }}
+                                </UButton>
+                                
+                                <template #content>
+                                    <div class="p-2">
+                                        <UCalendar
+                                            v-model="sinceCalendarValue"
+                                            @update:model-value="sinceDateOpen = false"
+                                        />
+                                        <UButton
+                                            v-if="filters.since"
+                                            variant="ghost"
+                                            color="neutral"
+                                            size="xs"
+                                            block
+                                            class="mt-2"
+                                            @click="filters.since = null; sinceDateOpen = false"
+                                        >
+                                            Clear
+                                        </UButton>
+                                    </div>
+                                </template>
+                            </UPopover>
                             
                             <!-- Date Before -->
-                            <div class="flex items-center gap-2">
-                                <UIcon name="i-lucide-calendar-x" class="size-4 text-muted shrink-0" />
-                                <input
-                                    type="date"
-                                    class="flex-1 bg-transparent border border-default rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    :value="filters.before ? filters.before.toISOString().split('T')[0] : ''"
-                                    placeholder="Before date..."
-                                    @input="(e) => filters.before = (e.target as HTMLInputElement).value ? new Date((e.target as HTMLInputElement).value) : null"
-                                />
-                            </div>
+                            <UPopover v-model:open="beforeDateOpen">
+                                <UButton
+                                    variant="outline"
+                                    color="neutral"
+                                    icon="i-lucide-calendar-x"
+                                    size="sm"
+                                    class="w-full justify-start font-normal"
+                                    :class="{ 'text-muted': !filters.before }"
+                                >
+                                    {{ filters.before ? filters.before.toLocaleDateString() : 'Before date...' }}
+                                </UButton>
+                                
+                                <template #content>
+                                    <div class="p-2">
+                                        <UCalendar
+                                            v-model="beforeCalendarValue"
+                                            @update:model-value="beforeDateOpen = false"
+                                        />
+                                        <UButton
+                                            v-if="filters.before"
+                                            variant="ghost"
+                                            color="neutral"
+                                            size="xs"
+                                            block
+                                            class="mt-2"
+                                            @click="filters.before = null; beforeDateOpen = false"
+                                        >
+                                            Clear
+                                        </UButton>
+                                    </div>
+                                </template>
+                            </UPopover>
                         </div>
                         
                         <!-- Toggle Filters -->
