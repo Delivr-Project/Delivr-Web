@@ -7,7 +7,7 @@ import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
-
+import { useBreakpoints } from '@vueuse/core'
 
 const userInfoStore = useUserInfoStore();
 const user = await userInfoStore.use();
@@ -135,14 +135,51 @@ const searchGroups = computed(() => [{
 	items: Object.values(sidebarItems.value).flat()
 }])
 
+const breakpoints = useBreakpoints({
+    sm: 640,
+    md: 768,
+    lg: 1024,
+    xl: 1280
+});
+
+const isMobile = breakpoints.smaller('lg');
 
 </script>
 
 <template>
 	<UDashboardGroup class="main-bg-color flex-col min-h-svh">
 
-        <UDashboardNavbar>
-            Test
+        <UDashboardNavbar
+            :ui='{
+                root: "flex flex-row justify-between sm:grid sm:grid-cols-[1fr_30%_1fr] lg:grid-cols-[1fr_50%_1fr] items-center",
+                left: "justify-self-start",
+                center: "justify-self-center w-full flex ms-4 sm:ms-0",
+                right: "justify-self-end"
+            }'
+        >
+            
+            <template #title>
+                <div class="ms-0 lg:ms-0.5 flex items-center gap-1.5">
+                    <DelivrLogo class="hidden md:block h-8 w-auto flex-none" />
+                    <DelivrIcon class="block md:hidden h-8 w-8" />
+                </div>
+            </template>
+
+            <template #default>
+
+                <UDashboardSearchButton
+                    class="bg-transparent ring-default w-full"
+                    label="Search..."
+                />
+
+            </template>
+
+            <template #right>
+
+                <UserMenu :collapsed="isMobile"/>
+
+            </template>
+
         </UDashboardNavbar>
 
         <UDashboardSearch
@@ -158,7 +195,7 @@ const searchGroups = computed(() => [{
                 collapsible
                 resizable
                 :ui="{
-                    header: 'main-bg-color',
+                    header: 'main-bg-color flex lg:hidden',
                     body: 'main-bg-color',
                     content: 'main-bg-color',
                     footer: 'border-t border-default main-bg-color',
@@ -167,10 +204,9 @@ const searchGroups = computed(() => [{
                 :default-size="18"
                 :max-size="30"
             >
-                <template #header="{ collapsed }">
-                    <div :class="`${!collapsed ? 'ms-2.5' : ''} flex items-center gap-1.5`">
-                        <DelivrLogo v-if="!collapsed" class="h-8 w-auto flex-none" />
-                        <DelivrIcon v-else class="h-8 w-8" />
+                <template #header>
+                    <div class="ms-2.5 flex items-center gap-1.5">
+                        <DelivrLogo class="h-8 w-auto flex-none" />
                     </div>
                 </template>
 

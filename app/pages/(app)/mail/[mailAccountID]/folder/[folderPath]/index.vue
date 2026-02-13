@@ -290,7 +290,6 @@ function openMail(uid: number) {
                     right: "justify-self-end",
 
                 }'
-                
             >
                 <template #default>
                     <UDashboardSearchButton
