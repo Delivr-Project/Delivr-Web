@@ -67,14 +67,14 @@ const mailAccountsTableColumns: TableColumn<MailAccount>[] = [
                             label="Add Mail Account"
                             icon="i-lucide-plus"
                             color="primary"
-                            to="/mail-accounts/new"
+                            to="/settings/mail-accounts/new"
                         />
                     </template>
 
 
                     <template #display_name-cell="{ row }">
                         <NuxtLink
-                            :to="`/mail-accounts/${row.original.id}`"
+                            :to="`/settings/mail-accounts/${row.original.id}`"
                             class="font-medium text-primary-400 hover:underline"
                         >
                             {{ row.original.display_name }}
@@ -98,7 +98,7 @@ const mailAccountsTableColumns: TableColumn<MailAccount>[] = [
                         <UButton
                             label="Add Mail Account"
                             color="primary"
-                            to="/mail-accounts/new"
+                            to="/settings/mail-accounts/new"
                         />
                     </template>
                 </DashboardDataTable>

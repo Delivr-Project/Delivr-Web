@@ -4,8 +4,8 @@ import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMai
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
 
 useSeoMeta({
-    title: 'Dashboard | Delivr',
-    description: 'Overview of your emails'
+    title: 'Admin Panel | Delivr',
+    description: 'Overview of your admin panel'
 });
 
 const toast = useToast();
@@ -14,18 +14,22 @@ const userInfoStore = await useUserInfoStore();
 
 const user = await userInfoStore.use();
 if (!userInfoStore.isValid(user)) {
-    throw new Error('User not authenticated but trying to access Dashboard')
+    throw new Error('User not authenticated but trying to access Admin Panel')
 }
 
-const isAdmin = computed(() => user.value.role === 'admin')
+const isAdmin = computed(() => user.value.role === 'admin');
 
-const selectMailAccountStore = useSelectedMailAccountStore();
-const currentMailAccount = await selectMailAccountStore.use();
-if (currentMailAccount.value) {
-    navigateTo(`/mail/${currentMailAccount.value.id}/folder/inbox`);
+if (!isAdmin.value) {
+    toast.add({
+        title: 'Access Denied',
+        description: 'You do not have permission to access the Admin Panel.',
+        icon: 'i-lucide-alert-triangle',
+        color: 'error',
+    });
+    navigateTo('/');
 } else {
-    // No mail account selected, navigate to mail accounts page to add one
-    navigateTo('/settings/mail-accounts');
+    // navigate to /admin/users as default admin page for now
+    navigateTo('/admin/users');
 }
 
 </script>
@@ -34,14 +38,14 @@ if (currentMailAccount.value) {
     <UDashboardPanel>
         <template #header>
             <DashboardPageHeader
-                title="Dashboard"
-                icon="i-lucide-layout-dashboard"
+                title="Admin Panel"
+                icon="i-lucide-shield"
             />
         </template>
 
         <template #body>
             <DashboardPageBody>
-                not used for now
+                
             </DashboardPageBody>
         </template>
     </UDashboardPanel>

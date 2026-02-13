@@ -61,7 +61,7 @@ if (mailAccountID === "new") {
 function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
 
     return mailAccountID === "new" ? {
-        [`/mail-accounts/new`]: {
+        [`/settings/mail-accounts/new`]: {
             isNavLink: true,
             label: 'General',
             icon: 'i-lucide-info',
@@ -79,7 +79,7 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
             }
         }
     } : {
-        [`/mail-accounts/${mailAccountID}`]: {
+        [`/settings/mail-accounts/${mailAccountID}`]: {
             isNavLink: true,
             label: 'General',
             icon: 'i-lucide-info',
@@ -96,7 +96,7 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
                 };
             }
         },
-        [`/mail-accounts/${mailAccountID}/backend-configuration`]: {
+        [`/settings/mail-accounts/${mailAccountID}/backend-configuration`]: {
             isNavLink: true,
             label: 'Backend Configuration',
             icon: 'i-lucide-settings',
@@ -108,7 +108,7 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
                         description: `Manage settings for Mail Account ${account.value?.display_name} on Delivr`
                     },
                     breadcrumbItems: [
-                        { label: account.value?.display_name, to: `/mail-accounts/${mailAccountID}` },
+                        { label: account.value?.display_name, to: `/settings/mail-accounts/${mailAccountID}` },
                         { label: 'Backend Configuration' }
                     ]
                 };
@@ -120,7 +120,7 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
 const subrouterPathDynamics = useSubrouterPathDynamics({
     baseTitle: `Mail Accounts | Delivr`,
     basebreadcrumbItems: [
-        { label: 'Manage Mail Accounts', to: '/mail-accounts' }
+        { label: 'Manage Mail Accounts', to: '/settings/mail-accounts' }
     ],
     routes: getRoutesConfig()
 });

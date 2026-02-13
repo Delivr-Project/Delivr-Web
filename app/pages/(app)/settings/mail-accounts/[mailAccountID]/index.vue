@@ -107,7 +107,7 @@ async function onFormSubmit() {
                 await mailAccountsStore.refresh();
 
 				// Redirect to the new package page
-				await navigateTo(`/mail-accounts/${result.data.id}`);
+				await navigateTo(`/settings/mail-accounts/${result.data.id}`);
 			} else {
 				throw new Error(result.message || 'Failed to create package');
 			}
@@ -180,7 +180,7 @@ async function onDeleteMailAccount() {
             await mailAccountsStore.refresh();
 
             // Redirect to the mail accounts list page
-            await navigateTo(`/mail-accounts`);
+            await navigateTo(`/settings/mail-accounts`);
         } else {
             throw new Error(result.message || 'Failed to delete Mail Account');
         }

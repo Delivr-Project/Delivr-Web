@@ -139,14 +139,14 @@ async function onDeleteApiKey() {
                             label="New API Key"
                             icon="i-lucide-plus"
                             color="primary"
-                            to="/apikeys/new"
+                            to="/settings/apikeys/new"
                         />
                     </template>
 
 
                     <template #id-cell="{ row }">
                         <NuxtLink
-                            :to="`/apikeys/${row.original.id}`"
+                            :to="`/settings/apikeys/${row.original.id}`"
                             class="font-medium text-sky-400 hover:underline"
                         >
                             {{ row.original.id }}
@@ -213,7 +213,7 @@ async function onDeleteApiKey() {
                         <UButton
                             label="Create API Key"
                             color="primary"
-                            to="/apikeys/new"
+                            to="/settings/apikeys/new"
                         />
                     </template>
 

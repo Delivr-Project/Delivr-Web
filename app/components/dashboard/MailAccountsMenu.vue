@@ -16,11 +16,11 @@ const selectedMailAccount = await selectedMailAccountStore.use();
 const baseItems: DropdownMenuItem[] = [{
     label: 'Add new Account',
     icon: 'i-lucide-circle-plus',
-    to: '/mail-accounts/new'
+    to: '/settings/mail-accounts/new'
 },{
     label: 'Manage Accounts',
     icon: 'i-lucide-cog',
-    to: '/mail-accounts'
+    to: '/settings/mail-accounts'
 }];
 
 const items = computed<DropdownMenuItem[][]>(() => {

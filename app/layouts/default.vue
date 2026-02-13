@@ -8,6 +8,7 @@ import DelivrLogo from '~/components/img/DelivrLogo.vue';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
 
+const route = useRoute();
 
 const userInfoStore = useUserInfoStore();
 const user = await userInfoStore.use();
@@ -102,12 +103,12 @@ const sidebarItems = computed(() => {
         },
         {
             label: "Manage Mail Accounts",
-            to: "/mail-accounts",
+            to: "/settings/mail-accounts",
             icon: "i-lucide-at-sign",
         },
         {
             label: "API Keys",
-            to: "/apikeys",
+            to: "/settings/apikeys",
             icon: "i-lucide-key",
         }
     ];
@@ -133,8 +134,21 @@ const searchGroups = computed(() => [{
     id: 'links',
     label: 'Go to',
     items: Object.values(sidebarItems.value).flat()
-}])
+}]);
 
+
+
+const displaySidebars = computed(() => {
+
+    const settingsSidebar = route.path.startsWith('/settings');
+    const adminSidebar = route.path.startsWith('/admin');
+
+    return {
+        mailSidebar: !settingsSidebar && !adminSidebar,
+        settingsSidebar: settingsSidebar,
+        adminSidebar: adminSidebar,
+    }
+});
 
 </script>
 
@@ -164,10 +178,10 @@ const searchGroups = computed(() => [{
             :max-size="30"
         >
             <template #header="{ collapsed }">
-                <div :class="`${!collapsed ? 'ms-2.5' : ''} flex items-center gap-1.5`">
+                <NuxtLink to="/" :class="`${!collapsed ? 'ms-2.5' : ''} flex items-center gap-1.5`">
                     <DelivrLogo v-if="!collapsed" class="h-8 w-auto flex-none" />
                     <DelivrIcon v-else class="h-8 w-8" />
-                </div>
+                </NuxtLink >
             </template>
 
             <template #default="{ collapsed }">
@@ -179,7 +193,10 @@ const searchGroups = computed(() => [{
                         orientation="vertical"
                     /> -->
 
-                <div class="flex flex-col main-bg-color">
+                <div
+                    v-if="displaySidebars.mailSidebar"
+                    class="flex flex-col main-bg-color"
+                >
                     <UNavigationMenu
                         :collapsed="collapsed"
                         :items="[{
@@ -224,19 +241,31 @@ const searchGroups = computed(() => [{
                     />
                 </div>
 
+
                 <UNavigationMenu
-                    v-if="isAdmin"
+                    v-if="displaySidebars.adminSidebar || displaySidebars.settingsSidebar"
                     :collapsed="collapsed"
-                    :items="sidebarItems.admin"
+                    :items="[{
+                        label: 'Go back to Mails',
+                        icon: 'i-lucide-arrow-left',
+                        to: '/',
+                    }]"
                     orientation="vertical"
-                    class="mt-auto"
+                    class="mb-2"
                 />
 
                 <UNavigationMenu
+                    v-if="isAdmin && displaySidebars.adminSidebar"
+                    :collapsed="collapsed"
+                    :items="sidebarItems.admin"
+                    orientation="vertical"
+                />
+
+                <UNavigationMenu
+                    v-if="displaySidebars.settingsSidebar"
                     :collapsed="collapsed"
                     :items="sidebarItems.settings"
                     orientation="vertical"
-                    :class="!isAdmin ? 'mt-auto' : ''"
                 />
 
                 <!-- <UNavigationMenu

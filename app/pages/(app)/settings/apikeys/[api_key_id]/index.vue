@@ -43,7 +43,7 @@ async function onFormSubmit() {
 				api_key_creation_result_data.value = result.data 
 
 				// Redirect to the newly created ÁPI Key page
-				// navigateTo(`/apikeys/${result.data?.id}`);
+				// navigateTo(`/settings/apikeys/${result.data?.id}`);
 
 			} else {
 				throw new Error(result.message || 'Failed to create API Key');
@@ -118,7 +118,7 @@ async function onDeleteApiKey() {
 
 			deleteConfirmOpen.value = false;
 
-			await navigateTo('/apikeys');
+			await navigateTo('/settings/apikeys');
 
         } else {
             throw new Error(res.message || 'Failed to delete API Key.');
@@ -140,7 +140,7 @@ async function onAPIKeyReveal() {
 	const id = api_key_creation_result_data.value.id;
 	api_key_creation_result_data.value = null;
 	
-	navigateTo(`/apikeys/${id}`);
+	navigateTo(`/settings/apikeys/${id}`);
 }
 
 
