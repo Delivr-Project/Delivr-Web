@@ -845,6 +845,96 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse 
     }))
 });
 
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData = z.object({
+    body: z.optional(z.object({
+        from: z.optional(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        to: z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        cc: z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        bcc: z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        subject: z.optional(z.string()),
+        references: z.optional(z.union([
+            z.string(),
+            z.array(z.string())
+        ])),
+        flags: z.optional(z.object({
+            seen: z.optional(z.boolean()),
+            answered: z.optional(z.boolean()),
+            flagged: z.optional(z.boolean()),
+            deleted: z.optional(z.boolean()),
+            draft: z.optional(z.boolean()),
+            recent: z.optional(z.boolean())
+        })),
+        replyTo: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        messageId: z.optional(z.string()),
+        inReplyTo: z.optional(z.string()),
+        priority: z.optional(z.enum([
+            'normal',
+            'low',
+            'high'
+        ])),
+        body: z.object({
+            text: z.optional(z.string()),
+            html: z.optional(z.string())
+        })
+    })),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mail created successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail created successfully'),
+    data: z.object({
+        uid: z.number()
+    })
+});
+
+export const zDeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string(),
+        mailUID: z.number()
+    }),
+    query: z.optional(z.object({
+        permanent: z.optional(z.boolean()).default(false)
+    }))
+});
+
+/**
+ * Mail deleted successfully
+ */
+export const zDeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail deleted successfully'),
+    data: z.object({
+        success: z.boolean()
+    })
+});
+
 export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = z.object({
     body: z.optional(z.never()),
     path: z.object({
@@ -918,6 +1008,123 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
             text: z.optional(z.string()),
             html: z.optional(z.string())
         })
+    })
+});
+
+export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = z.object({
+    body: z.optional(z.object({
+        from: z.optional(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        })),
+        to: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        cc: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        bcc: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        subject: z.optional(z.string()),
+        references: z.optional(z.union([
+            z.string(),
+            z.array(z.string())
+        ])),
+        flags: z.optional(z.object({
+            seen: z.optional(z.boolean()),
+            answered: z.optional(z.boolean()),
+            flagged: z.optional(z.boolean()),
+            deleted: z.optional(z.boolean()),
+            draft: z.optional(z.boolean()),
+            recent: z.optional(z.boolean())
+        })),
+        replyTo: z.optional(z.array(z.object({
+            name: z.optional(z.string()),
+            address: z.string()
+        }))),
+        messageId: z.optional(z.string()),
+        inReplyTo: z.optional(z.string()),
+        priority: z.optional(z.enum([
+            'normal',
+            'low',
+            'high'
+        ])),
+        body: z.optional(z.object({
+            text: z.optional(z.string()),
+            html: z.optional(z.string())
+        }))
+    })),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string(),
+        mailUID: z.number()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mail updated successfully
+ */
+export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail updated successfully'),
+    data: z.object({
+        success: z.boolean(),
+        newUid: z.optional(z.number())
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendData = z.object({
+    body: z.optional(z.object({
+        moveToSent: z.optional(z.boolean()).default(true),
+        deleteOriginal: z.optional(z.boolean()).default(false)
+    })),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string(),
+        mailUID: z.number()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mail sent successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail sent successfully'),
+    data: z.object({
+        messageId: z.optional(z.string())
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveData = z.object({
+    body: z.optional(z.object({
+        targetMailbox: z.string()
+    })),
+    path: z.object({
+        mailAccountID: z.number().gt(0),
+        mailboxPath: z.string(),
+        mailUID: z.number()
+    }),
+    query: z.optional(z.never())
+});
+
+/**
+ * Mail moved successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail moved successfully'),
+    data: z.object({
+        newUid: z.optional(z.number())
     })
 });
 
@@ -1035,6 +1242,247 @@ export const zPutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse =
     code: z.literal(200),
     message: z.literal('Mail identity updated successfully'),
     data: z.null()
+});
+
+export const zGetMailAccountsByMailAccountIdSearchData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        mailAccountID: z.number().gt(0)
+    }),
+    query: z.object({
+        q: z.string().min(1),
+        order: z.optional(z.enum(['newest', 'oldest'])),
+        limit: z.optional(z.int().gte(1).lte(100)).default(25),
+        offset: z.optional(z.int().gte(0).lte(9007199254740991)).default(0),
+        includeTrash: z.optional(z.boolean()).default(false),
+        includeSpam: z.optional(z.boolean()).default(false)
+    })
+});
+
+/**
+ * Search completed successfully
+ */
+export const zGetMailAccountsByMailAccountIdSearchResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Search completed successfully'),
+    data: z.object({
+        total: z.int().gte(0).lte(9007199254740991),
+        mailboxesSearched: z.int().gte(0).lte(9007199254740991),
+        results: z.array(z.object({
+            mailboxPath: z.string(),
+            mailboxName: z.string(),
+            specialUse: z.optional(z.string()),
+            mail: z.object({
+                uid: z.number().gte(0),
+                rawHeaders: z.record(z.string(), z.string()),
+                rawFlags: z.array(z.string()),
+                from: z.optional(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                })),
+                to: z.array(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                })),
+                cc: z.array(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                })),
+                bcc: z.array(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                })),
+                subject: z.optional(z.string()),
+                references: z.optional(z.union([
+                    z.string(),
+                    z.array(z.string())
+                ])),
+                date: z.optional(z.number()),
+                flags: z.optional(z.object({
+                    seen: z.optional(z.boolean()),
+                    answered: z.optional(z.boolean()),
+                    flagged: z.optional(z.boolean()),
+                    deleted: z.optional(z.boolean()),
+                    draft: z.optional(z.boolean()),
+                    recent: z.optional(z.boolean())
+                })),
+                replyTo: z.optional(z.array(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                }))),
+                messageId: z.optional(z.string()),
+                inReplyTo: z.optional(z.string()),
+                priority: z.optional(z.enum([
+                    'normal',
+                    'low',
+                    'high'
+                ])),
+                attachments: z.array(z.object({
+                    filename: z.optional(z.string()),
+                    contentType: z.string(),
+                    size: z.number(),
+                    contentId: z.optional(z.string()),
+                    contentDisposition: z.optional(z.string())
+                })),
+                body: z.object({
+                    text: z.optional(z.string()),
+                    html: z.optional(z.string())
+                })
+            })
+        }))
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdSearchData = z.object({
+    body: z.optional(z.object({
+        text: z.optional(z.string()),
+        subject: z.optional(z.string()),
+        from: z.optional(z.string()),
+        to: z.optional(z.string()),
+        body: z.optional(z.string()),
+        since: z.optional(z.int().gt(0).lte(9007199254740991)),
+        before: z.optional(z.int().gt(0).lte(9007199254740991)),
+        hasAttachment: z.optional(z.boolean()),
+        seen: z.optional(z.boolean()),
+        flagged: z.optional(z.boolean()),
+        answered: z.optional(z.boolean()),
+        draft: z.optional(z.boolean())
+    })),
+    path: z.object({
+        mailAccountID: z.number().gt(0)
+    }),
+    query: z.optional(z.object({
+        order: z.optional(z.enum(['newest', 'oldest'])),
+        limit: z.optional(z.int().gte(1).lte(100)).default(50),
+        offset: z.optional(z.int().gte(0).lte(9007199254740991)).default(0),
+        mailboxes: z.optional(z.string()),
+        excludeMailboxes: z.optional(z.string()),
+        includeTrash: z.optional(z.boolean()).default(false),
+        includeSpam: z.optional(z.boolean()).default(false),
+        includeDrafts: z.optional(z.boolean()).default(true)
+    }))
+});
+
+/**
+ * Search completed successfully
+ */
+export const zPostMailAccountsByMailAccountIdSearchResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Search completed successfully'),
+    data: z.object({
+        total: z.int().gte(0).lte(9007199254740991),
+        mailboxesSearched: z.int().gte(0).lte(9007199254740991),
+        results: z.array(z.object({
+            mailboxPath: z.string(),
+            mailboxName: z.string(),
+            specialUse: z.optional(z.string()),
+            mail: z.object({
+                uid: z.number().gte(0),
+                rawHeaders: z.record(z.string(), z.string()),
+                rawFlags: z.array(z.string()),
+                from: z.optional(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                })),
+                to: z.array(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                })),
+                cc: z.array(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                })),
+                bcc: z.array(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                })),
+                subject: z.optional(z.string()),
+                references: z.optional(z.union([
+                    z.string(),
+                    z.array(z.string())
+                ])),
+                date: z.optional(z.number()),
+                flags: z.optional(z.object({
+                    seen: z.optional(z.boolean()),
+                    answered: z.optional(z.boolean()),
+                    flagged: z.optional(z.boolean()),
+                    deleted: z.optional(z.boolean()),
+                    draft: z.optional(z.boolean()),
+                    recent: z.optional(z.boolean())
+                })),
+                replyTo: z.optional(z.array(z.object({
+                    name: z.optional(z.string()),
+                    address: z.string()
+                }))),
+                messageId: z.optional(z.string()),
+                inReplyTo: z.optional(z.string()),
+                priority: z.optional(z.enum([
+                    'normal',
+                    'low',
+                    'high'
+                ])),
+                attachments: z.array(z.object({
+                    filename: z.optional(z.string()),
+                    contentType: z.string(),
+                    size: z.number(),
+                    contentId: z.optional(z.string()),
+                    contentDisposition: z.optional(z.string())
+                })),
+                body: z.object({
+                    text: z.optional(z.string()),
+                    html: z.optional(z.string())
+                })
+            })
+        }))
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdSearchCountData = z.object({
+    body: z.optional(z.object({
+        text: z.optional(z.string()),
+        subject: z.optional(z.string()),
+        from: z.optional(z.string()),
+        to: z.optional(z.string()),
+        body: z.optional(z.string()),
+        since: z.optional(z.int().gt(0).lte(9007199254740991)),
+        before: z.optional(z.int().gt(0).lte(9007199254740991)),
+        hasAttachment: z.optional(z.boolean()),
+        seen: z.optional(z.boolean()),
+        flagged: z.optional(z.boolean()),
+        answered: z.optional(z.boolean()),
+        draft: z.optional(z.boolean())
+    })),
+    path: z.object({
+        mailAccountID: z.number().gt(0)
+    }),
+    query: z.optional(z.object({
+        order: z.optional(z.enum(['newest', 'oldest'])),
+        mailboxes: z.optional(z.string()),
+        excludeMailboxes: z.optional(z.string()),
+        includeTrash: z.optional(z.boolean()).default(false),
+        includeSpam: z.optional(z.boolean()).default(false),
+        includeDrafts: z.optional(z.boolean()).default(true)
+    }))
+});
+
+/**
+ * Count completed successfully
+ */
+export const zPostMailAccountsByMailAccountIdSearchCountResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Count completed successfully'),
+    data: z.object({
+        total: z.int().gte(0).lte(9007199254740991),
+        mailboxesSearched: z.int().gte(0).lte(9007199254740991),
+        breakdown: z.array(z.object({
+            mailboxPath: z.string(),
+            mailboxName: z.string(),
+            count: z.int().gte(0).lte(9007199254740991)
+        }))
+    })
 });
 
 export const zGetAdminUsersData = z.object({

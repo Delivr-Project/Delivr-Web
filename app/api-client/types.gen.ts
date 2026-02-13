@@ -1328,6 +1328,142 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses =
 
 export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses];
 
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData = {
+    body?: {
+        from?: {
+            name?: string;
+            address: string;
+        };
+        to: Array<{
+            name?: string;
+            address: string;
+        }>;
+        cc: Array<{
+            name?: string;
+            address: string;
+        }>;
+        bcc: Array<{
+            name?: string;
+            address: string;
+        }>;
+        subject?: string;
+        references?: string | Array<string>;
+        flags?: {
+            seen?: boolean;
+            answered?: boolean;
+            flagged?: boolean;
+            deleted?: boolean;
+            draft?: boolean;
+            recent?: boolean;
+        };
+        replyTo?: Array<{
+            name?: string;
+            address: string;
+        }>;
+        messageId?: string;
+        inReplyTo?: string;
+        priority?: 'normal' | 'low' | 'high';
+        body: {
+            text?: string;
+            html?: string;
+        };
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails';
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsErrors[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsErrors];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses = {
+    /**
+     * Mail created successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail created successfully';
+        data: {
+            uid: number;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses];
+
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+        mailUID: number;
+    };
+    query?: {
+        /**
+         * If true, permanently delete the mail. Otherwise, move to Trash.
+         */
+        permanent?: boolean;
+    };
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}';
+};
+
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors = {
+    /**
+     * Mail with specified UID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail with specified UID not found';
+    };
+};
+
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError = DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors[keyof DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors];
+
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses = {
+    /**
+     * Mail deleted successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail deleted successfully';
+        data: {
+            success: boolean;
+        };
+    };
+};
+
+export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses[keyof DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses];
+
 export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = {
     body?: never;
     path: {
@@ -1419,6 +1555,197 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidRe
 };
 
 export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses];
+
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = {
+    body?: {
+        from?: {
+            name?: string;
+            address: string;
+        };
+        to?: Array<{
+            name?: string;
+            address: string;
+        }>;
+        cc?: Array<{
+            name?: string;
+            address: string;
+        }>;
+        bcc?: Array<{
+            name?: string;
+            address: string;
+        }>;
+        subject?: string;
+        references?: string | Array<string>;
+        flags?: {
+            seen?: boolean;
+            answered?: boolean;
+            flagged?: boolean;
+            deleted?: boolean;
+            draft?: boolean;
+            recent?: boolean;
+        };
+        replyTo?: Array<{
+            name?: string;
+            address: string;
+        }>;
+        messageId?: string;
+        inReplyTo?: string;
+        priority?: 'normal' | 'low' | 'high';
+        body?: {
+            text?: string;
+            html?: string;
+        };
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+        mailUID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}';
+};
+
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors = {
+    /**
+     * Mail with specified UID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail with specified UID not found';
+    };
+};
+
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError = PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors[keyof PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors];
+
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses = {
+    /**
+     * Mail updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail updated successfully';
+        data: {
+            success: boolean;
+            /**
+             * New UID if the mail was replaced (for content updates)
+             */
+            newUid?: number;
+        };
+    };
+};
+
+export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses[keyof PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendData = {
+    body?: {
+        /**
+         * Whether to move the original mail to Sent folder after sending
+         */
+        moveToSent?: boolean;
+        /**
+         * Whether to delete the original mail after sending (only if moveToSent is false)
+         */
+        deleteOriginal?: boolean;
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+        mailUID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}/send';
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendErrors = {
+    /**
+     * Mail with specified UID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail with specified UID not found';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendError = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendErrors[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendErrors];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponses = {
+    /**
+     * Mail sent successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail sent successfully';
+        data: {
+            /**
+             * The Message-ID of the sent mail
+             */
+            messageId?: string;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponses];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveData = {
+    body?: {
+        /**
+         * The path of the target mailbox to move the mail to
+         */
+        targetMailbox: string;
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+        mailUID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}/move';
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveErrors = {
+    /**
+     * Mail with specified UID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail with specified UID not found';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveError = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveErrors[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveErrors];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponses = {
+    /**
+     * Mail moved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail moved successfully';
+        data: {
+            /**
+             * The new UID of the mail in the target mailbox, if available
+             */
+            newUid?: number;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponses];
 
 export type GetMailAccountsByMailAccountIdIdentitiesData = {
     body?: never;
@@ -1628,6 +1955,464 @@ export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses = 
 };
 
 export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse = PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses[keyof PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses];
+
+export type GetMailAccountsByMailAccountIdSearchData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+    };
+    query: {
+        /**
+         * Search query string
+         */
+        q: string;
+        /**
+         * Sort order by email date
+         */
+        order?: 'newest' | 'oldest';
+        /**
+         * Maximum number of results to return
+         */
+        limit?: number;
+        /**
+         * Number of results to skip for pagination
+         */
+        offset?: number;
+        /**
+         * Include Trash/Deleted items folder in search
+         */
+        includeTrash?: boolean;
+        /**
+         * Include Spam/Junk folder in search
+         */
+        includeSpam?: boolean;
+    };
+    url: '/mail-accounts/{mailAccountID}/search';
+};
+
+export type GetMailAccountsByMailAccountIdSearchResponses = {
+    /**
+     * Search completed successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Search completed successfully';
+        data: {
+            /**
+             * Total number of matching emails across all searched mailboxes
+             */
+            total: number;
+            /**
+             * Number of mailboxes that were searched
+             */
+            mailboxesSearched: number;
+            /**
+             * Array of search results with mailbox information
+             */
+            results: Array<{
+                /**
+                 * Path of the mailbox containing this email
+                 */
+                mailboxPath: string;
+                /**
+                 * Display name of the mailbox
+                 */
+                mailboxName: string;
+                /**
+                 * Special use flag (e.g., \Sent, \Drafts, \Trash)
+                 */
+                specialUse?: string;
+                mail: {
+                    uid: number;
+                    rawHeaders: {
+                        [key: string]: string;
+                    };
+                    rawFlags: Array<string>;
+                    from?: {
+                        name?: string;
+                        address: string;
+                    };
+                    to: Array<{
+                        name?: string;
+                        address: string;
+                    }>;
+                    cc: Array<{
+                        name?: string;
+                        address: string;
+                    }>;
+                    bcc: Array<{
+                        name?: string;
+                        address: string;
+                    }>;
+                    subject?: string;
+                    references?: string | Array<string>;
+                    date?: number;
+                    flags?: {
+                        seen?: boolean;
+                        answered?: boolean;
+                        flagged?: boolean;
+                        deleted?: boolean;
+                        draft?: boolean;
+                        recent?: boolean;
+                    };
+                    replyTo?: Array<{
+                        name?: string;
+                        address: string;
+                    }>;
+                    messageId?: string;
+                    inReplyTo?: string;
+                    priority?: 'normal' | 'low' | 'high';
+                    attachments: Array<{
+                        filename?: string;
+                        contentType: string;
+                        size: number;
+                        contentId?: string;
+                        contentDisposition?: string;
+                    }>;
+                    body: {
+                        text?: string;
+                        html?: string;
+                    };
+                };
+            }>;
+        };
+    };
+};
+
+export type GetMailAccountsByMailAccountIdSearchResponse = GetMailAccountsByMailAccountIdSearchResponses[keyof GetMailAccountsByMailAccountIdSearchResponses];
+
+export type PostMailAccountsByMailAccountIdSearchData = {
+    body?: {
+        /**
+         * Full-text search across subject, from, to, and body
+         */
+        text?: string;
+        /**
+         * Search in email subject
+         */
+        subject?: string;
+        /**
+         * Search in sender address or name
+         */
+        from?: string;
+        /**
+         * Search in recipient addresses
+         */
+        to?: string;
+        /**
+         * Search in email body content
+         */
+        body?: string;
+        /**
+         * Return messages since this date (Unix timestamp in milliseconds)
+         */
+        since?: number;
+        /**
+         * Return messages before this date (Unix timestamp in milliseconds)
+         */
+        before?: number;
+        /**
+         * Filter emails by attachment presence
+         */
+        hasAttachment?: boolean;
+        /**
+         * Filter by read/unread status (true = read, false = unread)
+         */
+        seen?: boolean;
+        /**
+         * Filter by flagged/starred status
+         */
+        flagged?: boolean;
+        /**
+         * Filter by replied-to status
+         */
+        answered?: boolean;
+        /**
+         * Filter by draft status
+         */
+        draft?: boolean;
+    };
+    path: {
+        mailAccountID: number;
+    };
+    query?: {
+        /**
+         * Sort order by email date
+         */
+        order?: 'newest' | 'oldest';
+        /**
+         * Maximum number of results to return
+         */
+        limit?: number;
+        /**
+         * Number of results to skip for pagination
+         */
+        offset?: number;
+        /**
+         * Comma-separated list of mailbox paths to search (searches all if not specified)
+         */
+        mailboxes?: string;
+        /**
+         * Comma-separated list of mailbox paths to exclude from search
+         */
+        excludeMailboxes?: string;
+        /**
+         * Include Trash/Deleted items folder in search
+         */
+        includeTrash?: boolean;
+        /**
+         * Include Spam/Junk folder in search
+         */
+        includeSpam?: boolean;
+        /**
+         * Include Drafts folder in search
+         */
+        includeDrafts?: boolean;
+    };
+    url: '/mail-accounts/{mailAccountID}/search';
+};
+
+export type PostMailAccountsByMailAccountIdSearchErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdSearchError = PostMailAccountsByMailAccountIdSearchErrors[keyof PostMailAccountsByMailAccountIdSearchErrors];
+
+export type PostMailAccountsByMailAccountIdSearchResponses = {
+    /**
+     * Search completed successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Search completed successfully';
+        data: {
+            /**
+             * Total number of matching emails across all searched mailboxes
+             */
+            total: number;
+            /**
+             * Number of mailboxes that were searched
+             */
+            mailboxesSearched: number;
+            /**
+             * Array of search results with mailbox information
+             */
+            results: Array<{
+                /**
+                 * Path of the mailbox containing this email
+                 */
+                mailboxPath: string;
+                /**
+                 * Display name of the mailbox
+                 */
+                mailboxName: string;
+                /**
+                 * Special use flag (e.g., \Sent, \Drafts, \Trash)
+                 */
+                specialUse?: string;
+                mail: {
+                    uid: number;
+                    rawHeaders: {
+                        [key: string]: string;
+                    };
+                    rawFlags: Array<string>;
+                    from?: {
+                        name?: string;
+                        address: string;
+                    };
+                    to: Array<{
+                        name?: string;
+                        address: string;
+                    }>;
+                    cc: Array<{
+                        name?: string;
+                        address: string;
+                    }>;
+                    bcc: Array<{
+                        name?: string;
+                        address: string;
+                    }>;
+                    subject?: string;
+                    references?: string | Array<string>;
+                    date?: number;
+                    flags?: {
+                        seen?: boolean;
+                        answered?: boolean;
+                        flagged?: boolean;
+                        deleted?: boolean;
+                        draft?: boolean;
+                        recent?: boolean;
+                    };
+                    replyTo?: Array<{
+                        name?: string;
+                        address: string;
+                    }>;
+                    messageId?: string;
+                    inReplyTo?: string;
+                    priority?: 'normal' | 'low' | 'high';
+                    attachments: Array<{
+                        filename?: string;
+                        contentType: string;
+                        size: number;
+                        contentId?: string;
+                        contentDisposition?: string;
+                    }>;
+                    body: {
+                        text?: string;
+                        html?: string;
+                    };
+                };
+            }>;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdSearchResponse = PostMailAccountsByMailAccountIdSearchResponses[keyof PostMailAccountsByMailAccountIdSearchResponses];
+
+export type PostMailAccountsByMailAccountIdSearchCountData = {
+    body?: {
+        /**
+         * Full-text search across subject, from, to, and body
+         */
+        text?: string;
+        /**
+         * Search in email subject
+         */
+        subject?: string;
+        /**
+         * Search in sender address or name
+         */
+        from?: string;
+        /**
+         * Search in recipient addresses
+         */
+        to?: string;
+        /**
+         * Search in email body content
+         */
+        body?: string;
+        /**
+         * Return messages since this date (Unix timestamp in milliseconds)
+         */
+        since?: number;
+        /**
+         * Return messages before this date (Unix timestamp in milliseconds)
+         */
+        before?: number;
+        /**
+         * Filter emails by attachment presence
+         */
+        hasAttachment?: boolean;
+        /**
+         * Filter by read/unread status (true = read, false = unread)
+         */
+        seen?: boolean;
+        /**
+         * Filter by flagged/starred status
+         */
+        flagged?: boolean;
+        /**
+         * Filter by replied-to status
+         */
+        answered?: boolean;
+        /**
+         * Filter by draft status
+         */
+        draft?: boolean;
+    };
+    path: {
+        mailAccountID: number;
+    };
+    query?: {
+        /**
+         * Sort order by email date
+         */
+        order?: 'newest' | 'oldest';
+        /**
+         * Comma-separated list of mailbox paths to search (searches all if not specified)
+         */
+        mailboxes?: string;
+        /**
+         * Comma-separated list of mailbox paths to exclude from search
+         */
+        excludeMailboxes?: string;
+        /**
+         * Include Trash/Deleted items folder in search
+         */
+        includeTrash?: boolean;
+        /**
+         * Include Spam/Junk folder in search
+         */
+        includeSpam?: boolean;
+        /**
+         * Include Drafts folder in search
+         */
+        includeDrafts?: boolean;
+    };
+    url: '/mail-accounts/{mailAccountID}/search/count';
+};
+
+export type PostMailAccountsByMailAccountIdSearchCountErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdSearchCountError = PostMailAccountsByMailAccountIdSearchCountErrors[keyof PostMailAccountsByMailAccountIdSearchCountErrors];
+
+export type PostMailAccountsByMailAccountIdSearchCountResponses = {
+    /**
+     * Count completed successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Count completed successfully';
+        data: {
+            /**
+             * Total number of matching emails across all searched mailboxes
+             */
+            total: number;
+            /**
+             * Number of mailboxes that were searched
+             */
+            mailboxesSearched: number;
+            /**
+             * Per-mailbox breakdown of matching emails, sorted by count descending
+             */
+            breakdown: Array<{
+                /**
+                 * Path of the mailbox
+                 */
+                mailboxPath: string;
+                /**
+                 * Display name of the mailbox
+                 */
+                mailboxName: string;
+                /**
+                 * Number of matching emails in this mailbox
+                 */
+                count: number;
+            }>;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdSearchCountResponse = PostMailAccountsByMailAccountIdSearchCountResponses[keyof PostMailAccountsByMailAccountIdSearchCountResponses];
 
 export type GetAdminUsersData = {
     body?: never;
