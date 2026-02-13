@@ -71,7 +71,7 @@ const sidebarItems = computed(() => {
     }
 
     const adminItems: NavigationMenuItem[] = [
-{
+        {
             label: "Admin",
             icon: "i-lucide-shield",
             type: "label"
@@ -84,7 +84,7 @@ const sidebarItems = computed(() => {
     ];
 
     const settings: NavigationMenuItem[] = [
-{
+        {
             label: "Settings",
             icon: "i-lucide-settings",
             type: "label",
@@ -130,20 +130,16 @@ const sidebarItems = computed(() => {
 });
 
 const searchGroups = computed(() => [{
-	id: 'links',
-	label: 'Go to',
-	items: Object.values(sidebarItems.value).flat()
+    id: 'links',
+    label: 'Go to',
+    items: Object.values(sidebarItems.value).flat()
 }])
 
 
 </script>
 
 <template>
-	<UDashboardGroup class="main-bg-color flex-col min-h-svh">
-
-        <UDashboardNavbar>
-            Test
-        </UDashboardNavbar>
+    <UDashboardGroup class="main-bg-color">
 
         <UDashboardSearch
             :groups="searchGroups"
@@ -152,52 +148,52 @@ const searchGroups = computed(() => [{
             description="Search"
         />
 
-        <div class="flex flex-row overflow-hidden main-bg-color h-full">
 
-            <UDashboardSidebar id="default"
-                collapsible
-                resizable
-                :ui="{
-                    header: 'main-bg-color',
-                    body: 'main-bg-color',
-                    content: 'main-bg-color',
-                    footer: 'border-t border-default main-bg-color',
-                }"
-                :min-size="18"
-                :default-size="18"
-                :max-size="30"
-            >
-                <template #header="{ collapsed }">
-                    <div :class="`${!collapsed ? 'ms-2.5' : ''} flex items-center gap-1.5`">
-                        <DelivrLogo v-if="!collapsed" class="h-8 w-auto flex-none" />
-                        <DelivrIcon v-else class="h-8 w-8" />
-                    </div>
-                </template>
+        <UDashboardSidebar
+            id="default"
+            collapsible
+            resizable
+            :ui="{
+                header: 'main-bg-color',
+                body: 'main-bg-color',
+                content: 'main-bg-color',
+                footer: 'border-t border-default main-bg-color',
+            }"
+            :min-size="18"
+            :default-size="18"
+            :max-size="30"
+        >
+            <template #header="{ collapsed }">
+                <div :class="`${!collapsed ? 'ms-2.5' : ''} flex items-center gap-1.5`">
+                    <DelivrLogo v-if="!collapsed" class="h-8 w-auto flex-none" />
+                    <DelivrIcon v-else class="h-8 w-8" />
+                </div>
+            </template>
 
-                <template #default="{ collapsed }">
+            <template #default="{ collapsed }">
 
-                    <!-- NOTE: Basic items removed for now, can be added back if needed in the future -->
-                    <!-- <UNavigationMenu
+                <!-- NOTE: Basic items removed for now, can be added back if needed in the future -->
+                <!-- <UNavigationMenu
                         :collapsed="collapsed"
                         :items="sidebarItems.basic"
                         orientation="vertical"
                     /> -->
 
-                    <div class="flex flex-col main-bg-color">
-                        <UNavigationMenu
-                            :collapsed="collapsed"
-                            :items="[{
-                                label: 'Mail',
-                                icon: 'i-lucide-mail',
-                                type: 'label'
-                            }]"
-                            orientation="vertical"
-                        />
+                <div class="flex flex-col main-bg-color">
+                    <UNavigationMenu
+                        :collapsed="collapsed"
+                        :items="[{
+                            label: 'Mail',
+                            icon: 'i-lucide-mail',
+                            type: 'label'
+                        }]"
+                        orientation="vertical"
+                    />
 
-                        <MailAccountsMenu :collapsed="collapsed" />
+                    <MailAccountsMenu :collapsed="collapsed" />
 
-                        <!-- Compose Button - Prominent -->
-                        <!-- <div v-if="currentMailAccount" class="px-2 mb-2">
+                    <!-- Compose Button - Prominent -->
+                    <!-- <div v-if="currentMailAccount" class="px-2 mb-2">
                             <UButton
                                 v-if="!collapsed"
                                 icon="i-lucide-pen-square"
@@ -219,49 +215,47 @@ const searchGroups = computed(() => [{
                                 />
                             </UTooltip>
                         </div> -->
-                        
-                        <UNavigationMenu
-                            :collapsed="collapsed"
-                            :items="sidebarItems.mail"
-                            orientation="vertical"
-                            class="mt-0"
-                        />
-                    </div>
-
-                    <UNavigationMenu
-                        v-if="isAdmin"
-                        :collapsed="collapsed"
-                        :items="sidebarItems.admin"
-                        orientation="vertical"
-                        class="mt-auto"
-                    />
 
                     <UNavigationMenu
                         :collapsed="collapsed"
-                        :items="sidebarItems.settings"
+                        :items="sidebarItems.mail"
                         orientation="vertical"
-                        :class="!isAdmin ? 'mt-auto' : ''"
+                        class="mt-0"
                     />
+                </div>
 
-                    <!-- <UNavigationMenu
+                <UNavigationMenu
+                    v-if="isAdmin"
+                    :collapsed="collapsed"
+                    :items="sidebarItems.admin"
+                    orientation="vertical"
+                    class="mt-auto"
+                />
+
+                <UNavigationMenu
+                    :collapsed="collapsed"
+                    :items="sidebarItems.settings"
+                    orientation="vertical"
+                    :class="!isAdmin ? 'mt-auto' : ''"
+                />
+
+                <!-- <UNavigationMenu
                         :collapsed="collapsed"
                         :items="sidebarItems.footer"
                         orientation="vertical"
                     /> -->
 
-                </template>
+            </template>
 
-                <template #footer="{ collapsed }">
-                    <UserMenu :collapsed="collapsed" />
-                </template>
+            <template #footer="{ collapsed }">
+                <UserMenu :collapsed="collapsed" />
+            </template>
 
-            </UDashboardSidebar>
+        </UDashboardSidebar>
 
-            <slot />
-
-        </div>
+        <slot />
 
         <NotificationsSlideover />
 
-	</UDashboardGroup>
+    </UDashboardGroup>
 </template>
