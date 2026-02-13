@@ -3,6 +3,17 @@ export default defineAppConfig({
         colors: {
             primary: 'sky',
             neutral: 'slate'
+        },
+
+        dashboardSidebar: {
+            slots: {
+                root: "min-h-full"
+            }
+        },
+        dashboardPanel: {
+            slots: {
+                root: "min-h-full"
+            }
         }
     },
     theme: {

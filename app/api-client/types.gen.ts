@@ -1304,10 +1304,10 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses =
                 draft?: boolean;
                 recent?: boolean;
             };
-            replyTo?: {
+            replyTo?: Array<{
                 name?: string;
                 address: string;
-            };
+            }>;
             messageId?: string;
             inReplyTo?: string;
             priority?: 'normal' | 'low' | 'high';
@@ -1396,10 +1396,10 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidRe
                 draft?: boolean;
                 recent?: boolean;
             };
-            replyTo?: {
+            replyTo?: Array<{
                 name?: string;
                 address: string;
-            };
+            }>;
             messageId?: string;
             inReplyTo?: string;
             priority?: 'normal' | 'low' | 'high';

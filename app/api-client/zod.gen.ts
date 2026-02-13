@@ -820,10 +820,10 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse 
             draft: z.optional(z.boolean()),
             recent: z.optional(z.boolean())
         })),
-        replyTo: z.optional(z.object({
+        replyTo: z.optional(z.array(z.object({
             name: z.optional(z.string()),
             address: z.string()
-        })),
+        }))),
         messageId: z.optional(z.string()),
         inReplyTo: z.optional(z.string()),
         priority: z.optional(z.enum([
@@ -896,10 +896,10 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
             draft: z.optional(z.boolean()),
             recent: z.optional(z.boolean())
         })),
-        replyTo: z.optional(z.object({
+        replyTo: z.optional(z.array(z.object({
             name: z.optional(z.string()),
             address: z.string()
-        })),
+        }))),
         messageId: z.optional(z.string()),
         inReplyTo: z.optional(z.string()),
         priority: z.optional(z.enum([

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '#ui/types';
+import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
 
 useSeoMeta({
@@ -18,6 +19,14 @@ if (!userInfoStore.isValid(user)) {
 
 const isAdmin = computed(() => user.value.role === 'admin')
 
+const selectMailAccountStore = useSelectedMailAccountStore();
+const currentMailAccount = await selectMailAccountStore.use();
+if (currentMailAccount.value) {
+    navigateTo(`/mail/${currentMailAccount.value.id}/folder/inbox`);
+} else {
+    // No mail account selected, navigate to mail accounts page to add one
+    navigateTo('/mail-accounts');
+}
 
 </script>
 
@@ -31,7 +40,9 @@ const isAdmin = computed(() => user.value.role === 'admin')
         </template>
 
         <template #body>
-            <DashboardPageBody></DashboardPageBody>
+            <DashboardPageBody>
+                not used for now
+            </DashboardPageBody>
         </template>
     </UDashboardPanel>
 </template>

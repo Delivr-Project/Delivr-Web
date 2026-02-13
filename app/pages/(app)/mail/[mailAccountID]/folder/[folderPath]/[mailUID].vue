@@ -1,92 +1,198 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailData } from '~/utils/types';
+import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
+import { Utils } from '~/utils';
 
-const folderPath = decodeURIComponent(useRoute().params.folderPath as string);
-const systemFolderPath = folderPath.toLowerCase() === 'inbox' ? 'INBOX' : folderPath;
-const uiFolderPath = folderPath.charAt(0).toUpperCase() + folderPath.slice(1).toLowerCase();
-
-const mailUID = parseInt(useRoute().params.mailUID as string);
-
+const route = useRoute();
 const toast = useToast();
 
-const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
+const folderPath = decodeURIComponent(route.params.folderPath as string);
+const systemFolderPath = folderPath.toLowerCase() === 'inbox' ? 'INBOX' : folderPath;
+const mailUID = parseInt(route.params.mailUID as string);
 
-const mail = await useAPIAsyncData(`/mail-accounts/${mailAccount.data.value.id}/mailboxes/${systemFolderPath}/mails/${mailUID}`, async () => {
-    const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid({
-        path: {
-            mailAccountID: mailAccount.data.value.id,
-            mailboxPath: systemFolderPath,
-            mailUID: mailUID
+const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
+const accountId = mailAccount.data.value.id;
+
+const mail = await useAPIAsyncData<MailData | null>(
+    `/mail-accounts/${accountId}/mailboxes/${systemFolderPath}/mails/${mailUID}`,
+    async () => {
+        const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid({
+            path: {
+                mailAccountID: accountId,
+                mailboxPath: systemFolderPath,
+                mailUID: mailUID,
+            }
+        }));
+        if (!response.success) {
+            toast.add({
+                title: `Failed to load email`,
+                description: response.message || 'An unknown error occurred.',
+                color: 'error'
+            });
+            return null;
         }
-    }));
-    if (!response.success) {
-        toast.add({
-            title: `Failed to load email with UID ${mailUID}`,
-            description: response.message || 'An unknown error occurred while fetching emails.',
-            color: 'error'
-        });
-        navigateTo(`/mail/${mailAccount.data.value.id}/folder/${encodeURIComponent(folderPath)}`);
-        return {} as MailData;
+        return response.data;
     }
-    return response.data;
-});
+);
 
 const mailData = mail.data;
 
+// Redirect if mail not found
+if (!mailData.value) {
+    navigateTo(`/mail/${accountId}/folder/${encodeURIComponent(folderPath)}`);
+}
+
+const subject = computed(() => mailData.value?.subject || '(No subject)');
+
 useSeoMeta({
-    title: `${uiFolderPath} | Delivr`,
-    description: 'Manage your emails'
+    title: `${subject.value} | Delivr`,
+    description: 'View email'
 });
 
-const formatFullDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('de-DE', { 
+// ── Helpers ──
+
+function formatFullDate(timestamp: number): string {
+    return new Date(timestamp).toLocaleString('de-DE', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
     });
-};
-
-const goBack = () => {
-    navigateTo('/inbox');
-};
-
-const reply = () => {
-    // TODO: Implement reply functionality
-    console.log('Reply to:', mailData.value?.uid);
-};
-
-const forward = () => {
-    // TODO: Implement forward functionality
-    console.log('Forward:', mailData.value?.uid);
-};
-
-const deleteMail = () => {
-    // TODO: Implement delete functionality
-    console.log('Delete:', mailData.value?.uid);
-    goBack();
-};
-
-const markAsUnread = () => {
-    // TODO: Implement mark as unread
-    console.log('Mark as unread:', mailData.value?.uid);
-    goBack();
-};
-
-if (!mailData.value) {
-    // Email not found, redirect to inbox
-    navigateTo('/inbox');
 }
 
-const finalSubject = mailData.value?.subject || 'Email with Unknown Subject';
+function formatAddressList(addresses: Array<{ name?: string; address: string }>): string {
+    return addresses.map(a => a.name ? `${a.name} <${a.address}>` : a.address).join(', ');
+}
 
-useSeoMeta({
-    title: `${finalSubject} | Delivr`,
-    description: 'View email details'
+function isUnread(m: MailData): boolean {
+    return !m.flags?.seen;
+}
+
+function isFlagged(m: MailData): boolean {
+    return !!m.flags?.flagged;
+}
+
+// ── Detail expansion ──
+
+const showDetails = ref(false);
+
+// ── Sanitized HTML body with dark mode wrapper ──
+
+const sanitizedHtml = computed(() => {
+    if (!mailData.value?.body?.html) return '';
+    return useSanitizeHtml(mailData.value.body.html, { wrapForDarkMode: true });
 });
+
+const hasHtmlBody = computed(() => !!mailData.value?.body?.html);
+const hasTextBody = computed(() => !!mailData.value?.body?.text);
+const hasAttachments = computed(() => (mailData.value?.attachments?.length ?? 0) > 0);
+
+// ── Action handlers (placeholders for backend) ──
+
+function handleArchive() {
+    toast.add({
+        title: 'Archive not available',
+        description: 'This feature will be available soon.',
+        color: 'warning'
+    });
+}
+
+function handleDelete() {
+    toast.add({
+        title: 'Delete not available',
+        description: 'Move to trash will be available soon.',
+        color: 'warning'
+    });
+}
+
+function handleMarkUnread() {
+    toast.add({
+        title: 'Mark as unread not available',
+        description: 'This feature will be available soon.',
+        color: 'warning'
+    });
+}
+
+function handleToggleStar() {
+    toast.add({
+        title: 'Star feature not available',
+        description: 'This feature will be available soon.',
+        color: 'warning'
+    });
+}
+
+function handleSpam() {
+    toast.add({
+        title: 'Mark as spam not available',
+        description: 'This feature will be available soon.',
+        color: 'warning'
+    });
+}
+
+function handleReply() {
+    toast.add({
+        title: 'Reply not available',
+        description: 'Email composing will be available soon.',
+        color: 'warning'
+    });
+}
+
+function handleReplyAll() {
+    toast.add({
+        title: 'Reply All not available',
+        description: 'Email composing will be available soon.',
+        color: 'warning'
+    });
+}
+
+function handleForward() {
+    toast.add({
+        title: 'Forward not available',
+        description: 'Email composing will be available soon.',
+        color: 'warning'
+    });
+}
+
+function handlePrint() {
+    window.print();
+}
+
+// ── Navigation ──
+
+function goBack() {
+    navigateTo(`/mail/${accountId}/folder/${encodeURIComponent(folderPath)}`);
+}
+
+// ── Dropdown actions ──
+
+const moreActions = computed(() => [
+    [{
+        label: 'Mark as unread',
+        icon: 'i-lucide-mail',
+        click: handleMarkUnread,
+    }, {
+        label: isFlagged(mailData.value!) ? 'Remove star' : 'Add star',
+        icon: isFlagged(mailData.value!) ? 'i-lucide-star-off' : 'i-lucide-star',
+        click: handleToggleStar,
+    }],
+    [{
+        label: 'Print',
+        icon: 'i-lucide-printer',
+        click: handlePrint,
+    }],
+    [{
+        label: 'Report spam',
+        icon: 'i-lucide-shield-alert',
+        click: handleSpam,
+    }, {
+        label: 'Delete',
+        icon: 'i-lucide-trash-2',
+        color: 'error' as const,
+        click: handleDelete,
+    }],
+]);
 
 </script>
 
@@ -94,8 +200,8 @@ useSeoMeta({
     <UDashboardPanel v-if="mailData">
         <template #header>
             <DashboardPageHeader
-                :title="finalSubject"
-                icon="i-lucide-mail"
+                :title="subject"
+                icon="i-lucide-mail-open"
             >
                 <template #leading>
                     <UButton
@@ -104,236 +210,309 @@ useSeoMeta({
                         variant="ghost"
                         size="sm"
                         @click="goBack"
-                    >
-                        Back to Inbox
-                    </UButton>
+                    />
+                </template>
+                <template #trailing>
+                    <div class="flex items-center gap-0.5">
+                        <!-- Archive -->
+                        <UTooltip text="Archive">
+                            <UButton
+                                icon="i-lucide-archive"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                @click="handleArchive"
+                            />
+                        </UTooltip>
+
+                        <!-- Delete -->
+                        <UTooltip text="Delete">
+                            <UButton
+                                icon="i-lucide-trash-2"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                @click="handleDelete"
+                            />
+                        </UTooltip>
+
+                        <!-- Mark unread -->
+                        <UTooltip text="Mark as unread">
+                            <UButton
+                                icon="i-lucide-mail"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                @click="handleMarkUnread"
+                            />
+                        </UTooltip>
+
+                        <!-- Star -->
+                        <UTooltip :text="isFlagged(mailData) ? 'Remove star' : 'Add star'">
+                            <UButton
+                                :icon="isFlagged(mailData) ? 'i-lucide-star' : 'i-lucide-star'"
+                                :color="isFlagged(mailData) ? 'warning' : 'neutral'"
+                                :variant="isFlagged(mailData) ? 'soft' : 'ghost'"
+                                size="sm"
+                                @click="handleToggleStar"
+                            />
+                        </UTooltip>
+
+                        <div class="w-px h-5 bg-default mx-1" />
+
+                        <!-- Reply -->
+                        <UTooltip text="Reply">
+                            <UButton
+                                icon="i-lucide-reply"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                @click="handleReply"
+                            />
+                        </UTooltip>
+
+                        <!-- Reply All -->
+                        <UTooltip text="Reply All">
+                            <UButton
+                                icon="i-lucide-reply-all"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                @click="handleReplyAll"
+                            />
+                        </UTooltip>
+
+                        <!-- Forward -->
+                        <UTooltip text="Forward">
+                            <UButton
+                                icon="i-lucide-forward"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                                @click="handleForward"
+                            />
+                        </UTooltip>
+
+                        <div class="w-px h-5 bg-default mx-1" />
+
+                        <!-- More actions -->
+                        <UDropdownMenu :items="moreActions">
+                            <UButton
+                                icon="i-lucide-ellipsis-vertical"
+                                color="neutral"
+                                variant="ghost"
+                                size="sm"
+                            />
+                        </UDropdownMenu>
+                    </div>
                 </template>
             </DashboardPageHeader>
         </template>
 
         <template #body>
-            <DashboardPageBody>
-                <!-- Email Header -->
-                <div class="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-                    <!-- Subject Line -->
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-                        <div class="flex items-start justify-between gap-4 mb-4">
-                            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                                {{ finalSubject }}
-                            </h1>
-                            <div class="flex items-center gap-2 shrink-0">
-                                <UBadge v-if="mailData.unread" color="primary" size="sm">
-                                    Unread
-                                </UBadge>
-                                <UBadge v-if="mailData.hasAttachment" color="neutral" variant="outline" size="sm">
-                                    <UIcon name="i-lucide-paperclip" class="w-3 h-3 mr-1" />
-                                    Attachment
-                                </UBadge>
-                            </div>
-                        </div>
+            <DashboardPageBody class="h-full">
+                <div class="space-y-4 h-full flex flex-col">
 
-                        <!-- Sender Info -->
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="flex items-start gap-3">
-                                <UAvatar
-                                    :src="mail.from.avatar?.src"
-                                    :alt="mail.from.name"
-                                    size="lg"
-                                />
-                                <div>
-                                    <div class="font-semibold text-gray-900 dark:text-gray-100">
-                                        {{ mail.from.name }}
+                    <!-- Sender / Recipient Card -->
+                    <div class="rounded-lg border border-default bg-elevated p-4">
+                        <div class="flex items-start gap-4">
+                            <Gravatar
+                                :email="mailData.from?.address"
+                                size="lg"
+                                class="shrink-0"
+                            />
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <span class="font-semibold text-default">
+                                        {{ mailData.from?.name || mailData.from?.address || 'Unknown' }}
+                                    </span>
+                                    <UBadge v-if="isUnread(mailData)" color="primary" size="xs">Unread</UBadge>
+                                    <UBadge v-if="mailData.priority === 'high'" color="error" variant="subtle" size="xs">
+                                        High Priority
+                                    </UBadge>
+                                    <UIcon 
+                                        v-if="isFlagged(mailData)" 
+                                        name="i-lucide-star" 
+                                        class="size-4 text-amber-500" 
+                                    />
+                                </div>
+                                <div class="text-sm text-muted">
+                                    {{ mailData.from?.address }}
+                                </div>
+                                <div v-if="mailData.date" class="text-xs text-dimmed mt-1">
+                                    {{ formatFullDate(mailData.date) }}
+                                </div>
+
+                                <!-- Expandable details -->
+                                <button
+                                    class="text-xs text-primary hover:underline mt-2 flex items-center gap-1 cursor-pointer"
+                                    @click="showDetails = !showDetails"
+                                >
+                                    <UIcon :name="showDetails ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3.5" />
+                                    {{ showDetails ? 'Hide details' : 'Show details' }}
+                                </button>
+
+                                <div v-if="showDetails" class="mt-3 space-y-1.5 text-sm border-t border-default pt-3">
+                                    <div v-if="mailData.to.length > 0" class="flex gap-2">
+                                        <span class="text-dimmed shrink-0 w-14">To:</span>
+                                        <span class="text-muted break-all">{{ formatAddressList(mailData.to) }}</span>
                                     </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ mail.from.email }}
+                                    <div v-if="mailData.cc.length > 0" class="flex gap-2">
+                                        <span class="text-dimmed shrink-0 w-14">Cc:</span>
+                                        <span class="text-muted break-all">{{ formatAddressList(mailData.cc) }}</span>
                                     </div>
-                                    <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                        {{ formatFullDate(mail.date) }}
+                                    <div v-if="mailData.bcc.length > 0" class="flex gap-2">
+                                        <span class="text-dimmed shrink-0 w-14">Bcc:</span>
+                                        <span class="text-muted break-all">{{ formatAddressList(mailData.bcc) }}</span>
+                                    </div>
+                                    <div v-if="mailData.replyTo" class="flex gap-2">
+                                        <span class="text-dimmed shrink-0 w-14">Reply-To:</span>
+                                        <span class="text-muted break-all">
+                                            {{ mailData.replyTo.name ? `${mailData.replyTo.name} <${mailData.replyTo.address}>` : mailData.replyTo.address }}
+                                        </span>
+                                    </div>
+                                    <div v-if="mailData.messageId" class="flex gap-2">
+                                        <span class="text-dimmed shrink-0 w-14">Message-ID:</span>
+                                        <span class="text-muted font-mono text-xs break-all">{{ mailData.messageId }}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Action Buttons -->
-                            <div class="flex items-center gap-2 shrink-0">
+                            <!-- Quick actions on right side -->
+                            <div class="flex items-center gap-1 shrink-0">
                                 <UButton
                                     icon="i-lucide-reply"
-                                    color="neutral"
-                                    variant="outline"
+                                    color="primary"
+                                    variant="soft"
                                     size="sm"
-                                    @click="reply"
+                                    @click="handleReply"
                                 >
                                     Reply
                                 </UButton>
-                                <UDropdownMenu
-                                    :items="[[
-                                        { label: 'Forward', icon: 'i-lucide-forward', click: forward },
-                                        { label: 'Mark as unread', icon: 'i-lucide-mail', click: markAsUnread }
-                                    ], [
-                                        { label: 'Delete', icon: 'i-lucide-trash-2', click: deleteMail, color: 'error' }
-                                    ]]"
-                                >
-                                    <UButton
-                                        icon="i-lucide-more-vertical"
-                                        color="neutral"
-                                        variant="ghost"
-                                        size="sm"
-                                    />
-                                </UDropdownMenu>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Email Body -->
-                    <div class="p-6 bg-gray-50 dark:bg-gray-900/50">
-                        <div v-if="mail.isHTML" class="prose prose-sm dark:prose-invert max-w-none">
-                            <div 
-                                v-html="sanitizeHtml(mail.body)"
-                                class="html-email-content"
-                            ></div>
+                    <!-- Body -->
+                    <div class="rounded-lg border border-default overflow-y-auto grow">
+                        <!-- HTML body rendered in sandboxed iframe for maximum isolation -->
+                        <div v-if="hasHtmlBody" class="bg-default h-full">
+                            <ClientOnly>
+                                <iframe
+                                    :srcdoc="sanitizedHtml"
+                                    sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                                    referrerpolicy="no-referrer"
+                                    class="w-full border-0 block h-full"
+                                    style="background: transparent;"
+                                />
+                                <template #fallback>
+                                    <div class="flex items-center justify-center py-12">
+                                        <USkeleton class="h-40 w-full" />
+                                    </div>
+                                </template>
+                            </ClientOnly>
                         </div>
-                        <div v-else class="prose prose-sm dark:prose-invert max-w-none">
-                            <div class="whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
-                                {{ mail.body }}
-                            </div>
+
+                        <!-- Plain text body -->
+                        <div v-else-if="hasTextBody" class="p-4 bg-default">
+                            <pre class="whitespace-pre-wrap text-sm text-muted leading-relaxed font-sans m-0">{{ mailData.body?.text }}</pre>
+                        </div>
+
+                        <!-- No body -->
+                        <div v-else class="p-6 bg-default text-center">
+                            <UIcon name="i-lucide-mail-x" class="size-8 text-dimmed mb-2" />
+                            <p class="text-sm text-dimmed">This email has no content.</p>
                         </div>
                     </div>
 
-                    <!-- Attachments (if any) -->
-                    <div v-if="mail.hasAttachment" class="p-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-                        <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                            Attachments
+                    <!-- Attachments -->
+                    <div v-if="hasAttachments" class="rounded-lg border border-default bg-elevated p-4">
+                        <div class="text-sm font-semibold text-default mb-3 flex items-center gap-2">
+                            <UIcon name="i-lucide-paperclip" class="size-4" />
+                            Attachments ({{ mailData.attachments.length }})
                         </div>
-                        <div class="flex flex-wrap gap-3">
-                            <!-- Mock attachments -->
-                            <UCard
-                                class="w-64 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors"
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div
+                                v-for="(attachment, idx) in mailData.attachments"
+                                :key="idx"
+                                class="flex items-center gap-3 p-3 rounded-lg border border-default bg-default hover:border-primary transition-colors cursor-pointer"
                             >
-                                <div class="flex items-center gap-3">
-                                    <div class="p-2 bg-primary-100 dark:bg-primary-900 rounded">
-                                        <UIcon name="i-lucide-file-text" class="w-6 h-6 text-primary-600 dark:text-primary-400" />
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                            document.pdf
-                                        </div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                                            2.4 MB
-                                        </div>
-                                    </div>
-                                    <UButton
-                                        icon="i-lucide-download"
-                                        color="neutral"
-                                        variant="ghost"
-                                        size="xs"
+                                <div class="shrink-0 p-2 rounded-md bg-primary/10">
+                                    <UIcon
+                                        :name="attachment.contentType?.startsWith('image/') ? 'i-lucide-image' : 'i-lucide-file'"
+                                        class="size-5 text-primary"
                                     />
                                 </div>
-                            </UCard>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium text-default truncate">
+                                        {{ attachment.filename || 'Unnamed file' }}
+                                    </div>
+                                    <div class="text-xs text-dimmed">
+                                        {{ Utils.formatFileSize(attachment.size) }}
+                                    </div>
+                                </div>
+                                <UButton
+                                    icon="i-lucide-download"
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
+                                    disabled
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Reply Section -->
-                    <div class="p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
-                        <UButton
-                            icon="i-lucide-reply"
-                            color="primary"
-                            size="md"
-                            @click="reply"
-                        >
-                            Reply to {{ mail.from.name }}
-                        </UButton>
+                    <!-- Footer actions -->
+                    <div class="flex items-center justify-between pt-2 border-t border-default">
+                        <div class="flex items-center gap-2">
+                            <UButton
+                                icon="i-lucide-reply"
+                                color="neutral"
+                                variant="outline"
+                                size="sm"
+                                @click="handleReply"
+                            >
+                                Reply
+                            </UButton>
+                            <UButton
+                                icon="i-lucide-reply-all"
+                                color="neutral"
+                                variant="outline"
+                                size="sm"
+                                @click="handleReplyAll"
+                            >
+                                Reply All
+                            </UButton>
+                            <UButton
+                                icon="i-lucide-forward"
+                                color="neutral"
+                                variant="outline"
+                                size="sm"
+                                @click="handleForward"
+                            >
+                                Forward
+                            </UButton>
+                        </div>
+                        <div class="text-xs text-dimmed">
+                            Message UID: {{ mailUID }}
+                        </div>
                     </div>
+
                 </div>
             </DashboardPageBody>
         </template>
     </UDashboardPanel>
+
+    <!-- Not found state -->
+    <UDashboardPanel v-else>
+        <template #body>
+            <div class="flex flex-col items-center justify-center py-16">
+                <UIcon name="i-lucide-mail-x" class="size-12 mb-4 text-dimmed" />
+                <p class="text-muted mb-4">Email not found</p>
+                <UButton color="neutral" variant="outline" @click="goBack">
+                    Back to {{ folderPath }}
+                </UButton>
+            </div>
+        </template>
+    </UDashboardPanel>
 </template>
-
-<style scoped>
-/*.html-email-content {
-    color: rgb(55 65 81);
-}
-
-:global(.dark) .html-email-content {
-    color: rgb(209 213 219);
-}
-
-.html-email-content :deep(h1),
-.html-email-content :deep(h2),
-.html-email-content :deep(h3),
-.html-email-content :deep(h4),
-.html-email-content :deep(h5),
-.html-email-content :deep(h6) {
-    font-weight: 700;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.html-email-content :deep(h1) {
-    font-size: 1.5rem;
-    line-height: 2rem;
-}
-
-.html-email-content :deep(h2) {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
-}
-
-.html-email-content :deep(h3) {
-    font-size: 1.125rem;
-    line-height: 1.75rem;
-}
-
-.html-email-content :deep(p) {
-    margin-bottom: 0.75rem;
-}
-
-.html-email-content :deep(ul),
-.html-email-content :deep(ol) {
-    margin-bottom: 0.75rem;
-    padding-left: 1.5rem;
-}
-
-.html-email-content :deep(li) {
-    margin-bottom: 0.25rem;
-}
-
-.html-email-content :deep(a) {
-    color: rgb(37 99 235);
-    text-decoration: none;
-}
-
-.html-email-content :deep(a):hover {
-    text-decoration: underline;
-}
-
-:global(.dark) .html-email-content :deep(a) {
-    color: rgb(96 165 250);
-}
-
-.html-email-content :deep(strong) {
-    font-weight: 600;
-}
-
-.html-email-content :deep(code) {
-    background-color: rgb(243 244 246);
-    padding: 0.125rem 0.25rem;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-    font-family: ui-monospace, monospace;
-}
-
-:global(.dark) .html-email-content :deep(code) {
-    background-color: rgb(31 41 55);
-}
-
-.html-email-content :deep(blockquote) {
-    border-left: 4px solid rgb(209 213 219);
-    padding-left: 1rem;
-    font-style: italic;
-    margin: 0.75rem 0;
-}
-
-:global(.dark) .html-email-content :deep(blockquote) {
-    border-left-color: rgb(55 65 81);
-}*/
-</style>
