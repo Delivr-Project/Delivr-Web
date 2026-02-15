@@ -99,6 +99,14 @@ const createSchema = z.object({
 
 type CreateSchema = z.output<typeof createSchema>;
 
+const createState = ref<CreateSchema>({
+    username: "",
+    display_name: "",
+    email: "",
+    password: "",
+    role: "user"
+});
+
 const editForm = reactive({
     display_name: "",
     email: "",
@@ -109,19 +117,36 @@ const passwordForm = reactive({
     password: "",
 });
 
-async function handleCreate(event: FormSubmitEvent<CreateSchema>) {
-    const res = await useAPI((api) => api.postAdminUsers({ body: event.data }));
+async function handleCreate() {
+
+    const res = await useAPI((api) => api.postAdminUsers({
+        body: createState.value
+    }));
+
     if (res.success) {
-        toast.add({ title: "User created", color: "success" });
+        toast.add({
+            title: "User created",
+            description: `User has been created successfully.`,
+            color: "success"
+        });
         showCreateModal.value = false;
         await refresh();
+
     } else {
         toast.add({
-            title: "Create failed",
+            title: "User creation failed",
             description: res.message,
             color: "error",
         });
     }
+    createState.value = {
+        username: "",
+        display_name: "",
+        email: "",
+        password: "",
+        role: "unverified" as AdminUser["role"],
+    };
+
 }
 
 function openEdit(user: AdminUser) {
@@ -147,7 +172,11 @@ async function submitEdit() {
     );
 
     if (res.success) {
-        toast.add({ title: "User updated", color: "success" });
+        toast.add({
+            title: "User updated",
+            description: `User has been updated successfully.`,
+            color: "success"
+        });
         showEditModal.value = false;
         await refresh();
     } else {
@@ -180,7 +209,11 @@ async function submitPassword() {
     );
 
     if (res.success) {
-        toast.add({ title: "Password updated", color: "success" });
+        toast.add({
+            title: "Password updated",
+            description: `Password has been updated successfully.`,
+            color: "success" 
+        });
         showPasswordModal.value = false;
     } else {
         toast.add({
@@ -202,7 +235,11 @@ async function deleteUser(user: AdminUser) {
     );
 
     if (res.success) {
-        toast.add({ title: "User deleted", color: "success" });
+        toast.add({
+            title: "User deleted",
+            description: `User has been deleted successfully.`,
+            color: "success"
+        });
         await refresh();
     } else {
         toast.add({
@@ -317,25 +354,53 @@ function getRoleColor(role: AdminUser["role"]) {
         title="Create User"
         icon="i-lucide-user-plus"
     >
-        <UForm :schema="createSchema" class="space-y-4" @submit="handleCreate">
+        <UForm
+            :state="createState"
+            :schema="createSchema"
+            class="space-y-4"
+            @submit="handleCreate"
+        >
             <UFormField label="Username" name="username" required>
-                <UInput placeholder="johndoe" />
+                <UInput
+                    v-model="createState.username"
+                    placeholder="johndoe"
+                    class="w-full"
+                />
             </UFormField>
 
             <UFormField label="Display Name" name="display_name" required>
-                <UInput placeholder="John Doe" />
+                <UInput
+                    v-model="createState.display_name"
+                    placeholder="John Doe"
+                    class="w-full"
+                />
             </UFormField>
 
             <UFormField label="Email" name="email" required>
-                <UInput type="email" placeholder="john@example.com" />
+                <UInput
+                    v-model="createState.email"
+                    type="email"
+                    placeholder="john.doe@example.com"
+                    class="w-full"
+                />
             </UFormField>
 
             <UFormField label="Password" name="password" required>
-                <UInput type="password" placeholder="••••••••" />
+                <UInput
+                    v-model="createState.password"
+                    type="password"
+                    placeholder="••••••••"
+                    class="w-full"
+                />
             </UFormField>
 
             <UFormField label="Role" name="role" required>
-                <USelect :items="roleOptions" placeholder="Select role" />
+                <USelect
+                    v-model="createState.role"
+                    :items="roleOptions"
+                    placeholder="Select role"
+                    class="w-full"
+                />
             </UFormField>
 
             <div class="flex justify-end gap-2 pt-4">
@@ -345,7 +410,11 @@ function getRoleColor(role: AdminUser["role"]) {
                     variant="ghost"
                     @click="showCreateModal = false"
                 />
-                <UButton type="submit" label="Create" color="primary" />
+                <UButton
+                    type="submit"
+                    label="Create User"
+                    color="primary"
+                />
             </div>
         </UForm>
     </DashboardModal>
@@ -358,15 +427,15 @@ function getRoleColor(role: AdminUser["role"]) {
     >
         <div class="space-y-4">
             <UFormField label="Display Name">
-                <UInput v-model="editForm.display_name" />
+                <UInput v-model="editForm.display_name" class="w-full" />
             </UFormField>
 
             <UFormField label="Email">
-                <UInput v-model="editForm.email" type="email" />
+                <UInput v-model="editForm.email" type="email" class="w-full" />
             </UFormField>
 
             <UFormField label="Role">
-                <USelect v-model="editForm.role" :items="roleOptions" />
+                <USelect v-model="editForm.role" :items="roleOptions" class="w-full" />
             </UFormField>
 
             <div class="flex justify-end gap-2 pt-4">
@@ -376,7 +445,11 @@ function getRoleColor(role: AdminUser["role"]) {
                     variant="ghost"
                     @click="showEditModal = false"
                 />
-                <UButton label="Save" color="primary" @click="submitEdit" />
+                <UButton
+                    label="Save"
+                    color="primary"
+                    @click="submitEdit"
+                />
             </div>
         </div>
     </DashboardModal>
@@ -394,6 +467,7 @@ function getRoleColor(role: AdminUser["role"]) {
                     v-model="passwordForm.password"
                     type="password"
                     placeholder="••••••••"
+                    class="w-full"
                 />
             </UFormField>
 
