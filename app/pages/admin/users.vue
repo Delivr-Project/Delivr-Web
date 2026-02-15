@@ -38,7 +38,6 @@ const userColumns: TableColumn<AdminUser>[] = [
 
 const roleOptions = [
     { label: "Admin", value: "admin" },
-    { label: "Developer", value: "developer" },
     { label: "User", value: "user" },
 ];
 
@@ -110,7 +109,7 @@ const createState = ref<CreateSchema>({
 const editForm = reactive({
     display_name: "",
     email: "",
-    role: "developer" as "admin" | "user",
+    role: "user" as AdminUser["role"],
 });
 
 const passwordForm = reactive({
@@ -144,7 +143,7 @@ async function handleCreate() {
         display_name: "",
         email: "",
         password: "",
-        role: "unverified" as AdminUser["role"],
+        role: "user",
     };
 
 }
