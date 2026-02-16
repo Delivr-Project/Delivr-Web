@@ -313,8 +313,9 @@ async function performSearch(append = false) {
                 if (body.before instanceof Date) body.before = (body.before as Date).toISOString();
                 
                 const result = await useAPI((api) => api.postMailAccountsByMailAccountIdSearch({
-                    composable: '$fetch',
-                    path: { mailAccountID: currentMailAccount.value!.id },
+                    path: {
+                        mailAccountID: currentMailAccount.value!.id
+                    },
                     query: {
                         limit: PAGE_SIZE,
                         offset,
@@ -334,8 +335,9 @@ async function performSearch(append = false) {
             } else {
                 // Simple quick search
                 const result = await useAPI((api) => api.getMailAccountsByMailAccountIdSearch({
-                    composable: '$fetch',
-                    path: { mailAccountID: currentMailAccount.value!.id },
+                    path: {
+                        mailAccountID: currentMailAccount.value!.id
+                    },
                     query: {
                         q: quickSearchQuery.value.trim(),
                         limit: PAGE_SIZE,
@@ -371,8 +373,9 @@ async function performSearch(append = false) {
             if (filters.draft !== null) body.draft = filters.draft;
             
             const result = await useAPI((api) => api.postMailAccountsByMailAccountIdSearch({
-                composable: '$fetch',
-                path: { mailAccountID: currentMailAccount.value!.id },
+                path: {
+                    mailAccountID: currentMailAccount.value!.id
+                },
                 query: {
                     limit: PAGE_SIZE,
                     offset,
