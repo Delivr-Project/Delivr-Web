@@ -287,7 +287,7 @@ function openMail(uid: number) {
                 :ui='{
                     root: "grid grid-cols-[1fr_50%_1fr] sm:grid-cols-[1fr_20%_1fr] items-center",
                     left: "justify-self-start",
-                    center: "justify-self-center w-full",
+                    center: "flex justify-self-center w-full",
                     right: "justify-self-end",
 
                 }'
