@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { PostMailAccountsByMailAccountIdSearchResponse, GetMailAccountsByMailAccountIdSearchResponse } from '~/api-client/types.gen';
+import type { PostMailAccountsByMailAccountIdSearchResponse } from '~/api-client/types.gen';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import Gravatar from '~/components/Gravatar.vue';
-import { useDebounceFn } from '@vueuse/core';
+import { useDebounceFn, useLocalStorage } from '@vueuse/core';
 import { CalendarDate } from '@internationalized/date';
 
 // ── Types ──
@@ -10,6 +10,8 @@ import { CalendarDate } from '@internationalized/date';
 type SearchResultItem = NonNullable<
     (PostMailAccountsByMailAccountIdSearchResponse & { success: true })['data']['results'][number]
 >;
+
+type SortOrder = 'newest' | 'oldest';
 
 // ── Props & State ──
 
@@ -23,6 +25,9 @@ const currentMailAccount = await currentMailAccountStore.use();
 const searchMode = ref<'quick' | 'advanced'>('quick');
 const quickSearchQuery = ref('');
 const isSearching = ref(false);
+const sortOrder = ref<SortOrder>('newest');
+const activeResultIndex = ref(-1);
+const resultsContainer = ref<HTMLElement | null>(null);
 
 // Date picker popover states
 const sinceDateOpen = ref(false);
@@ -53,6 +58,115 @@ const currentPage = ref(1);
 const PAGE_SIZE = 20;
 const hasMoreResults = computed(() => searchResults.value.length < totalResults.value);
 
+// Recent searches (persisted)
+const recentSearches = useLocalStorage<string[]>('delivr:mail-search:recent', []);
+const MAX_RECENT = 6;
+
+// ── Suggested searches (presets) ──
+
+type SuggestedSearch = {
+    label: string;
+    icon: string;
+    apply: () => void;
+};
+
+const suggestedSearches: SuggestedSearch[] = [
+    {
+        label: 'Unread emails',
+        icon: 'i-lucide-mail',
+        apply: () => {
+            clearAllFilters();
+            searchMode.value = 'advanced';
+            filters.seen = false;
+            performSearch();
+        },
+    },
+    {
+        label: 'With attachments',
+        icon: 'i-lucide-paperclip',
+        apply: () => {
+            clearAllFilters();
+            searchMode.value = 'advanced';
+            filters.hasAttachment = true;
+            performSearch();
+        },
+    },
+    {
+        label: 'Flagged',
+        icon: 'i-lucide-star',
+        apply: () => {
+            clearAllFilters();
+            searchMode.value = 'advanced';
+            filters.flagged = true;
+            performSearch();
+        },
+    },
+    {
+        label: 'Last 7 days',
+        icon: 'i-lucide-calendar-clock',
+        apply: () => {
+            clearAllFilters();
+            searchMode.value = 'advanced';
+            filters.since = daysAgo(7);
+            performSearch();
+        },
+    },
+    {
+        label: 'Last 30 days',
+        icon: 'i-lucide-calendar-days',
+        apply: () => {
+            clearAllFilters();
+            searchMode.value = 'advanced';
+            filters.since = daysAgo(30);
+            performSearch();
+        },
+    },
+    {
+        label: 'Unreplied',
+        icon: 'i-lucide-reply',
+        apply: () => {
+            clearAllFilters();
+            searchMode.value = 'advanced';
+            filters.answered = false;
+            performSearch();
+        },
+    },
+];
+
+// ── Date presets (for advanced panel) ──
+
+type DatePreset = {
+    label: string;
+    since: () => Date;
+    before?: () => Date | null;
+};
+
+const datePresets: DatePreset[] = [
+    { label: 'Today', since: () => startOfToday() },
+    { label: 'Last 7 days', since: () => daysAgo(7) },
+    { label: 'Last 30 days', since: () => daysAgo(30) },
+    { label: 'Last 3 months', since: () => daysAgo(90) },
+    { label: 'This year', since: () => new Date(new Date().getFullYear(), 0, 1) },
+];
+
+function applyDatePreset(preset: DatePreset) {
+    filters.since = preset.since();
+    filters.before = preset.before?.() ?? null;
+}
+
+function daysAgo(days: number): Date {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+function startOfToday(): Date {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
 // ── Calendar value converters ──
 
 const sinceCalendarValue = computed({
@@ -81,47 +195,39 @@ const beforeCalendarValue = computed({
 
 // ── Quick Search Filter Parsing ──
 
-const FILTER_PREFIXES = ['from:', 'to:', 'subject:', 'body:', 'has:', 'is:', 'after:', 'before:'] as const;
-
 function parseQuickSearch(query: string): { filters: Partial<typeof filters>; remainingText: string } {
     const parsedFilters: Partial<typeof filters> = {};
     let remaining = query;
-    
-    // Parse from:
+
     const fromMatch = remaining.match(/\bfrom:(\S+)/i);
     if (fromMatch?.[1]) {
         parsedFilters.from = fromMatch[1].replace(/^["']|["']$/g, '');
         remaining = remaining.replace(fromMatch[0], '').trim();
     }
-    
-    // Parse to:
+
     const toMatch = remaining.match(/\bto:(\S+)/i);
     if (toMatch?.[1]) {
         parsedFilters.to = toMatch[1].replace(/^["']|["']$/g, '');
         remaining = remaining.replace(toMatch[0], '').trim();
     }
-    
-    // Parse subject: (supports quoted strings)
+
     const subjectMatch = remaining.match(/\bsubject:(?:"([^"]+)"|'([^']+)'|(\S+))/i);
     if (subjectMatch) {
         parsedFilters.subject = subjectMatch[1] || subjectMatch[2] || subjectMatch[3];
         remaining = remaining.replace(subjectMatch[0], '').trim();
     }
-    
-    // Parse body:
+
     const bodyMatch = remaining.match(/\bbody:(?:"([^"]+)"|'([^']+)'|(\S+))/i);
     if (bodyMatch) {
         parsedFilters.body = bodyMatch[1] || bodyMatch[2] || bodyMatch[3];
         remaining = remaining.replace(bodyMatch[0], '').trim();
     }
-    
-    // Parse has:attachment
+
     if (/\bhas:attachment/i.test(remaining)) {
         parsedFilters.hasAttachment = true;
         remaining = remaining.replace(/\bhas:attachment/i, '').trim();
     }
-    
-    // Parse is:unread / is:read
+
     if (/\bis:unread/i.test(remaining)) {
         parsedFilters.seen = false;
         remaining = remaining.replace(/\bis:unread/i, '').trim();
@@ -129,20 +235,17 @@ function parseQuickSearch(query: string): { filters: Partial<typeof filters>; re
         parsedFilters.seen = true;
         remaining = remaining.replace(/\bis:read/i, '').trim();
     }
-    
-    // Parse is:flagged / is:starred
+
     if (/\bis:(flagged|starred)/i.test(remaining)) {
         parsedFilters.flagged = true;
         remaining = remaining.replace(/\bis:(flagged|starred)/i, '').trim();
     }
-    
-    // Parse is:draft
+
     if (/\bis:draft/i.test(remaining)) {
         parsedFilters.draft = true;
         remaining = remaining.replace(/\bis:draft/i, '').trim();
     }
-    
-    // Parse after:date (YYYY-MM-DD or natural language)
+
     const afterMatch = remaining.match(/\bafter:(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/i);
     if (afterMatch?.[1]) {
         const date = new Date(afterMatch[1]);
@@ -151,8 +254,7 @@ function parseQuickSearch(query: string): { filters: Partial<typeof filters>; re
         }
         remaining = remaining.replace(afterMatch[0], '').trim();
     }
-    
-    // Parse before:date
+
     const beforeMatch = remaining.match(/\bbefore:(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/i);
     if (beforeMatch?.[1]) {
         const date = new Date(beforeMatch[1]);
@@ -161,7 +263,7 @@ function parseQuickSearch(query: string): { filters: Partial<typeof filters>; re
         }
         remaining = remaining.replace(beforeMatch[0], '').trim();
     }
-    
+
     return { filters: parsedFilters, remainingText: remaining.trim() };
 }
 
@@ -169,11 +271,7 @@ function parseQuickSearch(query: string): { filters: Partial<typeof filters>; re
 const quickSearchHints = computed(() => {
     const hints: string[] = [];
     const query = quickSearchQuery.value.toLowerCase();
-    
-    // Show relevant hints based on what user is typing
-    if (query.endsWith('from:') || query.includes('from:')) return [];
-    if (query.endsWith('to:') || query.includes('to:')) return [];
-    
+
     if (!query.includes('from:')) hints.push('from:');
     if (!query.includes('to:')) hints.push('to:');
     if (!query.includes('subject:')) hints.push('subject:');
@@ -181,26 +279,30 @@ const quickSearchHints = computed(() => {
     if (!query.includes('is:')) hints.push('is:unread');
     if (!query.includes('after:')) hints.push('after:');
     if (!query.includes('before:')) hints.push('before:');
-    
+
     return hints.slice(0, 5);
 });
 
 // ── Computed ──
 
 const hasActiveFilters = computed(() => {
-    return filters.text || filters.subject || filters.from || filters.to || 
+    return !!(filters.text || filters.subject || filters.from || filters.to ||
            filters.body || filters.since || filters.before ||
            filters.hasAttachment !== null || filters.seen !== null ||
-           filters.flagged !== null || filters.answered !== null || filters.draft !== null;
+           filters.flagged !== null || filters.answered !== null || filters.draft !== null);
 });
+
+const hasAnyQuery = computed(() =>
+    hasActiveFilters.value || !!quickSearchQuery.value.trim()
+);
 
 const activeFilterChips = computed(() => {
     const chips: { key: string; label: string; icon?: string }[] = [];
-    
+
     if (searchMode.value === 'quick' && quickSearchQuery.value) {
         chips.push({ key: 'quick', label: `"${quickSearchQuery.value}"`, icon: 'i-lucide-search' });
     }
-    
+
     if (filters.text) chips.push({ key: 'text', label: `Text: ${filters.text}`, icon: 'i-lucide-text' });
     if (filters.subject) chips.push({ key: 'subject', label: `Subject: ${filters.subject}`, icon: 'i-lucide-heading' });
     if (filters.from) chips.push({ key: 'from', label: `From: ${filters.from}`, icon: 'i-lucide-user' });
@@ -208,39 +310,39 @@ const activeFilterChips = computed(() => {
     if (filters.body) chips.push({ key: 'body', label: `Body: ${filters.body}`, icon: 'i-lucide-file-text' });
     if (filters.since) chips.push({ key: 'since', label: `After: ${formatDateShort(filters.since)}`, icon: 'i-lucide-calendar' });
     if (filters.before) chips.push({ key: 'before', label: `Before: ${formatDateShort(filters.before)}`, icon: 'i-lucide-calendar' });
-    if (filters.hasAttachment !== null) chips.push({ 
-        key: 'hasAttachment', 
-        label: filters.hasAttachment ? 'Has attachments' : 'No attachments', 
-        icon: 'i-lucide-paperclip' 
+    if (filters.hasAttachment !== null) chips.push({
+        key: 'hasAttachment',
+        label: filters.hasAttachment ? 'Has attachments' : 'No attachments',
+        icon: 'i-lucide-paperclip'
     });
-    if (filters.seen !== null) chips.push({ 
-        key: 'seen', 
-        label: filters.seen ? 'Read' : 'Unread', 
-        icon: filters.seen ? 'i-lucide-mail-open' : 'i-lucide-mail' 
+    if (filters.seen !== null) chips.push({
+        key: 'seen',
+        label: filters.seen ? 'Read' : 'Unread',
+        icon: filters.seen ? 'i-lucide-mail-open' : 'i-lucide-mail'
     });
-    if (filters.flagged !== null) chips.push({ 
-        key: 'flagged', 
-        label: filters.flagged ? 'Flagged' : 'Not flagged', 
-        icon: 'i-lucide-star' 
+    if (filters.flagged !== null) chips.push({
+        key: 'flagged',
+        label: filters.flagged ? 'Flagged' : 'Not flagged',
+        icon: 'i-lucide-star'
     });
-    if (filters.answered !== null) chips.push({ 
-        key: 'answered', 
-        label: filters.answered ? 'Replied' : 'Not replied', 
-        icon: 'i-lucide-reply' 
+    if (filters.answered !== null) chips.push({
+        key: 'answered',
+        label: filters.answered ? 'Replied' : 'Not replied',
+        icon: 'i-lucide-reply'
     });
-    if (filters.draft !== null) chips.push({ 
-        key: 'draft', 
-        label: filters.draft ? 'Drafts' : 'Not drafts', 
-        icon: 'i-lucide-file-edit' 
+    if (filters.draft !== null) chips.push({
+        key: 'draft',
+        label: filters.draft ? 'Drafts' : 'Not drafts',
+        icon: 'i-lucide-file-edit'
     });
-    
+
     return chips;
 });
 
 // ── Helpers ──
 
 function formatDateShort(date: Date): string {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function formatRelativeDate(dateNum: number): string {
@@ -248,15 +350,15 @@ function formatRelativeDate(dateNum: number): string {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
     } else if (diffDays === 1) {
         return 'Yesterday';
     } else if (diffDays < 7) {
-        return date.toLocaleDateString('en-US', { weekday: 'short' });
+        return date.toLocaleDateString(undefined, { weekday: 'short' });
     } else {
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
 }
 
@@ -278,40 +380,57 @@ function isFlagged(item: SearchResultItem): boolean {
 }
 
 function hasAttachments(item: SearchResultItem): boolean {
-    return item.mail.attachments && item.mail.attachments.length > 0;
+    return !!(item.mail.attachments && item.mail.attachments.length > 0);
 }
 
 function addFilterHint(hint: string) {
     quickSearchQuery.value = (quickSearchQuery.value.trim() + ' ' + hint).trim();
 }
 
+function pushRecentSearch(query: string) {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    const without = recentSearches.value.filter(q => q !== trimmed);
+    recentSearches.value = [trimmed, ...without].slice(0, MAX_RECENT);
+}
+
+function useRecentSearch(query: string) {
+    searchMode.value = 'quick';
+    quickSearchQuery.value = query;
+    performSearch();
+}
+
+function clearRecentSearches() {
+    recentSearches.value = [];
+}
+
 // ── Search Actions ──
 
 async function performSearch(append = false) {
     if (!currentMailAccount.value) return;
-    
+
     isSearching.value = true;
     if (!append) {
         searchResults.value = [];
         currentPage.value = 1;
+        activeResultIndex.value = -1;
     }
-    
+
     try {
         const offset = (currentPage.value - 1) * PAGE_SIZE;
-        
+
         if (searchMode.value === 'quick' && quickSearchQuery.value.trim()) {
-            // Parse quick search for filters
+            if (!append) pushRecentSearch(quickSearchQuery.value);
+
             const { filters: parsedFilters, remainingText } = parseQuickSearch(quickSearchQuery.value);
-            
-            // If we have parsed filters, use advanced search
+
             if (Object.keys(parsedFilters).length > 0) {
                 const body: Record<string, unknown> = { ...parsedFilters };
                 if (remainingText) body.text = remainingText;
-                
-                // Convert dates to ISO strings
+
                 if (body.since instanceof Date) body.since = (body.since as Date).toISOString();
                 if (body.before instanceof Date) body.before = (body.before as Date).toISOString();
-                
+
                 const result = await useAPI((api) => api.postMailAccountsByMailAccountIdSearch({
                     path: {
                         mailAccountID: currentMailAccount.value!.id
@@ -319,21 +438,18 @@ async function performSearch(append = false) {
                     query: {
                         limit: PAGE_SIZE,
                         offset,
-                        order: 'newest',
+                        order: sortOrder.value,
                     },
                     body
                 }));
-                
+
                 if (result.success && result.data) {
-                    if (append) {
-                        searchResults.value = [...searchResults.value, ...result.data.results];
-                    } else {
-                        searchResults.value = result.data.results;
-                    }
+                    searchResults.value = append
+                        ? [...searchResults.value, ...result.data.results]
+                        : result.data.results;
                     totalResults.value = result.data.total;
                 }
             } else {
-                // Simple quick search
                 const result = await useAPI((api) => api.getMailAccountsByMailAccountIdSearch({
                     path: {
                         mailAccountID: currentMailAccount.value!.id
@@ -342,23 +458,20 @@ async function performSearch(append = false) {
                         q: quickSearchQuery.value.trim(),
                         limit: PAGE_SIZE,
                         offset,
-                        order: 'newest',
+                        order: sortOrder.value,
                     }
                 }));
-                
+
                 if (result.success && result.data) {
-                    if (append) {
-                        searchResults.value = [...searchResults.value, ...result.data.results];
-                    } else {
-                        searchResults.value = result.data.results;
-                    }
+                    searchResults.value = append
+                        ? [...searchResults.value, ...result.data.results]
+                        : result.data.results;
                     totalResults.value = result.data.total;
                 }
             }
         } else if (searchMode.value === 'advanced' && hasActiveFilters.value) {
-            // Advanced search
             const body: Record<string, unknown> = {};
-            
+
             if (filters.text) body.text = filters.text;
             if (filters.subject) body.subject = filters.subject;
             if (filters.from) body.from = filters.from;
@@ -371,7 +484,7 @@ async function performSearch(append = false) {
             if (filters.flagged !== null) body.flagged = filters.flagged;
             if (filters.answered !== null) body.answered = filters.answered;
             if (filters.draft !== null) body.draft = filters.draft;
-            
+
             const result = await useAPI((api) => api.postMailAccountsByMailAccountIdSearch({
                 path: {
                     mailAccountID: currentMailAccount.value!.id
@@ -379,17 +492,15 @@ async function performSearch(append = false) {
                 query: {
                     limit: PAGE_SIZE,
                     offset,
-                    order: 'newest',
+                    order: sortOrder.value,
                 },
                 body
             }));
-            
+
             if (result.success && result.data) {
-                if (append) {
-                    searchResults.value = [...searchResults.value, ...result.data.results];
-                } else {
-                    searchResults.value = result.data.results;
-                }
+                searchResults.value = append
+                    ? [...searchResults.value, ...result.data.results]
+                    : result.data.results;
                 totalResults.value = result.data.total;
             }
         }
@@ -409,13 +520,16 @@ function removeFilter(key: string) {
     if (key === 'quick') {
         quickSearchQuery.value = '';
     } else if (key in filters) {
-        (filters as Record<string, unknown>)[key] = 
-            key === 'hasAttachment' || key === 'seen' || key === 'flagged' || key === 'answered' || key === 'draft' 
-                ? null 
+        (filters as Record<string, unknown>)[key] =
+            key === 'hasAttachment' || key === 'seen' || key === 'flagged' || key === 'answered' || key === 'draft'
+                ? null
                 : key === 'since' || key === 'before' ? null : '';
     }
-    if (searchResults.value.length > 0 || hasActiveFilters.value || quickSearchQuery.value) {
+    if (hasAnyQuery.value) {
         performSearch();
+    } else {
+        searchResults.value = [];
+        totalResults.value = 0;
     }
 }
 
@@ -436,6 +550,7 @@ function clearAllFilters() {
     searchResults.value = [];
     totalResults.value = 0;
     currentPage.value = 1;
+    activeResultIndex.value = -1;
 }
 
 function openMail(item: SearchResultItem) {
@@ -450,12 +565,49 @@ const debouncedSearch = useDebounceFn(() => {
     performSearch();
 }, 400);
 
-// Watch for quick search changes
 watch(quickSearchQuery, () => {
     if (searchMode.value === 'quick' && quickSearchQuery.value.trim()) {
         debouncedSearch();
+    } else if (searchMode.value === 'quick' && !quickSearchQuery.value.trim()) {
+        searchResults.value = [];
+        totalResults.value = 0;
     }
 });
+
+watch(sortOrder, () => {
+    if (hasAnyQuery.value) performSearch();
+});
+
+// ── Keyboard navigation within results ──
+
+function handleArrowKey(e: KeyboardEvent) {
+    if (!isOpen.value || searchResults.value.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeResultIndex.value = Math.min(activeResultIndex.value + 1, searchResults.value.length - 1);
+        scrollActiveResultIntoView();
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeResultIndex.value = Math.max(activeResultIndex.value - 1, 0);
+        scrollActiveResultIntoView();
+    } else if (e.key === 'Enter' && activeResultIndex.value >= 0) {
+        const item = searchResults.value[activeResultIndex.value];
+        if (item) {
+            e.preventDefault();
+            openMail(item);
+        }
+    }
+}
+
+function scrollActiveResultIntoView() {
+    nextTick(() => {
+        const el = resultsContainer.value?.querySelector<HTMLElement>(
+            `[data-result-index="${activeResultIndex.value}"]`
+        );
+        el?.scrollIntoView({ block: 'nearest' });
+    });
+}
 
 // ── Keyboard shortcut ──
 
@@ -475,6 +627,7 @@ defineShortcuts({
 watch(isOpen, (open) => {
     if (open) {
         currentPage.value = 1;
+        activeResultIndex.value = -1;
     }
 });
 </script>
@@ -483,63 +636,95 @@ watch(isOpen, (open) => {
     <UModal
         v-model:open="isOpen"
         :ui="{
-            content: 'sm:max-w-3xl sm:max-h-[85vh]',
+            content: 'sm:max-w-4xl sm:max-h-[88vh]',
         }"
     >
         <template #content>
-            <div class="flex flex-col h-full max-h-[85vh]">
-                <!-- Header -->
-                <div class="px-4 py-3 border-b border-default">
+            <div
+                class="flex flex-col h-full max-h-[88vh]"
+                @keydown="handleArrowKey"
+            >
+                <!-- ── Header ── -->
+                <div class="px-5 pt-4 pb-3 border-b border-default">
                     <div class="flex items-center gap-3">
                         <UIcon name="i-lucide-search" class="size-5 text-muted shrink-0" />
                         <UInput
                             v-if="searchMode === 'quick'"
                             v-model="quickSearchQuery"
-                            placeholder="Search emails..."
+                            placeholder="Search your emails…"
                             variant="none"
-                            size="lg"
+                            size="xl"
                             class="flex-1"
+                            :ui="{ base: 'text-base' }"
                             autofocus
-                            @keydown.enter="performSearch"
+                            @keydown.enter="performSearch()"
                         />
                         <UInput
                             v-else
                             v-model="filters.text"
-                            placeholder="Search all fields..."
+                            placeholder="Search across all fields…"
                             variant="none"
-                            size="lg"
+                            size="xl"
                             class="flex-1"
+                            :ui="{ base: 'text-base' }"
                             autofocus
+                            @keydown.enter="performSearch()"
                         />
-                        <div class="flex items-center gap-1">
-                            <UTooltip :text="searchMode === 'quick' ? 'Switch to advanced search' : 'Switch to quick search'">
-                                <UButton
-                                    :icon="searchMode === 'quick' ? 'i-lucide-sliders-horizontal' : 'i-lucide-search'"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="sm"
-                                    @click="searchMode = searchMode === 'quick' ? 'advanced' : 'quick'"
-                                />
-                            </UTooltip>
+
+                        <UButton
+                            icon="i-lucide-x"
+                            color="neutral"
+                            variant="ghost"
+                            size="sm"
+                            @click="isOpen = false"
+                        />
+                    </div>
+
+                    <!-- Tabs + sort -->
+                    <div class="flex items-center gap-2 mt-3">
+                        <!-- Segmented mode switcher -->
+                        <div class="inline-flex rounded-md bg-elevated p-0.5">
+                            <button
+                                type="button"
+                                class="px-3 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1.5"
+                                :class="searchMode === 'quick'
+                                    ? 'bg-default text-default shadow-sm'
+                                    : 'text-muted hover:text-default'"
+                                @click="searchMode = 'quick'"
+                            >
+                                <UIcon name="i-lucide-zap" class="size-3.5" />
+                                Quick
+                            </button>
+                            <button
+                                type="button"
+                                class="px-3 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1.5"
+                                :class="searchMode === 'advanced'
+                                    ? 'bg-default text-default shadow-sm'
+                                    : 'text-muted hover:text-default'"
+                                @click="searchMode = 'advanced'"
+                            >
+                                <UIcon name="i-lucide-sliders-horizontal" class="size-3.5" />
+                                Advanced
+                            </button>
+                        </div>
+
+                        <div class="flex-1" />
+
+                        <!-- Sort dropdown -->
+                        <UTooltip :text="`Sort: ${sortOrder === 'newest' ? 'Newest first' : 'Oldest first'}`">
                             <UButton
-                                icon="i-lucide-x"
+                                :icon="sortOrder === 'newest' ? 'i-lucide-arrow-down-wide-narrow' : 'i-lucide-arrow-up-wide-narrow'"
                                 color="neutral"
                                 variant="ghost"
-                                size="sm"
-                                @click="isOpen = false"
-                            />
-                        </div>
+                                size="xs"
+                                @click="sortOrder = sortOrder === 'newest' ? 'oldest' : 'newest'"
+                            >
+                                {{ sortOrder === 'newest' ? 'Newest' : 'Oldest' }}
+                            </UButton>
+                        </UTooltip>
                     </div>
-                    
-                    <!-- Mode indicator + Filter hints -->
-                    <div class="flex items-center gap-2 mt-2 text-xs text-muted">
-                        <UKbd value="meta" />
-                        <UKbd value="K" />
-                        <span class="mx-1">to toggle</span>
-                        <span class="text-primary font-medium">{{ searchMode === 'quick' ? 'Quick Search' : 'Advanced Search' }}</span>
-                    </div>
-                    
-                    <!-- Quick search filter hints -->
+
+                    <!-- Quick search filter hint chips -->
                     <Transition
                         enter-active-class="transition-all duration-150"
                         enter-from-class="opacity-0"
@@ -548,8 +733,11 @@ watch(isOpen, (open) => {
                         leave-from-class="opacity-100"
                         leave-to-class="opacity-0"
                     >
-                        <div v-if="searchMode === 'quick' && quickSearchHints.length > 0" class="flex flex-wrap items-center gap-1.5 mt-2">
-                            <span class="text-xs text-dimmed">Filters:</span>
+                        <div
+                            v-if="searchMode === 'quick' && quickSearchHints.length > 0"
+                            class="flex flex-wrap items-center gap-1.5 mt-3"
+                        >
+                            <span class="text-xs text-dimmed">Try:</span>
                             <button
                                 v-for="hint in quickSearchHints"
                                 :key="hint"
@@ -562,7 +750,7 @@ watch(isOpen, (open) => {
                     </Transition>
                 </div>
 
-                <!-- Advanced Filters Panel -->
+                <!-- ── Advanced Filters Panel ── -->
                 <Transition
                     enter-active-class="transition-all duration-200 ease-out"
                     enter-from-class="opacity-0 -translate-y-2"
@@ -571,41 +759,33 @@ watch(isOpen, (open) => {
                     leave-from-class="opacity-100 translate-y-0"
                     leave-to-class="opacity-0 -translate-y-2"
                 >
-                    <div v-if="searchMode === 'advanced'" class="px-4 py-3 border-b border-default bg-elevated/50">
+                    <div v-if="searchMode === 'advanced'" class="px-5 py-4 border-b border-default bg-elevated/40">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            <!-- Subject -->
                             <UInput
                                 v-model="filters.subject"
-                                placeholder="Subject contains..."
+                                placeholder="Subject contains…"
                                 icon="i-lucide-heading"
                                 size="sm"
                             />
-                            
-                            <!-- From -->
                             <UInput
                                 v-model="filters.from"
-                                placeholder="From..."
+                                placeholder="From…"
                                 icon="i-lucide-user"
                                 size="sm"
                             />
-                            
-                            <!-- To -->
                             <UInput
                                 v-model="filters.to"
-                                placeholder="To..."
+                                placeholder="To…"
                                 icon="i-lucide-users"
                                 size="sm"
                             />
-                            
-                            <!-- Body -->
                             <UInput
                                 v-model="filters.body"
-                                placeholder="Body contains..."
+                                placeholder="Body contains…"
                                 icon="i-lucide-file-text"
                                 size="sm"
                             />
-                            
-                            <!-- Date Since -->
+
                             <UPopover v-model:open="sinceDateOpen">
                                 <UButton
                                     variant="outline"
@@ -615,9 +795,9 @@ watch(isOpen, (open) => {
                                     class="w-full justify-start font-normal"
                                     :class="{ 'text-muted': !filters.since }"
                                 >
-                                    {{ filters.since ? filters.since.toLocaleDateString() : 'After date...' }}
+                                    {{ filters.since ? `From: ${formatDateShort(filters.since)}` : 'After date…' }}
                                 </UButton>
-                                
+
                                 <template #content>
                                     <div class="p-2">
                                         <UCalendar
@@ -638,8 +818,7 @@ watch(isOpen, (open) => {
                                     </div>
                                 </template>
                             </UPopover>
-                            
-                            <!-- Date Before -->
+
                             <UPopover v-model:open="beforeDateOpen">
                                 <UButton
                                     variant="outline"
@@ -649,9 +828,9 @@ watch(isOpen, (open) => {
                                     class="w-full justify-start font-normal"
                                     :class="{ 'text-muted': !filters.before }"
                                 >
-                                    {{ filters.before ? filters.before.toLocaleDateString() : 'Before date...' }}
+                                    {{ filters.before ? `To: ${formatDateShort(filters.before)}` : 'Before date…' }}
                                 </UButton>
-                                
+
                                 <template #content>
                                     <div class="p-2">
                                         <UCalendar
@@ -673,11 +852,26 @@ watch(isOpen, (open) => {
                                 </template>
                             </UPopover>
                         </div>
-                        
-                        <!-- Toggle Filters -->
+
+                        <!-- Date presets -->
+                        <div class="flex flex-wrap items-center gap-1.5 mt-3">
+                            <span class="text-xs text-dimmed mr-1">Quick dates:</span>
+                            <UButton
+                                v-for="preset in datePresets"
+                                :key="preset.label"
+                                color="neutral"
+                                variant="subtle"
+                                size="xs"
+                                @click="applyDatePreset(preset)"
+                            >
+                                {{ preset.label }}
+                            </UButton>
+                        </div>
+
+                        <!-- Toggle filters -->
                         <div class="flex flex-wrap items-center gap-2 mt-3">
-                            <span class="text-xs text-muted mr-1">Filters:</span>
-                            
+                            <span class="text-xs text-dimmed mr-1">Flags:</span>
+
                             <UButton
                                 :color="filters.hasAttachment === true ? 'primary' : filters.hasAttachment === false ? 'error' : 'neutral'"
                                 :variant="filters.hasAttachment !== null ? 'solid' : 'outline'"
@@ -687,7 +881,7 @@ watch(isOpen, (open) => {
                             >
                                 {{ filters.hasAttachment === true ? 'Has attachments' : filters.hasAttachment === false ? 'No attachments' : 'Attachments' }}
                             </UButton>
-                            
+
                             <UButton
                                 :color="filters.seen === true ? 'primary' : filters.seen === false ? 'info' : 'neutral'"
                                 :variant="filters.seen !== null ? 'solid' : 'outline'"
@@ -697,9 +891,9 @@ watch(isOpen, (open) => {
                             >
                                 {{ filters.seen === true ? 'Read' : filters.seen === false ? 'Unread' : 'Read status' }}
                             </UButton>
-                            
+
                             <UButton
-                                :color="filters.flagged === true ? 'warning' : filters.flagged === false ? 'neutral' : 'neutral'"
+                                :color="filters.flagged === true ? 'warning' : 'neutral'"
                                 :variant="filters.flagged !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-star"
@@ -707,9 +901,9 @@ watch(isOpen, (open) => {
                             >
                                 {{ filters.flagged === true ? 'Flagged' : filters.flagged === false ? 'Not flagged' : 'Flagged' }}
                             </UButton>
-                            
+
                             <UButton
-                                :color="filters.answered === true ? 'success' : filters.answered === false ? 'neutral' : 'neutral'"
+                                :color="filters.answered === true ? 'success' : 'neutral'"
                                 :variant="filters.answered !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-reply"
@@ -717,9 +911,9 @@ watch(isOpen, (open) => {
                             >
                                 {{ filters.answered === true ? 'Replied' : filters.answered === false ? 'Not replied' : 'Replied' }}
                             </UButton>
-                            
+
                             <UButton
-                                :color="filters.draft === true ? 'secondary' : filters.draft === false ? 'neutral' : 'neutral'"
+                                :color="filters.draft === true ? 'secondary' : 'neutral'"
                                 :variant="filters.draft !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-file-edit"
@@ -729,8 +923,8 @@ watch(isOpen, (open) => {
                             </UButton>
                         </div>
 
-                        <!-- Search Button -->
-                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-default">
+                        <!-- Action row -->
+                        <div class="flex items-center justify-between mt-4 pt-3 border-t border-default">
                             <UButton
                                 v-if="hasActiveFilters"
                                 color="neutral"
@@ -739,10 +933,10 @@ watch(isOpen, (open) => {
                                 icon="i-lucide-x"
                                 @click="clearAllFilters"
                             >
-                                Clear all filters
+                                Clear all
                             </UButton>
-                            <div v-else></div>
-                            
+                            <div v-else />
+
                             <UButton
                                 color="primary"
                                 size="sm"
@@ -757,7 +951,7 @@ watch(isOpen, (open) => {
                     </div>
                 </Transition>
 
-                <!-- Active Filter Chips -->
+                <!-- ── Active Filter Chips ── -->
                 <Transition
                     enter-active-class="transition-all duration-200"
                     enter-from-class="opacity-0"
@@ -766,11 +960,11 @@ watch(isOpen, (open) => {
                     leave-from-class="opacity-100"
                     leave-to-class="opacity-0"
                 >
-                    <div 
-                        v-if="activeFilterChips.length > 0 && (searchResults.length > 0 || isSearching)"
-                        class="flex flex-wrap items-center gap-1.5 px-4 py-2 border-b border-default bg-primary/5"
+                    <div
+                        v-if="activeFilterChips.length > 0"
+                        class="flex flex-wrap items-center gap-1.5 px-5 py-2.5 border-b border-default bg-primary/5"
                     >
-                        <span class="text-xs text-muted mr-1">Active filters:</span>
+                        <span class="text-xs text-muted mr-1">Filters:</span>
                         <UBadge
                             v-for="chip in activeFilterChips"
                             :key="chip.key"
@@ -787,11 +981,14 @@ watch(isOpen, (open) => {
                     </div>
                 </Transition>
 
-                <!-- Results -->
-                <div class="flex-1 overflow-y-auto">
+                <!-- ── Results / Empty state ── -->
+                <div
+                    ref="resultsContainer"
+                    class="flex-1 overflow-y-auto"
+                >
                     <!-- Loading state -->
-                    <div v-if="isSearching" class="divide-y divide-default">
-                        <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-4 py-3.5">
+                    <div v-if="isSearching && searchResults.length === 0" class="divide-y divide-default">
+                        <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-5 py-3.5">
                             <USkeleton class="size-9 rounded-full" />
                             <div class="flex-1 space-y-2">
                                 <USkeleton class="h-4 w-1/3" />
@@ -802,24 +999,95 @@ watch(isOpen, (open) => {
                         </div>
                     </div>
 
-                    <!-- Empty state - No search yet -->
-                    <div v-else-if="searchResults.length === 0 && !hasActiveFilters && !quickSearchQuery" class="flex flex-col items-center justify-center py-16 px-4">
-                        <UIcon name="i-lucide-search" class="size-12 mb-4 text-dimmed" />
-                        <p class="text-muted text-sm mb-2">Search across all your emails</p>
-                        <p class="text-xs text-dimmed text-center max-w-xs">
-                            Use quick search for simple queries, or switch to advanced mode for powerful filtering options
-                        </p>
+                    <!-- Idle / empty state: suggestions + recent -->
+                    <div
+                        v-else-if="searchResults.length === 0 && !hasAnyQuery"
+                        class="px-5 py-6 space-y-6"
+                    >
+                        <!-- Recent searches -->
+                        <div v-if="recentSearches.length > 0">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xs font-semibold uppercase tracking-wider text-dimmed flex items-center gap-1.5">
+                                    <UIcon name="i-lucide-history" class="size-3.5" />
+                                    Recent searches
+                                </h3>
+                                <UButton
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
+                                    @click="clearRecentSearches"
+                                >
+                                    Clear
+                                </UButton>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <UBadge
+                                    v-for="query in recentSearches"
+                                    :key="query"
+                                    color="neutral"
+                                    variant="soft"
+                                    size="md"
+                                    class="cursor-pointer hover:bg-elevated transition-colors"
+                                    @click="useRecentSearch(query)"
+                                >
+                                    <UIcon name="i-lucide-corner-down-left" class="size-3 mr-1" />
+                                    {{ query }}
+                                </UBadge>
+                            </div>
+                        </div>
+
+                        <!-- Suggested searches -->
+                        <div>
+                            <h3 class="text-xs font-semibold uppercase tracking-wider text-dimmed mb-2 flex items-center gap-1.5">
+                                <UIcon name="i-lucide-sparkles" class="size-3.5" />
+                                Suggested
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button
+                                    v-for="suggestion in suggestedSearches"
+                                    :key="suggestion.label"
+                                    class="group flex items-center gap-3 p-3 rounded-lg border border-default hover:border-primary hover:bg-primary/5 transition-all text-left"
+                                    @click="suggestion.apply()"
+                                >
+                                    <div class="p-2 rounded-md bg-elevated group-hover:bg-primary/10 transition-colors">
+                                        <UIcon
+                                            :name="suggestion.icon"
+                                            class="size-4 text-muted group-hover:text-primary transition-colors"
+                                        />
+                                    </div>
+                                    <span class="text-sm font-medium text-default">{{ suggestion.label }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Syntax hint -->
+                        <div class="rounded-lg border border-dashed border-default p-3 bg-elevated/30">
+                            <div class="text-xs text-muted mb-1.5 flex items-center gap-1.5">
+                                <UIcon name="i-lucide-info" class="size-3.5" />
+                                <span class="font-medium">Pro tip:</span>
+                                <span>Use filter syntax in quick search</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 text-xs font-mono">
+                                <span class="px-1.5 py-0.5 rounded bg-default text-dimmed">from:alice@…</span>
+                                <span class="px-1.5 py-0.5 rounded bg-default text-dimmed">subject:"hello"</span>
+                                <span class="px-1.5 py-0.5 rounded bg-default text-dimmed">has:attachment</span>
+                                <span class="px-1.5 py-0.5 rounded bg-default text-dimmed">is:unread</span>
+                                <span class="px-1.5 py-0.5 rounded bg-default text-dimmed">after:2025-01-01</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Empty state - No results -->
-                    <div v-else-if="searchResults.length === 0 && (hasActiveFilters || quickSearchQuery)" class="flex flex-col items-center justify-center py-16 px-4">
+                    <!-- No results -->
+                    <div
+                        v-else-if="searchResults.length === 0 && hasAnyQuery && !isSearching"
+                        class="flex flex-col items-center justify-center py-16 px-4"
+                    >
                         <UIcon name="i-lucide-inbox" class="size-12 mb-4 text-dimmed" />
                         <p class="text-muted text-sm mb-2">No emails found</p>
-                        <p class="text-xs text-dimmed text-center max-w-xs">
+                        <p class="text-xs text-dimmed text-center max-w-xs mb-4">
                             Try adjusting your search criteria or removing some filters
                         </p>
                         <UButton
-                            class="mt-4"
                             color="neutral"
                             variant="outline"
                             size="sm"
@@ -833,19 +1101,20 @@ watch(isOpen, (open) => {
                     <!-- Results list -->
                     <div v-else class="divide-y divide-default">
                         <div
-                            v-for="item in searchResults"
+                            v-for="(item, idx) in searchResults"
                             :key="`${item.mailboxPath || 'unknown'}-${item.mail.uid}`"
-                            class="group flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors hover:bg-elevated"
+                            :data-result-index="idx"
+                            class="group flex items-start gap-3 px-5 py-3.5 cursor-pointer transition-colors"
+                            :class="activeResultIndex === idx ? 'bg-primary/10' : 'hover:bg-elevated'"
                             @click="openMail(item)"
+                            @mouseenter="activeResultIndex = idx"
                         >
-                            <!-- Avatar -->
                             <Gravatar
                                 :email="item.mail.from?.address"
                                 size="md"
                                 class="shrink-0 mt-0.5"
                             />
 
-                            <!-- Content -->
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center justify-between gap-2 mb-0.5">
                                     <div class="flex items-center gap-2 min-w-0">
@@ -865,10 +1134,10 @@ watch(isOpen, (open) => {
                                         />
                                     </div>
                                     <div class="flex items-center gap-1.5 shrink-0">
-                                        <UBadge 
+                                        <UBadge
                                             v-if="item.mailboxPath"
-                                            color="neutral" 
-                                            variant="subtle" 
+                                            color="neutral"
+                                            variant="subtle"
                                             size="xs"
                                         >
                                             {{ item.mailboxPath }}
@@ -894,9 +1163,8 @@ watch(isOpen, (open) => {
                                 </div>
                             </div>
 
-                            <!-- Arrow indicator -->
-                            <UIcon 
-                                name="i-lucide-chevron-right" 
+                            <UIcon
+                                name="i-lucide-chevron-right"
                                 class="size-4 text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-2"
                             />
                         </div>
@@ -912,24 +1180,38 @@ watch(isOpen, (open) => {
                             :loading="isSearching"
                             @click="loadMore"
                         >
-                            Load more results
+                            Load {{ Math.min(PAGE_SIZE, totalResults - searchResults.length) }} more
                         </UButton>
                     </div>
                 </div>
 
-                <!-- Footer -->
-                <div class="px-4 py-2 border-t border-default bg-elevated/50 text-xs text-muted flex items-center justify-between">
-                    <span v-if="searchResults.length > 0">
-                        {{ searchResults.length }}{{ totalResults > searchResults.length ? ` of ${totalResults}` : '' }} result{{ totalResults !== 1 ? 's' : '' }}
-                    </span>
-                    <span v-else>
-                        {{ currentMailAccount ? `Searching in ${currentMailAccount.display_name}` : 'Select a mail account to search' }}
-                    </span>
-                    <div class="flex items-center gap-2">
-                        <UKbd value="↵" />
-                        <span>to search</span>
-                        <UKbd value="esc" />
-                        <span>to close</span>
+                <!-- ── Footer ── -->
+                <div class="px-5 py-2 border-t border-default bg-elevated/40 text-xs text-muted flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <UIcon name="i-lucide-at-sign" class="size-3.5 shrink-0" />
+                        <span v-if="searchResults.length > 0" class="truncate">
+                            {{ searchResults.length }}{{ totalResults > searchResults.length ? ` of ${totalResults}` : '' }} result{{ totalResults !== 1 ? 's' : '' }}
+                            <span v-if="currentMailAccount">· {{ currentMailAccount.display_name }}</span>
+                        </span>
+                        <span v-else-if="currentMailAccount" class="truncate">
+                            Searching all folders in {{ currentMailAccount.display_name }}
+                        </span>
+                        <span v-else class="truncate">Select a mail account to search</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <div class="hidden sm:flex items-center gap-1">
+                            <UKbd value="↑" size="sm" />
+                            <UKbd value="↓" size="sm" />
+                            <span>navigate</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <UKbd value="↵" size="sm" />
+                            <span>open</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <UKbd value="esc" size="sm" />
+                            <span>close</span>
+                        </div>
                     </div>
                 </div>
             </div>
