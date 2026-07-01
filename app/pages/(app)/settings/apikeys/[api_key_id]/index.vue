@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PostAccountApikeysResponses } from '~/api-client';
-import { zPostAccountApikeysData } from '~/api-client/zod.gen';
+import { zPostAccountApikeysBody } from '~/api-client/zod.gen';
 
 
 const toast = useToast();
@@ -9,7 +9,7 @@ const apiKey = useSubrouterInjectedData<APIKey, NewAPIKey>("api_key", true).inje
 const apiKey_data = apiKey.data;
 const apiKey_loading = apiKey.loading;
 
-const apiKey_form_schema = apiKey.isNew ? zPostAccountApikeysData.shape.body : null;
+const apiKey_form_schema = apiKey.isNew ? zPostAccountApikeysBody : null;
 const apiKey_form_state = ref<NewAPIKey>({
     description: apiKey_data.value.description,
     expires_at: apiKey_data.value.expires_at as any

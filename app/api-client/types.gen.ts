@@ -5,7 +5,7 @@ export type ClientOptions = {
 };
 
 export type PostAuthLoginData = {
-    body?: {
+    body: {
         username: string;
         password: string;
     };
@@ -137,7 +137,7 @@ export type PostAuthLogoutResponses = {
 export type PostAuthLogoutResponse = PostAuthLogoutResponses[keyof PostAuthLogoutResponses];
 
 export type PostAuthResetPasswordData = {
-    body?: {
+    body: {
         reset_token: string;
         /**
          * New password for the account
@@ -185,7 +185,7 @@ export type PostAuthResetPasswordResponses = {
 export type PostAuthResetPasswordResponse = PostAuthResetPasswordResponses[keyof PostAuthResetPasswordResponses];
 
 export type PostAuthResetPasswordRequestData = {
-    body?: {
+    body: {
         email: string;
     };
     path?: never;
@@ -304,7 +304,7 @@ export type GetAccountResponses = {
 export type GetAccountResponse = GetAccountResponses[keyof GetAccountResponses];
 
 export type PutAccountData = {
-    body?: {
+    body: {
         /**
          * Username for the account
          */
@@ -353,7 +353,7 @@ export type PutAccountResponses = {
 export type PutAccountResponse = PutAccountResponses[keyof PutAccountResponses];
 
 export type PutAccountPasswordData = {
-    body?: {
+    body: {
         /**
          * Current password of the account
          */
@@ -430,7 +430,7 @@ export type GetAccountApikeysResponses = {
 export type GetAccountApikeysResponse = GetAccountApikeysResponses[keyof GetAccountApikeysResponses];
 
 export type PostAccountApikeysData = {
-    body?: {
+    body: {
         description: string;
         expires_at: '7d' | '30d' | '90d' | '180d' | '365d' | null;
     };
@@ -554,6 +554,75 @@ export type GetAccountApikeysByApiKeyIdResponses = {
 
 export type GetAccountApikeysByApiKeyIdResponse = GetAccountApikeysByApiKeyIdResponses[keyof GetAccountApikeysByApiKeyIdResponses];
 
+export type GetAccountPreferencesRemoteContentPolicyData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/account/preferences/remote-content-policy';
+};
+
+export type GetAccountPreferencesRemoteContentPolicyResponses = {
+    /**
+     * Remote content policy retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Remote content policy retrieved successfully';
+        data: {
+            addresses?: {
+                [key: string]: 'allow' | 'block';
+            };
+            domains?: {
+                [key: string]: 'allow' | 'block';
+            };
+        };
+    };
+};
+
+export type GetAccountPreferencesRemoteContentPolicyResponse = GetAccountPreferencesRemoteContentPolicyResponses[keyof GetAccountPreferencesRemoteContentPolicyResponses];
+
+export type PutAccountPreferencesRemoteContentPolicyData = {
+    body: {
+        addresses?: {
+            [key: string]: 'allow' | 'block';
+        };
+        domains?: {
+            [key: string]: 'allow' | 'block';
+        };
+    };
+    path?: never;
+    query?: never;
+    url: '/account/preferences/remote-content-policy';
+};
+
+export type PutAccountPreferencesRemoteContentPolicyErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PutAccountPreferencesRemoteContentPolicyError = PutAccountPreferencesRemoteContentPolicyErrors[keyof PutAccountPreferencesRemoteContentPolicyErrors];
+
+export type PutAccountPreferencesRemoteContentPolicyResponses = {
+    /**
+     * Remote content policy updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Remote content policy updated successfully';
+        data: null;
+    };
+};
+
+export type PutAccountPreferencesRemoteContentPolicyResponse = PutAccountPreferencesRemoteContentPolicyResponses[keyof PutAccountPreferencesRemoteContentPolicyResponses];
+
 export type GetMailAccountsData = {
     body?: never;
     path?: never;
@@ -639,7 +708,7 @@ export type GetMailAccountsResponses = {
 export type GetMailAccountsResponse = GetMailAccountsResponses[keyof GetMailAccountsResponses];
 
 export type PostMailAccountsData = {
-    body?: {
+    body: {
         display_name: string;
         is_default?: boolean;
         smtp_host: string | string | string;
@@ -829,7 +898,7 @@ export type GetMailAccountsByMailAccountIdResponses = {
 export type GetMailAccountsByMailAccountIdResponse = GetMailAccountsByMailAccountIdResponses[keyof GetMailAccountsByMailAccountIdResponses];
 
 export type PutMailAccountsByMailAccountIdData = {
-    body?: {
+    body: {
         display_name?: string;
         is_default?: boolean;
     };
@@ -876,7 +945,7 @@ export type PutMailAccountsByMailAccountIdResponses = {
 export type PutMailAccountsByMailAccountIdResponse = PutMailAccountsByMailAccountIdResponses[keyof PutMailAccountsByMailAccountIdResponses];
 
 export type PutMailAccountsByMailAccountIdCredentialsData = {
-    body?: {
+    body: {
         smtp_host: string | string | string;
         /**
          * Port
@@ -982,7 +1051,7 @@ export type GetMailAccountsByMailAccountIdMailboxesResponses = {
 export type GetMailAccountsByMailAccountIdMailboxesResponse = GetMailAccountsByMailAccountIdMailboxesResponses[keyof GetMailAccountsByMailAccountIdMailboxesResponses];
 
 export type PostMailAccountsByMailAccountIdMailboxesData = {
-    body?: {
+    body: {
         path: string;
     };
     path: {
@@ -1130,7 +1199,7 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponses = {
 export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponses];
 
 export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathData = {
-    body?: {
+    body: {
         path: string;
     };
     path: {
@@ -1329,7 +1398,7 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses =
 export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses];
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData = {
-    body?: {
+    body: {
         from?: {
             name?: string;
             address: string;
@@ -1557,7 +1626,7 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidRe
 export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses];
 
 export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = {
-    body?: {
+    body: {
         from?: {
             name?: string;
             address: string;
@@ -1642,7 +1711,7 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidRe
 export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses[keyof PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses];
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendData = {
-    body?: {
+    body: {
         /**
          * Whether to move the original mail to Sent folder after sending
          */
@@ -1697,7 +1766,7 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidS
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponses];
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveData = {
-    body?: {
+    body: {
         /**
          * The path of the target mailbox to move the mail to
          */
@@ -1778,7 +1847,7 @@ export type GetMailAccountsByMailAccountIdIdentitiesResponses = {
 export type GetMailAccountsByMailAccountIdIdentitiesResponse = GetMailAccountsByMailAccountIdIdentitiesResponses[keyof GetMailAccountsByMailAccountIdIdentitiesResponses];
 
 export type PostMailAccountsByMailAccountIdIdentitiesData = {
-    body?: {
+    body: {
         display_name: string;
         email_address: string;
         is_default: boolean;
@@ -1908,7 +1977,7 @@ export type GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses = 
 export type GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse = GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses[keyof GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses];
 
 export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData = {
-    body?: {
+    body: {
         display_name?: string;
         email_address?: string;
         is_default?: boolean;
@@ -2083,7 +2152,7 @@ export type GetMailAccountsByMailAccountIdSearchResponses = {
 export type GetMailAccountsByMailAccountIdSearchResponse = GetMailAccountsByMailAccountIdSearchResponses[keyof GetMailAccountsByMailAccountIdSearchResponses];
 
 export type PostMailAccountsByMailAccountIdSearchData = {
-    body?: {
+    body: {
         /**
          * Full-text search across subject, from, to, and body
          */
@@ -2279,7 +2348,7 @@ export type PostMailAccountsByMailAccountIdSearchResponses = {
 export type PostMailAccountsByMailAccountIdSearchResponse = PostMailAccountsByMailAccountIdSearchResponses[keyof PostMailAccountsByMailAccountIdSearchResponses];
 
 export type PostMailAccountsByMailAccountIdSearchCountData = {
-    body?: {
+    body: {
         /**
          * Full-text search across subject, from, to, and body
          */
@@ -2448,7 +2517,7 @@ export type GetAdminUsersResponses = {
 export type GetAdminUsersResponse = GetAdminUsersResponses[keyof GetAdminUsersResponses];
 
 export type PostAdminUsersData = {
-    body?: {
+    body: {
         /**
          * Username for the account
          */
@@ -2593,7 +2662,7 @@ export type GetAdminUsersByUserIdResponses = {
 export type GetAdminUsersByUserIdResponse = GetAdminUsersByUserIdResponses[keyof GetAdminUsersByUserIdResponses];
 
 export type PutAdminUsersByUserIdData = {
-    body?: {
+    body: {
         username?: string;
         display_name?: string;
         email?: string;
@@ -2657,7 +2726,7 @@ export type PutAdminUsersByUserIdResponses = {
 export type PutAdminUsersByUserIdResponse = PutAdminUsersByUserIdResponses[keyof PutAdminUsersByUserIdResponses];
 
 export type PutAdminUsersByUserIdPasswordData = {
-    body?: {
+    body: {
         /**
          * New password for the account
          */

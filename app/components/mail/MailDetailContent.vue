@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { MailData } from '~/utils/types';
 import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
+import { useRemoteContentPolicyStore, extractDomain } from '~/composables/stores/useRemoteContentPolicyStore';
 import { Utils } from '~/utils';
 import Gravatar from '~/components/Gravatar.vue';
 
@@ -84,9 +85,83 @@ function isUnread(m: MailData): boolean {
 const subject = computed(() => mailData.value?.subject || '(No subject)');
 const showDetails = ref(false);
 
-const sanitizedHtml = computed(() => {
-    if (!mailData.value?.body?.html) return '';
-    return useSanitizeHtml(mailData.value.body.html, { wrapForDarkMode: true });
+// ── Remote image / content policy ──
+
+// Normally pre-warmed by the global auth middleware before this component ever
+// mounts; refreshed here too as a defensive no-op fallback (cheap when cached).
+const remoteContentPolicyStore = useRemoteContentPolicyStore();
+remoteContentPolicyStore.refreshIfNeeded();
+
+const senderAddress = computed(() => mailData.value?.from?.address?.trim().toLowerCase() || null);
+const senderDomain = computed(() => extractDomain(senderAddress.value));
+
+const resolvedRemotePolicy = computed(() => remoteContentPolicyStore.resolve(senderAddress.value));
+
+// One-time "load images for this message only"; reset whenever a different mail loads.
+const loadRemoteOnce = ref(false);
+watch(
+    () => [props.accountId, props.folderPath, props.mailUid] as const,
+    () => { loadRemoteOnce.value = false; }
+);
+
+// Block remote content unless the sender is explicitly allowed or the user chose
+// to load it once for this message.
+const shouldBlockRemote = computed(
+    () => !loadRemoteOnce.value && resolvedRemotePolicy.value !== 'allow'
+);
+
+const sanitized = computed(() => {
+    if (!mailData.value?.body?.html) return { html: '', hasRemoteContent: false };
+    return useSanitizeHtml(mailData.value.body.html, {
+        wrapForDarkMode: true,
+        blockRemoteContent: shouldBlockRemote.value,
+    });
+});
+const sanitizedHtml = computed(() => sanitized.value.html);
+
+// Show the banner only when we actually blocked remote content and the user has
+// not yet made a permanent choice (allow/block) for this sender.
+const showRemoteBanner = computed(
+    () => shouldBlockRemote.value
+        && resolvedRemotePolicy.value === 'unset'
+        && sanitized.value.hasRemoteContent
+);
+
+function loadRemoteImagesOnce() {
+    loadRemoteOnce.value = true;
+}
+
+type RemoteMenuItem = { label: string; icon: string; onSelect: () => void };
+
+const remoteContentMenu = computed(() => {
+    const addr = senderAddress.value;
+    const domain = senderDomain.value;
+
+    const allowGroup: RemoteMenuItem[] = [];
+    if (domain) allowGroup.push({
+        label: `Always load from @${domain}`,
+        icon: 'i-lucide-image',
+        onSelect: () => remoteContentPolicyStore.setDomainPolicy(domain, 'allow'),
+    });
+    if (addr) allowGroup.push({
+        label: `Always load from ${addr}`,
+        icon: 'i-lucide-image',
+        onSelect: () => remoteContentPolicyStore.setAddressPolicy(addr, 'allow'),
+    });
+
+    const blockGroup: RemoteMenuItem[] = [];
+    if (domain) blockGroup.push({
+        label: `Never load from @${domain}`,
+        icon: 'i-lucide-image-off',
+        onSelect: () => remoteContentPolicyStore.setDomainPolicy(domain, 'block'),
+    });
+    if (addr) blockGroup.push({
+        label: `Never load from ${addr}`,
+        icon: 'i-lucide-image-off',
+        onSelect: () => remoteContentPolicyStore.setAddressPolicy(addr, 'block'),
+    });
+
+    return [allowGroup, blockGroup].filter(g => g.length > 0);
 });
 
 const hasHtmlBody = computed(() => !!mailData.value?.body?.html);
@@ -305,6 +380,39 @@ defineExpose({ reload: loadMail });
                     <!-- Body -->
                     <div class="rounded-lg border border-default overflow-hidden">
                         <div v-if="hasHtmlBody">
+                            <!-- Remote-content notice: images are not loaded automatically -->
+                            <div
+                                v-if="showRemoteBanner"
+                                class="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-default bg-elevated/50 text-sm"
+                            >
+                                <UIcon name="i-lucide-image-off" class="size-4 text-muted shrink-0" />
+                                <span class="text-muted flex-1 min-w-40">
+                                    External images have been blocked to protect your privacy.
+                                </span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <UButton
+                                        color="primary"
+                                        variant="soft"
+                                        size="xs"
+                                        icon="i-lucide-image"
+                                        @click="loadRemoteImagesOnce"
+                                    >
+                                        Show images
+                                    </UButton>
+                                    <UDropdownMenu v-if="remoteContentMenu.length" :items="remoteContentMenu">
+                                        <UButton
+                                            color="neutral"
+                                            variant="ghost"
+                                            size="xs"
+                                            icon="i-lucide-chevron-down"
+                                            trailing
+                                        >
+                                            Options
+                                        </UButton>
+                                    </UDropdownMenu>
+                                </div>
+                            </div>
+
                             <ClientOnly>
                                 <iframe
                                     :srcdoc="sanitizedHtml"

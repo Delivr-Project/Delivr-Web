@@ -163,7 +163,7 @@ const displaySidebars = computed(() => {
                 content: 'main-bg-color',
                 footer: 'border-t border-default main-bg-color',
             }"
-            :min-size="18"
+            :min-size="10"
             :default-size="18"
             :max-size="30"
         >

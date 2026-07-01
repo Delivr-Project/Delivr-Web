@@ -1,5 +1,6 @@
 import { useMailAccountsStore } from "~/composables/stores/useMailAccountsStore";
 import { useUserInfoStore } from "~/composables/stores/useUserStore";
+import { useRemoteContentPolicyStore } from "~/composables/stores/useRemoteContentPolicyStore";
 
 export default defineNuxtRouteMiddleware(async (to) => {
 
@@ -21,6 +22,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
 
     const user = await useUserInfoStore().use();
+    await useRemoteContentPolicyStore().refreshIfNeeded();
 
     if (to.path.startsWith('/admin')) {
         // Check admin access

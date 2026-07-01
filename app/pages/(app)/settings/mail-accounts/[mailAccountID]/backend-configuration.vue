@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type z from 'zod';
-import { zPutMailAccountsByMailAccountIdCredentialsData } from '~/api-client/zod.gen';
+import { zPutMailAccountsByMailAccountIdCredentialsBody } from '~/api-client/zod.gen';
 import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useDefaultOnFormError } from '~/composables/useDefaultOnFormError';
 
@@ -20,7 +20,7 @@ const headerTexts = computed(() => {
 });
 
 
-const mailAccount_form_schema = zPutMailAccountsByMailAccountIdCredentialsData.shape.body;
+const mailAccount_form_schema = zPutMailAccountsByMailAccountIdCredentialsBody;
 type MailAccountFormSchema = NonNullable<z.infer<typeof mailAccount_form_schema>>;
 
 const mailAccount_form_state = ref<MailAccountFormSchema>({

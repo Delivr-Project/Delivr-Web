@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { FormError, FormErrorEvent, NavigationMenuItem } from '@nuxt/ui';
-import { zPostMailAccountsData, zPutMailAccountsByMailAccountIdData } from '~/api-client/zod.gen';
+import { zPostMailAccountsBody, zPutMailAccountsByMailAccountIdBody } from '~/api-client/zod.gen';
 import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useDefaultOnFormError } from '~/composables/useDefaultOnFormError';
 
@@ -29,7 +29,7 @@ const headerTexts = computed(() => {
 });
 
 
-const mailAccount_form_schema = mailAccount.isNew ? zPostMailAccountsData.shape.body : zPutMailAccountsByMailAccountIdData.shape.body;
+const mailAccount_form_schema = mailAccount.isNew ? zPostMailAccountsBody : zPutMailAccountsByMailAccountIdBody;
 const mailAccount_form_state = computed({
     get: () => {
 		if (mailAccount.isNew) {
