@@ -32,7 +32,7 @@ function subtreeContainsActive(node: MailboxTreeNode, accountId: number): boolea
 
 // Map a folder-tree node to a (possibly nested) navigation menu item.
 function toNavItem(node: MailboxTreeNode, accountId: number): NavigationMenuItem {
-    const unseen = node.mailbox ? node.mailbox.status.unseen : node.unseenTotal;
+    const unseen = node.unseenTotal;
     const item: NavigationMenuItem = {
         label: node.name,
         icon: folderIconFor(node),
