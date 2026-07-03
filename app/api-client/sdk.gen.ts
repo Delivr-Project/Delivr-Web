@@ -2,7 +2,7 @@
 
 import type { Client, Composable, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteAccountApikeysByApiKeyIdData, DeleteAccountApikeysByApiKeyIdError, DeleteAccountApikeysByApiKeyIdResponse, DeleteAccountData, DeleteAccountError, DeleteAccountResponse, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdError, DeleteAdminUsersByUserIdResponse, DeleteMailAccountsByMailAccountIdData, DeleteMailAccountsByMailAccountIdError, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathData, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathError, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, DeleteMailAccountsByMailAccountIdResponse, GetAccountApikeysByApiKeyIdData, GetAccountApikeysByApiKeyIdError, GetAccountApikeysByApiKeyIdResponse, GetAccountApikeysData, GetAccountApikeysResponse, GetAccountData, GetAccountError, GetAccountPreferencesRemoteContentPolicyData, GetAccountPreferencesRemoteContentPolicyResponse, GetAccountResponse, GetAdminUsersByUserIdData, GetAdminUsersByUserIdError, GetAdminUsersByUserIdResponse, GetAdminUsersData, GetAdminUsersResponse, GetAuthSessionData, GetAuthSessionError, GetAuthSessionResponse, GetMailAccountsByMailAccountIdData, GetMailAccountsByMailAccountIdError, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, GetMailAccountsByMailAccountIdIdentitiesData, GetMailAccountsByMailAccountIdIdentitiesResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusResponse, GetMailAccountsByMailAccountIdMailboxesData, GetMailAccountsByMailAccountIdMailboxesResponse, GetMailAccountsByMailAccountIdResponse, GetMailAccountsByMailAccountIdSearchData, GetMailAccountsByMailAccountIdSearchResponse, GetMailAccountsData, GetMailAccountsResponse, PostAccountApikeysData, PostAccountApikeysError, PostAccountApikeysResponse, PostAdminUsersData, PostAdminUsersError, PostAdminUsersResponse, PostAuthLoginData, PostAuthLoginError, PostAuthLoginResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthResetPasswordData, PostAuthResetPasswordError, PostAuthResetPasswordRequestData, PostAuthResetPasswordRequestError, PostAuthResetPasswordRequestResponse, PostAuthResetPasswordResponse, PostMailAccountsByMailAccountIdIdentitiesData, PostMailAccountsByMailAccountIdIdentitiesError, PostMailAccountsByMailAccountIdIdentitiesResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse, PostMailAccountsByMailAccountIdMailboxesData, PostMailAccountsByMailAccountIdMailboxesError, PostMailAccountsByMailAccountIdMailboxesResponse, PostMailAccountsByMailAccountIdSearchCountData, PostMailAccountsByMailAccountIdSearchCountError, PostMailAccountsByMailAccountIdSearchCountResponse, PostMailAccountsByMailAccountIdSearchData, PostMailAccountsByMailAccountIdSearchError, PostMailAccountsByMailAccountIdSearchResponse, PostMailAccountsData, PostMailAccountsError, PostMailAccountsResponse, PutAccountData, PutAccountError, PutAccountPasswordData, PutAccountPasswordError, PutAccountPasswordResponse, PutAccountPreferencesRemoteContentPolicyData, PutAccountPreferencesRemoteContentPolicyError, PutAccountPreferencesRemoteContentPolicyResponse, PutAccountResponse, PutAdminUsersByUserIdData, PutAdminUsersByUserIdError, PutAdminUsersByUserIdPasswordData, PutAdminUsersByUserIdPasswordError, PutAdminUsersByUserIdPasswordResponse, PutAdminUsersByUserIdResponse, PutMailAccountsByMailAccountIdCredentialsData, PutMailAccountsByMailAccountIdCredentialsError, PutMailAccountsByMailAccountIdCredentialsResponse, PutMailAccountsByMailAccountIdData, PutMailAccountsByMailAccountIdError, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, PutMailAccountsByMailAccountIdMailboxesByMailboxPathData, PutMailAccountsByMailAccountIdMailboxesByMailboxPathError, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse, PutMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, PutMailAccountsByMailAccountIdResponse } from './types.gen';
+import type { DeleteAccountApikeysByApiKeyIdData, DeleteAccountApikeysByApiKeyIdError, DeleteAccountApikeysByApiKeyIdResponse, DeleteAccountData, DeleteAccountError, DeleteAccountResponse, DeleteAdminUsersByUserIdData, DeleteAdminUsersByUserIdError, DeleteAdminUsersByUserIdResponse, DeleteMailAccountsByMailAccountIdData, DeleteMailAccountsByMailAccountIdError, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathData, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathError, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse, DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, DeleteMailAccountsByMailAccountIdResponse, GetAccountApikeysByApiKeyIdData, GetAccountApikeysByApiKeyIdError, GetAccountApikeysByApiKeyIdResponse, GetAccountApikeysData, GetAccountApikeysResponse, GetAccountData, GetAccountError, GetAccountPreferencesRemoteContentPolicyData, GetAccountPreferencesRemoteContentPolicyResponse, GetAccountResponse, GetAdminUsersByUserIdData, GetAdminUsersByUserIdError, GetAdminUsersByUserIdResponse, GetAdminUsersData, GetAdminUsersResponse, GetAuthSessionData, GetAuthSessionError, GetAuthSessionResponse, GetMailAccountsByMailAccountIdData, GetMailAccountsByMailAccountIdError, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, GetMailAccountsByMailAccountIdIdentitiesData, GetMailAccountsByMailAccountIdIdentitiesResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusData, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusError, GetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusResponse, GetMailAccountsByMailAccountIdMailboxesData, GetMailAccountsByMailAccountIdMailboxesResponse, GetMailAccountsByMailAccountIdResponse, GetMailAccountsByMailAccountIdSearchData, GetMailAccountsByMailAccountIdSearchResponse, GetMailAccountsData, GetMailAccountsResponse, PostAccountApikeysData, PostAccountApikeysError, PostAccountApikeysResponse, PostAdminUsersData, PostAdminUsersError, PostAdminUsersResponse, PostAuthLoginData, PostAuthLoginError, PostAuthLoginResponse, PostAuthLogoutData, PostAuthLogoutError, PostAuthLogoutResponse, PostAuthResetPasswordData, PostAuthResetPasswordError, PostAuthResetPasswordRequestData, PostAuthResetPasswordRequestError, PostAuthResetPasswordRequestResponse, PostAuthResetPasswordResponse, PostMailAccountsByMailAccountIdIdentitiesData, PostMailAccountsByMailAccountIdIdentitiesError, PostMailAccountsByMailAccountIdIdentitiesResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse, PostMailAccountsByMailAccountIdMailboxesData, PostMailAccountsByMailAccountIdMailboxesError, PostMailAccountsByMailAccountIdMailboxesResponse, PostMailAccountsByMailAccountIdSearchCountData, PostMailAccountsByMailAccountIdSearchCountError, PostMailAccountsByMailAccountIdSearchCountResponse, PostMailAccountsByMailAccountIdSearchData, PostMailAccountsByMailAccountIdSearchError, PostMailAccountsByMailAccountIdSearchResponse, PostMailAccountsData, PostMailAccountsError, PostMailAccountsResponse, PutAccountData, PutAccountError, PutAccountPasswordData, PutAccountPasswordError, PutAccountPasswordResponse, PutAccountPreferencesRemoteContentPolicyData, PutAccountPreferencesRemoteContentPolicyError, PutAccountPreferencesRemoteContentPolicyResponse, PutAccountResponse, PutAdminUsersByUserIdData, PutAdminUsersByUserIdError, PutAdminUsersByUserIdPasswordData, PutAdminUsersByUserIdPasswordError, PutAdminUsersByUserIdPasswordResponse, PutAdminUsersByUserIdResponse, PutMailAccountsByMailAccountIdCredentialsData, PutMailAccountsByMailAccountIdCredentialsError, PutMailAccountsByMailAccountIdCredentialsResponse, PutMailAccountsByMailAccountIdData, PutMailAccountsByMailAccountIdError, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError, PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse, PutMailAccountsByMailAccountIdMailboxesByMailboxPathData, PutMailAccountsByMailAccountIdMailboxesByMailboxPathError, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse, PutMailAccountsByMailAccountIdMailboxesByMailboxPathResponse, PutMailAccountsByMailAccountIdResponse } from './types.gen';
 
 export type Options<TComposable extends Composable = '$fetch', TData extends TDataShape = TDataShape, ResT = unknown, DefaultT = undefined> = Options2<TComposable, TData, ResT, DefaultT> & {
     /**
@@ -387,51 +387,6 @@ export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMails = <TComp
 });
 
 /**
- * Bulk Move Mails
- *
- * Move multiple mails to another mailbox/folder.
- */
-export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMove = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveError, DefaultT>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/bulk-move',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Bulk Copy Mails
- *
- * Copy multiple mails to another mailbox/folder.
- */
-export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopy = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyError, DefaultT>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/bulk-copy',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Bulk Delete Mails
- *
- * Delete multiple mails by moving them to trash, or permanently delete them.
- */
-export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDelete = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteError, DefaultT>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/bulk-delete',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * Delete Mail
  *
  * Delete a mail by moving it to trash, or permanently delete it.
@@ -491,6 +446,51 @@ export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
 export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMove = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}/move',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Bulk Move Mails
+ *
+ * Move multiple mails to another mailbox/folder.
+ */
+export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMove = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mail-bulk-actions/move',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Bulk Copy Mails
+ *
+ * Copy multiple mails to another mailbox/folder.
+ */
+export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopy = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mail-bulk-actions/copy',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Bulk Delete Mails
+ *
+ * Delete multiple mails by moving them to trash, or permanently delete them.
+ */
+export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDelete = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteError, DefaultT>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mail-bulk-actions/delete',
     ...options,
     headers: {
         'Content-Type': 'application/json',

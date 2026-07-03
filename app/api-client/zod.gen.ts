@@ -828,72 +828,6 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse
     })
 });
 
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveBody = z.object({
-    uids: z.array(z.number()).min(1),
-    targetMailbox: z.string()
-});
-
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMovePath = z.object({
-    mailAccountID: z.number().gt(0),
-    mailboxPath: z.string()
-});
-
-/**
- * Mails moved successfully
- */
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponse = z.object({
-    success: z.literal(true),
-    code: z.literal(200),
-    message: z.literal('Mails moved successfully'),
-    data: z.object({
-        success: z.boolean()
-    })
-});
-
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyBody = z.object({
-    uids: z.array(z.number()).min(1),
-    targetMailbox: z.string()
-});
-
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyPath = z.object({
-    mailAccountID: z.number().gt(0),
-    mailboxPath: z.string()
-});
-
-/**
- * Mails copied successfully
- */
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponse = z.object({
-    success: z.literal(true),
-    code: z.literal(200),
-    message: z.literal('Mails copied successfully'),
-    data: z.object({
-        success: z.boolean()
-    })
-});
-
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteBody = z.object({
-    uids: z.array(z.number()).min(1),
-    permanent: z.boolean().optional().default(false)
-});
-
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeletePath = z.object({
-    mailAccountID: z.number().gt(0),
-    mailboxPath: z.string()
-});
-
-/**
- * Mails deleted successfully
- */
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponse = z.object({
-    success: z.literal(true),
-    code: z.literal(200),
-    message: z.literal('Mails deleted successfully'),
-    data: z.object({
-        success: z.boolean()
-    })
-});
-
 export const zDeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidPath = z.object({
     mailAccountID: z.number().gt(0),
     mailboxPath: z.string(),
@@ -1096,6 +1030,72 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUi
     message: z.literal('Mail moved successfully'),
     data: z.object({
         newUid: z.number().optional()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveBody = z.object({
+    uids: z.array(z.number()).min(1),
+    targetMailbox: z.string()
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMovePath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
+});
+
+/**
+ * Mails moved successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mails moved successfully'),
+    data: z.object({
+        success: z.boolean()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyBody = z.object({
+    uids: z.array(z.number()).min(1),
+    targetMailbox: z.string()
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
+});
+
+/**
+ * Mails copied successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsCopyResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mails copied successfully'),
+    data: z.object({
+        success: z.boolean()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteBody = z.object({
+    uids: z.array(z.number()).min(1),
+    permanent: z.boolean().optional().default(false)
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeletePath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
+});
+
+/**
+ * Mails deleted successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mails deleted successfully'),
+    data: z.object({
+        success: z.boolean()
     })
 });
 
