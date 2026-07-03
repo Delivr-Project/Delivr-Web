@@ -3,7 +3,9 @@
  *
  * Attachments are streamed from the API on demand (the server never stores or
  * caches them). On the client we likewise only hold a transient `blob:` object
- * URL, which is revoked immediately after use — nothing is persisted here either.
+ * URL: the download path revokes it immediately after the click, while the
+ * preview path revokes it on a short timer so the new tab has time to load it.
+ * Either way nothing is persisted here.
  *
  * We use a direct authenticated `fetch` rather than the generated SDK because the
  * endpoint returns a binary body, and because an `<img src>`/download needs the
@@ -15,6 +17,32 @@ export interface AttachmentRef {
     mailboxPath: string;
     mailUid: number;
     attachmentId: number;
+}
+
+/**
+ * MIME types that are safe to render inline in a new tab. A `blob:` URL inherits
+ * this app's origin, so opening active content (text/html, image/svg+xml, ...)
+ * there would let it run script in-origin — an XSS vector. Only inert types are
+ * allowlisted; everything else is downloaded instead of previewed. SVG is
+ * deliberately excluded because it can carry scripts.
+ */
+const PREVIEWABLE_MIME_TYPES = new Set([
+    'application/pdf',
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/webp',
+    'image/bmp',
+    'image/x-icon',
+    'image/vnd.microsoft.icon',
+]);
+
+/** True if the given content type may be safely previewed inline (see allowlist). */
+export function isPreviewableType(contentType?: string | null): boolean {
+    if (!contentType) return false;
+    // Drop any parameters (e.g. "; charset=utf-8") and normalise casing.
+    const type = contentType.split(';')[0]!.trim().toLowerCase();
+    return PREVIEWABLE_MIME_TYPES.has(type);
 }
 
 function buildAttachmentUrl(ref: AttachmentRef, download: boolean): string {
@@ -49,6 +77,21 @@ async function fetchAttachmentBlob(ref: AttachmentRef, download: boolean): Promi
     return await response.blob();
 }
 
+/** Trigger a browser download for an already-fetched blob via a transient object URL. */
+function triggerDownload(blob: Blob, filename?: string): void {
+    const url = URL.createObjectURL(blob);
+    try {
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename || 'attachment';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
 export function useMailAttachments() {
     const toast = useToast();
 
@@ -60,17 +103,7 @@ export function useMailAttachments() {
     async function downloadAttachment(ref: AttachmentRef, filename?: string): Promise<void> {
         try {
             const blob = await fetchAttachmentBlob(ref, true);
-            const url = URL.createObjectURL(blob);
-            try {
-                const anchor = document.createElement('a');
-                anchor.href = url;
-                anchor.download = filename || 'attachment';
-                document.body.appendChild(anchor);
-                anchor.click();
-                anchor.remove();
-            } finally {
-                URL.revokeObjectURL(url);
-            }
+            triggerDownload(blob, filename);
         } catch (e) {
             toast.add({
                 title: 'Download failed',
@@ -81,13 +114,22 @@ export function useMailAttachments() {
     }
 
     /**
-     * Open an attachment inline in a new browser tab (e.g. to preview a PDF or
-     * image). The object URL is revoked after a short delay so the new tab has
-     * time to load it.
+     * Preview an attachment. Inert types (PDF, raster images) are opened inline in
+     * a new tab; anything else — including active content like HTML or SVG that
+     * could execute script in this origin via the `blob:` URL — is downloaded
+     * instead. The allowlist is enforced on the fetched blob's actual type.
      */
-    async function openAttachment(ref: AttachmentRef): Promise<void> {
+    async function openAttachment(ref: AttachmentRef, filename?: string): Promise<void> {
         try {
             const blob = await fetchAttachmentBlob(ref, false);
+
+            // Security: never render non-allowlisted types inline (XSS via blob: URL
+            // inheriting the app origin). Fall back to a download for those.
+            if (!isPreviewableType(blob.type)) {
+                triggerDownload(blob, filename);
+                return;
+            }
+
             const url = URL.createObjectURL(blob);
             window.open(url, '_blank', 'noopener,noreferrer');
             // Give the new tab time to load before releasing the object URL.

@@ -98,7 +98,7 @@ app/
 ## Key Conventions
 
 - **API Client**: Generated via `@hey-api/openapi-ts` from the Delivr API OpenAPI spec. **Do not hand-edit** `*.gen.ts` files. Regenerate with `bun run api-client:generate` (reads the spec from the running API at `http://localhost:14123/docs/v1/openapi`).
-- **Binary endpoints**: The generated SDK returns parsed JSON, so it isn't used for binary responses (e.g. attachment content). `useMailAttachments` does a direct authenticated `fetch` (bearer token from `useAppCookies`, base URL from `runtimeConfig.public.apiUrl`) → `Blob` → transient `blob:` URL for download/inline preview, revoked right after use. Nothing is persisted client-side.
+- **Binary endpoints**: The generated SDK returns parsed JSON, so it isn't used for binary responses (e.g. attachment content). `useMailAttachments` does a direct authenticated `fetch` (bearer token from `useAppCookies`, base URL from `runtimeConfig.public.apiUrl`) → `Blob` → transient `blob:` URL for download/inline preview (download revokes it immediately; preview revokes on a short timer so the opened tab can load it). Inline preview is restricted to an allowlist of inert types (PDF + raster images, **not** SVG/HTML) to avoid script execution in the app origin via the `blob:` URL; other types are downloaded. Nothing is persisted client-side.
 - **Composables**: All composables in `app/composables/` are auto-imported by Nuxt. Stores use the `use*Store` naming convention.
 - **Components**: Auto-imported from `app/components/`. Organized by domain (dashboard/, mail/, form/, img/).
 - **Layouts**: `auth.vue` for unauthenticated routes, `default.vue` for the main dashboard.

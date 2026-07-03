@@ -198,8 +198,8 @@ async function handleDownloadAttachment(idx: number, filename?: string) {
     }
 }
 
-function handleOpenAttachment(idx: number) {
-    openAttachment(attachmentRef(idx));
+function handleOpenAttachment(idx: number, filename?: string) {
+    openAttachment(attachmentRef(idx), filename);
 }
 
 // ── Action handlers (placeholders) ──
@@ -483,31 +483,40 @@ defineExpose({ reload: loadMail });
                             <div
                                 v-for="(attachment, idx) in mailData.attachments"
                                 :key="idx"
-                                class="flex items-center gap-3 p-3 rounded-lg border border-default hover:border-primary transition-colors cursor-pointer"
-                                @click="handleOpenAttachment(idx)"
+                                class="flex items-center gap-3 p-3 rounded-lg border border-default hover:border-primary focus-within:border-primary transition-colors"
                             >
-                                <div class="shrink-0 p-2 rounded-md bg-primary/10">
-                                    <UIcon
-                                        :name="isImageAttachment(attachment.contentType) ? 'i-lucide-image' : 'i-lucide-file'"
-                                        class="size-5 text-primary"
-                                    />
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-medium text-default truncate">
-                                        {{ attachment.filename || 'Unnamed file' }}
+                                <!-- Semantic button for preview: native keyboard/SR support,
+                                     kept a sibling of the download button (no nested controls). -->
+                                <button
+                                    type="button"
+                                    :aria-label="`Preview ${attachment.filename || 'attachment'}`"
+                                    class="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    @click="handleOpenAttachment(idx, attachment.filename ?? undefined)"
+                                >
+                                    <div class="shrink-0 p-2 rounded-md bg-primary/10">
+                                        <UIcon
+                                            :name="isImageAttachment(attachment.contentType) ? 'i-lucide-image' : 'i-lucide-file'"
+                                            class="size-5 text-primary"
+                                        />
                                     </div>
-                                    <div class="text-xs text-dimmed">
-                                        {{ Utils.formatFileSize(attachment.size) }}
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm font-medium text-default truncate">
+                                            {{ attachment.filename || 'Unnamed file' }}
+                                        </div>
+                                        <div class="text-xs text-dimmed">
+                                            {{ Utils.formatFileSize(attachment.size) }}
+                                        </div>
                                     </div>
-                                </div>
+                                </button>
                                 <UTooltip text="Download">
                                     <UButton
                                         icon="i-lucide-download"
                                         color="neutral"
                                         variant="ghost"
                                         size="xs"
+                                        :aria-label="`Download ${attachment.filename || 'attachment'}`"
                                         :loading="downloadingIdx === idx"
-                                        @click.stop="handleDownloadAttachment(idx, attachment.filename ?? undefined)"
+                                        @click="handleDownloadAttachment(idx, attachment.filename ?? undefined)"
                                     />
                                 </UTooltip>
                             </div>
