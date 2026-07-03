@@ -26,9 +26,7 @@ function goBack() {
     const folderPath = Array.isArray(route.params.folderPath)
         ? route.params.folderPath[0]
         : route.params.folderPath;
-    const segments = MailboxDisplayUtils.parseFolderParam(folderPath);
-    const encoded = segments.map(encodeURIComponent).join('/');
-    router.push(`/mail/${route.params.mailAccountID}/folder/${encoded}`);
+    router.push(`/mail/${route.params.mailAccountID}/folder/${folderPath || ''}`);
 }
 </script>
 

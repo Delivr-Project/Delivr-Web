@@ -562,11 +562,11 @@ function openMail(item: SearchResultItem) {
     // Resolve the mailbox so we split on its real delimiter; the selected mail
     // is now part of the route path.
     const mailbox = currentMailAccount.value?.mailboxes?.find(mb => mb.path === mailboxPath);
-    const folderSegments = mailbox
-        ? MailboxDisplayUtils.pathToUrlSegments(mailbox.path, mailbox.delimiter)
-        : encodeURIComponent(mailboxPath);
+    const folderSegment = mailbox
+        ? MailboxDisplayUtils.pathToUrlSegment(mailbox.path, mailbox.delimiter)
+        : encodeURIComponent(encodeURIComponent(mailboxPath));
 
-    navigateTo(`/mail/${accountId}/folder/${folderSegments}/${item.mail.uid}`);
+    navigateTo(`/mail/${accountId}/folder/${folderSegment}/${item.mail.uid}`);
     isOpen.value = false;
 }
 

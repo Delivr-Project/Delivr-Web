@@ -225,9 +225,10 @@ function toggleViewMode() {
 
 function encodedFolderPath(): string {
     const mb = currentMailbox.value;
+    const delimiter = mb?.delimiter || mailboxes.value[0]?.delimiter || '/';
     return mb
-        ? MailboxDisplayUtils.pathToUrlSegments(mb.path, mb.delimiter)
-        : folderSegments.value.map(encodeURIComponent).join('/');
+        ? MailboxDisplayUtils.pathToUrlSegment(mb.path, delimiter)
+        : MailboxDisplayUtils.pathToUrlSegment(folderSegments.value.join(delimiter), delimiter);
 }
 
 function mailRoute(uid: number): string {

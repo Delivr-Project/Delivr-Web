@@ -27,35 +27,44 @@ export class MailboxDisplayUtils {
     }
 
     /**
-     * Convert an IMAP path into a URL path fragment. Splits on the mailbox's own
-     * delimiter and percent-encodes each segment, so a "/"-delimited path maps to
-     * real URL segments (no fragile "%2F"), while names containing reserved chars
-     * still survive. Reverse of {@link findMailboxByUrlSegments}.
+     * Convert an IMAP path into a single URL path segment. Splits on the
+     * mailbox's own delimiter, percent-encodes each folder name, and joins them
+     * back with the real delimiter. If the delimiter is "/" it is encoded so
+     * Nuxt's [folderPath] param captures the entire path as one segment. This
+     * preserves the original delimiter in the URL (e.g. "INBOX.Job" for a
+     * dot-delimited server, "INBOX%2FJob" for a slash-delimited one).
      */
-    public static pathToUrlSegments(path: string, delimiter: string): string {
-        if (!delimiter) return encodeURIComponent(path);
-        return path.split(delimiter).map(encodeURIComponent).join('/');
+    public static pathToUrlSegment(path: string, delimiter: string): string {
+        const segments = delimiter ? path.split(delimiter) : [path];
+        const joined = segments.map(encodeURIComponent).join(delimiter);
+        return delimiter === '/' ? encodeURIComponent(joined) : joined;
     }
 
     /** Full router path for a mailbox folder. */
     public static folderUrl(accountId: number, mb: Mailbox): string {
-        return `/mail/${accountId}/folder/${this.pathToUrlSegments(mb.path, mb.delimiter)}`;
+        return `/mail/${accountId}/folder/${this.pathToUrlSegment(mb.path, mb.delimiter)}`;
     }
 
     /**
      * Decode a single dynamic route segment that was produced by
-     * {@link pathToUrlSegments}. The segment may contain '/'-joined encoded
-     * pieces for nested folders (e.g. "INBOX/Work").
+     * {@link pathToUrlSegment}. The outer layer is decoded first, then each
+     * folder name; the result is split on every supported IMAP delimiter so the
+     * caller can try matching against the real mailbox list.
      */
     public static parseFolderParam(param: string | string[] | undefined): string[] {
         const raw = Array.isArray(param) ? param[0] : param;
         if (!raw) return [];
-        return raw
-            .split('/')
-            .map((s) => {
-                try { return decodeURIComponent(s); } catch { return s; }
-            })
-            .filter((s) => s.length > 0);
+        try {
+            const decoded = decodeURIComponent(raw);
+            return decoded
+                .split(/[\/\\.]/)
+                .map((s) => {
+                    try { return decodeURIComponent(s); } catch { return s; }
+                })
+                .filter((s) => s.length > 0);
+        } catch {
+            return raw.split(/[\/\\.]/).filter((s) => s.length > 0);
+        }
     }
 
     public static normalizeFolderParam(param: unknown): string[] {
