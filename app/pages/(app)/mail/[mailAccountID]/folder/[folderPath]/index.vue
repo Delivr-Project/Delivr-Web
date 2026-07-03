@@ -6,6 +6,7 @@ import MailDetailContent from '~/components/mail/MailDetailContent.vue';
 import { useMailViewMode } from '~/composables/useMailViewMode';
 import { useMailActions } from '~/composables/useMailActions';
 import { useMailDragState } from '~/composables/useMailDragState';
+import { useMailMultiSelect } from '~/composables/useMailMultiSelect';
 import DashboardDeleteModal from '~/components/dashboard/DashboardDeleteModal.vue';
 
 const route = useRoute();
@@ -169,6 +170,15 @@ watch(mailList, (newList) => {
     const pruned = new Set([...selectedUids.value].filter(uid => validUids.has(uid)));
     if (pruned.size !== selectedUids.value.size) selectedUids.value = pruned;
 });
+
+// Ctrl/Cmd+Click and Shift+Click on a row — shared by both the list and
+// split view rows below, so they use the exact same selection semantics.
+const { handleItemClick } = useMailMultiSelect(selectedUids);
+const orderedUids = computed(() => mailList.value.map(m => m.uid));
+
+function handleRowClick(event: MouseEvent, mail: MailListItem) {
+    handleItemClick(event, mail.uid, orderedUids.value, () => openMail(mail.uid));
+}
 
 // ── Bulk actions ──
 
@@ -517,13 +527,13 @@ watch(viewMode, (mode) => {
                                     v-for="mail in mailList"
                                     :key="mail.uid"
                                     draggable="true"
-                                    class="group relative flex items-center gap-3 px-4 py-1.5 border-b border-default last:border-b-0 cursor-pointer transition-colors text-sm"
+                                    class="group relative flex items-center gap-3 px-4 py-1.5 border-b border-default last:border-b-0 cursor-pointer transition-colors text-sm select-none"
                                     :class="[
                                         isSelected(mail.uid)
                                             ? 'bg-primary/10'
                                             : 'hover:bg-elevated/60'
                                     ]"
-                                    @click="openMail(mail.uid)"
+                                    @click="handleRowClick($event, mail)"
                                     @dragstart="onDragStart($event, mail)"
                                     @dragend="onDragEnd"
                                 >
@@ -597,7 +607,7 @@ watch(viewMode, (mode) => {
                                     v-for="mail in mailList"
                                     :key="mail.uid"
                                     draggable="true"
-                                    class="group relative flex flex-col gap-0.5 px-3 py-2 border-b border-default last:border-b-0 cursor-pointer transition-colors"
+                                    class="group relative flex flex-col gap-0.5 px-3 py-2 border-b border-default last:border-b-0 cursor-pointer transition-colors select-none"
                                     :class="[
                                         activeMailUid === mail.uid
                                             ? 'bg-primary/15 border-l-2 border-l-primary pl-2.5'
@@ -605,7 +615,7 @@ watch(viewMode, (mode) => {
                                                 ? 'bg-primary/10'
                                                 : 'hover:bg-elevated/60'
                                     ]"
-                                    @click="openMail(mail.uid)"
+                                    @click="handleRowClick($event, mail)"
                                     @dragstart="onDragStart($event, mail)"
                                     @dragend="onDragEnd"
                                 >
