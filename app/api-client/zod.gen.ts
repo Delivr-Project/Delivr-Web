@@ -235,6 +235,42 @@ export const zPutAccountPreferencesRemoteContentPolicyResponse = z.object({
     data: z.null()
 });
 
+/**
+ * Mail list page size retrieved successfully
+ */
+export const zGetAccountPreferencesMailListPageSizeResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail list page size retrieved successfully'),
+    data: z.object({
+        pageSize: z.union([
+            z.literal(25),
+            z.literal(50),
+            z.literal(100),
+            z.literal('all')
+        ]).optional().default(25)
+    })
+});
+
+export const zPutAccountPreferencesMailListPageSizeBody = z.object({
+    pageSize: z.union([
+        z.literal(25),
+        z.literal(50),
+        z.literal(100),
+        z.literal('all')
+    ]).optional().default(25)
+});
+
+/**
+ * Mail list page size updated successfully
+ */
+export const zPutAccountPreferencesMailListPageSizeResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail list page size updated successfully'),
+    data: z.null()
+});
+
 export const zGetMailAccountsQuery = z.object({
     withMailboxes: z.boolean().optional().default(false)
 });
