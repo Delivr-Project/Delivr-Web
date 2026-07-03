@@ -32,8 +32,9 @@ const mailboxes = computed(() => mailAccount.data.value.mailboxes || []);
 // (with the correct delimiter) for API calls and its leaf name for display.
 const folderSegments = normalizeFolderParam(route.params.folderPath);
 const currentMailbox = computed(() => findMailboxByUrlSegments(mailboxes.value, folderSegments));
-const systemFolderPath = computed(() => currentMailbox.value?.path ?? folderSegments.join('/'));
-
+const systemFolderPath = computed(() =>
+    currentMailbox.value?.path ?? folderSegments.join(mailboxes.value[0]?.delimiter || '/')
+);
 const folderTitle = computed(() =>
     currentMailbox.value ? leafName(currentMailbox.value) : (folderSegments[folderSegments.length - 1] ?? 'Folder')
 );
@@ -46,9 +47,9 @@ const breadcrumbItems = computed(() =>
         : [{ label: folderTitle.value }]
 );
 
-// Original folder icon logic: match the full lowercased mailbox path.
 const folderIcon = computed(() => {
-    const lower = systemFolderPath.value.toLowerCase();
+    const special = currentMailbox.value?.specialUse?.replace(/^\\/, '').toLowerCase();
+    const lower = (special ?? folderTitle.value).toLowerCase();
     if (lower === 'inbox') return 'i-lucide-inbox';
     if (lower === 'sent' || lower === 'sent mail' || lower === 'sent messages') return 'i-lucide-send';
     if (lower === 'drafts') return 'i-lucide-file-edit';

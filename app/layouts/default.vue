@@ -12,14 +12,14 @@ import { buildMailboxTree, folderUrl, type MailboxTreeNode } from '~/utils/mailb
 
 const route = useRoute();
 
-// Original folder icon logic: match the full lowercased mailbox path.
 function folderIconFor(node: MailboxTreeNode): string {
-    const lowerPath = node.mailbox?.path.toLowerCase();
-    if (lowerPath === 'sent' || lowerPath === 'sent mail' || lowerPath === 'sent messages') return 'i-lucide-send';
-    if (lowerPath === 'drafts') return 'i-lucide-file-edit';
-    if (lowerPath === 'trash' || lowerPath === 'deleted' || lowerPath === 'deleted messages') return 'i-lucide-trash-2';
-    if (lowerPath === 'spam' || lowerPath === 'junk') return 'i-lucide-shield-alert';
-    if (lowerPath === 'archive') return 'i-lucide-archive';
+    const special = node.mailbox?.specialUse?.replace(/^\\/, '').toLowerCase();
+    const lower = (special ?? node.name).toLowerCase();
+    if (lower === 'sent' || lower === 'sent mail' || lower === 'sent messages') return 'i-lucide-send';
+    if (lower === 'drafts') return 'i-lucide-file-edit';
+    if (lower === 'trash' || lower === 'deleted' || lower === 'deleted messages') return 'i-lucide-trash-2';
+    if (lower === 'spam' || lower === 'junk') return 'i-lucide-shield-alert';
+    if (lower === 'archive') return 'i-lucide-archive';
     return 'i-lucide-folder';
 }
 

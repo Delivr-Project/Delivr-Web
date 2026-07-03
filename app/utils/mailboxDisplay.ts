@@ -49,10 +49,15 @@ export function folderUrl(accountId: number, mb: Mailbox): string {
     return `/mail/${accountId}/folder/${pathToUrlSegments(mb.path, mb.delimiter)}`;
 }
 
-/** Normalize a catch-all route param (`string | string[]`) into decoded segments. */
 export function normalizeFolderParam(param: unknown): string[] {
     const raw = Array.isArray(param) ? param : [param];
-    return raw.map((s) => String(s)).filter((s) => s.length > 0);
+    return raw
+        .filter((s): s is string | number => s !== undefined && s !== null)
+        .map((s) => {
+            const str = String(s);
+            try { return decodeURIComponent(str); } catch { return str; }
+        })
+        .filter((s) => s.length > 0);
 }
 
 /**
@@ -126,7 +131,8 @@ function rollupUnseen(node: MailboxTreeNode): number {
 export function buildMailboxTree(mailboxes: Mailbox[]): MailboxTreeNode[] {
     const inbox = mailboxes.find(isInbox);
     const defaultDelimiter = inbox?.delimiter || mailboxes[0]?.delimiter || '/';
-    const inboxPrefix = inbox ? inbox.path + defaultDelimiter : null;
+    const inboxDelimiter = inbox?.delimiter || defaultDelimiter;
+    const inboxPrefix = inbox ? inbox.path + inboxDelimiter : null;
 
     const roots: MailboxTreeNode[] = [];
     const byKey = new Map<string, MailboxTreeNode>();
@@ -137,7 +143,7 @@ export function buildMailboxTree(mailboxes: Mailbox[]): MailboxTreeNode[] {
         const delimiter = mb.delimiter || defaultDelimiter;
 
         let displayPath = mb.path;
-        if (inboxPrefix && mb.path.startsWith(inboxPrefix)) {
+        if (inboxPrefix && mb.path.toLowerCase().startsWith(inboxPrefix.toLowerCase())) {
             displayPath = mb.path.slice(inboxPrefix.length);
         }
 
