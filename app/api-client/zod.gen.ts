@@ -2,13 +2,9 @@
 
 import * as z from 'zod';
 
-export const zPostAuthLoginData = z.object({
-    body: z.optional(z.object({
-        username: z.string(),
-        password: z.string()
-    })),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
+export const zPostAuthLoginBody = z.object({
+    username: z.string(),
+    password: z.string()
 });
 
 /**
@@ -27,12 +23,6 @@ export const zPostAuthLoginResponse = z.object({
     })
 });
 
-export const zGetAuthSessionData = z.object({
-    body: z.optional(z.never()),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
-});
-
 /**
  * Session info retrieved successfully
  */
@@ -48,12 +38,6 @@ export const zGetAuthSessionResponse = z.object({
     })
 });
 
-export const zPostAuthLogoutData = z.object({
-    body: z.optional(z.never()),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
-});
-
 /**
  * Logout successful
  */
@@ -64,13 +48,9 @@ export const zPostAuthLogoutResponse = z.object({
     data: z.null()
 });
 
-export const zPostAuthResetPasswordData = z.object({
-    body: z.optional(z.object({
-        reset_token: z.string().min(1),
-        new_password: z.string().min(8).max(50).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
-    })),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
+export const zPostAuthResetPasswordBody = z.object({
+    reset_token: z.string().min(1),
+    new_password: z.string().min(8).max(50).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
 });
 
 /**
@@ -83,12 +63,8 @@ export const zPostAuthResetPasswordResponse = z.object({
     data: z.null()
 });
 
-export const zPostAuthResetPasswordRequestData = z.object({
-    body: z.optional(z.object({
-        email: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/)
-    })),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
+export const zPostAuthResetPasswordRequestBody = z.object({
+    email: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/)
 });
 
 /**
@@ -101,12 +77,6 @@ export const zPostAuthResetPasswordRequestResponse = z.object({
     data: z.null()
 });
 
-export const zDeleteAccountData = z.object({
-    body: z.optional(z.never()),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
-});
-
 /**
  * Account deleted successfully
  */
@@ -115,12 +85,6 @@ export const zDeleteAccountResponse = z.object({
     code: z.literal(200),
     message: z.literal('Account deleted successfully'),
     data: z.null()
-});
-
-export const zGetAccountData = z.object({
-    body: z.optional(z.never()),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
 });
 
 /**
@@ -140,14 +104,10 @@ export const zGetAccountResponse = z.object({
     })
 });
 
-export const zPutAccountData = z.object({
-    body: z.optional(z.object({
-        username: z.optional(z.string().min(5).max(40).regex(/^(?!.*[.-]{2})(?!.*--)(?!.*\.\.)[a-z0-9](?:[a-z0-9._-]{3,38}[a-z0-9_])?$/)),
-        display_name: z.optional(z.string()),
-        email: z.optional(z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/))
-    })),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
+export const zPutAccountBody = z.object({
+    username: z.string().min(5).max(40).regex(/^(?!.*[.-]{2})(?!.*--)(?!.*\.\.)[a-z0-9](?:[a-z0-9._-]{3,38}[a-z0-9_])?$/).optional(),
+    display_name: z.string().optional(),
+    email: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/).optional()
 });
 
 /**
@@ -160,13 +120,9 @@ export const zPutAccountResponse = z.object({
     data: z.null()
 });
 
-export const zPutAccountPasswordData = z.object({
-    body: z.optional(z.object({
-        current_password: z.string(),
-        new_password: z.string().min(8).max(50).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
-    })),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
+export const zPutAccountPasswordBody = z.object({
+    current_password: z.string(),
+    new_password: z.string().min(8).max(50).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
 });
 
 /**
@@ -177,12 +133,6 @@ export const zPutAccountPasswordResponse = z.object({
     code: z.literal(200),
     message: z.literal('Password changed successfully'),
     data: z.null()
-});
-
-export const zGetAccountApikeysData = z.object({
-    body: z.optional(z.never()),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
 });
 
 /**
@@ -196,27 +146,19 @@ export const zGetAccountApikeysResponse = z.object({
         id: z.string(),
         description: z.string(),
         created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
-        expires_at: z.union([
-            z.int().gte(-9007199254740991).lte(9007199254740991),
-            z.null()
-        ])
+        expires_at: z.int().gte(-9007199254740991).lte(9007199254740991).nullable()
     }))
 });
 
-export const zPostAccountApikeysData = z.object({
-    body: z.optional(z.object({
-        description: z.string().min(1).max(255),
-        expires_at: z.union([
-            z.literal('7d'),
-            z.literal('30d'),
-            z.literal('90d'),
-            z.literal('180d'),
-            z.literal('365d'),
-            z.null()
-        ])
-    })),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
+export const zPostAccountApikeysBody = z.object({
+    description: z.string().min(1).max(255),
+    expires_at: z.union([
+        z.literal('7d'),
+        z.literal('30d'),
+        z.literal('90d'),
+        z.literal('180d'),
+        z.literal('365d')
+    ]).nullable()
 });
 
 /**
@@ -232,12 +174,8 @@ export const zPostAccountApikeysResponse = z.object({
     })
 });
 
-export const zDeleteAccountApikeysByApiKeyIdData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        apiKeyID: z.string().min(1).max(255)
-    }),
-    query: z.optional(z.never())
+export const zDeleteAccountApikeysByApiKeyIdPath = z.object({
+    apiKeyID: z.string().min(1).max(255)
 });
 
 /**
@@ -250,12 +188,8 @@ export const zDeleteAccountApikeysByApiKeyIdResponse = z.object({
     data: z.null()
 });
 
-export const zGetAccountApikeysByApiKeyIdData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        apiKeyID: z.string().min(1).max(255)
-    }),
-    query: z.optional(z.never())
+export const zGetAccountApikeysByApiKeyIdPath = z.object({
+    apiKeyID: z.string().min(1).max(255)
 });
 
 /**
@@ -269,19 +203,40 @@ export const zGetAccountApikeysByApiKeyIdResponse = z.object({
         id: z.string(),
         description: z.string(),
         created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
-        expires_at: z.union([
-            z.int().gte(-9007199254740991).lte(9007199254740991),
-            z.null()
-        ])
+        expires_at: z.int().gte(-9007199254740991).lte(9007199254740991).nullable()
     })
 });
 
-export const zGetMailAccountsData = z.object({
-    body: z.optional(z.never()),
-    path: z.optional(z.never()),
-    query: z.optional(z.object({
-        withMailboxes: z.optional(z.boolean()).default(false)
-    }))
+/**
+ * Remote content policy retrieved successfully
+ */
+export const zGetAccountPreferencesRemoteContentPolicyResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Remote content policy retrieved successfully'),
+    data: z.object({
+        addresses: z.record(z.string(), z.enum(['allow', 'block'])).optional().default({}),
+        domains: z.record(z.string(), z.enum(['allow', 'block'])).optional().default({})
+    })
+});
+
+export const zPutAccountPreferencesRemoteContentPolicyBody = z.object({
+    addresses: z.record(z.string(), z.enum(['allow', 'block'])).optional().default({}),
+    domains: z.record(z.string(), z.enum(['allow', 'block'])).optional().default({})
+});
+
+/**
+ * Remote content policy updated successfully
+ */
+export const zPutAccountPreferencesRemoteContentPolicyResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Remote content policy updated successfully'),
+    data: z.null()
+});
+
+export const zGetMailAccountsQuery = z.object({
+    withMailboxes: z.boolean().optional().default(false)
 });
 
 /**
@@ -366,7 +321,7 @@ export const zGetMailAccountsResponse = z.object({
                 parent: z.array(z.string()),
                 parentPath: z.string(),
                 flags: z.array(z.string()),
-                specialUse: z.optional(z.string()),
+                specialUse: z.string().optional(),
                 status: z.object({
                     messages: z.number().gte(0),
                     recent: z.number().gte(0),
@@ -377,43 +332,39 @@ export const zGetMailAccountsResponse = z.object({
     ])
 });
 
-export const zPostMailAccountsData = z.object({
-    body: z.optional(z.object({
-        display_name: z.string().min(1).max(255),
-        is_default: z.optional(z.boolean()),
-        smtp_host: z.union([
-            z.union([
-                z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
-                z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
-            ]),
-            z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
+export const zPostMailAccountsBody = z.object({
+    display_name: z.string().min(1).max(255),
+    is_default: z.boolean().optional(),
+    smtp_host: z.union([
+        z.union([
+            z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
+            z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
         ]),
-        smtp_port: z.int().gte(1).lte(65535),
-        smtp_encryption: z.enum([
-            'SSL',
-            'STARTTLS',
-            'NONE'
+        z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
+    ]),
+    smtp_port: z.int().gte(1).lte(65535),
+    smtp_encryption: z.enum([
+        'SSL',
+        'STARTTLS',
+        'NONE'
+    ]),
+    smtp_username: z.string().min(1).max(255),
+    smtp_password: z.string().min(1).max(1023),
+    imap_host: z.union([
+        z.union([
+            z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
+            z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
         ]),
-        smtp_username: z.string().min(1).max(255),
-        smtp_password: z.string().min(1).max(1023),
-        imap_host: z.union([
-            z.union([
-                z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
-                z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
-            ]),
-            z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
-        ]),
-        imap_port: z.int().gte(1).lte(65535),
-        imap_encryption: z.enum([
-            'SSL',
-            'STARTTLS',
-            'NONE'
-        ]),
-        imap_username: z.string().min(1).max(255),
-        imap_password: z.string().min(1).max(1023)
-    })),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
+        z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
+    ]),
+    imap_port: z.int().gte(1).lte(65535),
+    imap_encryption: z.enum([
+        'SSL',
+        'STARTTLS',
+        'NONE'
+    ]),
+    imap_username: z.string().min(1).max(255),
+    imap_password: z.string().min(1).max(1023)
 });
 
 /**
@@ -428,12 +379,8 @@ export const zPostMailAccountsResponse = z.object({
     })
 });
 
-export const zDeleteMailAccountsByMailAccountIdData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+export const zDeleteMailAccountsByMailAccountIdPath = z.object({
+    mailAccountID: z.number().gt(0)
 });
 
 /**
@@ -446,14 +393,12 @@ export const zDeleteMailAccountsByMailAccountIdResponse = z.object({
     data: z.null()
 });
 
-export const zGetMailAccountsByMailAccountIdData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0)
-    }),
-    query: z.optional(z.object({
-        withMailboxes: z.optional(z.boolean()).default(false)
-    }))
+export const zGetMailAccountsByMailAccountIdPath = z.object({
+    mailAccountID: z.number().gt(0)
+});
+
+export const zGetMailAccountsByMailAccountIdQuery = z.object({
+    withMailboxes: z.boolean().optional().default(false)
 });
 
 /**
@@ -538,7 +483,7 @@ export const zGetMailAccountsByMailAccountIdResponse = z.object({
                 parent: z.array(z.string()),
                 parentPath: z.string(),
                 flags: z.array(z.string()),
-                specialUse: z.optional(z.string()),
+                specialUse: z.string().optional(),
                 status: z.object({
                     messages: z.number().gte(0),
                     recent: z.number().gte(0),
@@ -549,15 +494,13 @@ export const zGetMailAccountsByMailAccountIdResponse = z.object({
     ])
 });
 
-export const zPutMailAccountsByMailAccountIdData = z.object({
-    body: z.optional(z.object({
-        display_name: z.optional(z.string().min(1).max(255)),
-        is_default: z.optional(z.boolean())
-    })),
-    path: z.object({
-        mailAccountID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+export const zPutMailAccountsByMailAccountIdBody = z.object({
+    display_name: z.string().min(1).max(255).optional(),
+    is_default: z.boolean().optional()
+});
+
+export const zPutMailAccountsByMailAccountIdPath = z.object({
+    mailAccountID: z.number().gt(0)
 });
 
 /**
@@ -570,43 +513,41 @@ export const zPutMailAccountsByMailAccountIdResponse = z.object({
     data: z.null()
 });
 
-export const zPutMailAccountsByMailAccountIdCredentialsData = z.object({
-    body: z.optional(z.object({
-        smtp_host: z.union([
-            z.union([
-                z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
-                z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
-            ]),
-            z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
+export const zPutMailAccountsByMailAccountIdCredentialsBody = z.object({
+    smtp_host: z.union([
+        z.union([
+            z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
+            z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
         ]),
-        smtp_port: z.int().gte(1).lte(65535),
-        smtp_username: z.string().min(1).max(255),
-        smtp_password: z.string().min(1).max(1023),
-        smtp_encryption: z.enum([
-            'SSL',
-            'STARTTLS',
-            'NONE'
+        z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
+    ]),
+    smtp_port: z.int().gte(1).lte(65535),
+    smtp_username: z.string().min(1).max(255),
+    smtp_password: z.string().min(1).max(1023),
+    smtp_encryption: z.enum([
+        'SSL',
+        'STARTTLS',
+        'NONE'
+    ]),
+    imap_host: z.union([
+        z.union([
+            z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
+            z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
         ]),
-        imap_host: z.union([
-            z.union([
-                z.ipv4().regex(/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/),
-                z.ipv6().regex(/^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/)
-            ]),
-            z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
-        ]),
-        imap_port: z.int().gte(1).lte(65535),
-        imap_username: z.string().min(1).max(255),
-        imap_password: z.string().min(1).max(1023),
-        imap_encryption: z.enum([
-            'SSL',
-            'STARTTLS',
-            'NONE'
-        ])
-    })),
-    path: z.object({
-        mailAccountID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+        z.string().regex(/^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/)
+    ]),
+    imap_port: z.int().gte(1).lte(65535),
+    imap_username: z.string().min(1).max(255),
+    imap_password: z.string().min(1).max(1023),
+    imap_encryption: z.enum([
+        'SSL',
+        'STARTTLS',
+        'NONE'
+    ])
+});
+
+export const zPutMailAccountsByMailAccountIdCredentialsPath = z.object({
+    mailAccountID: z.number().gt(0)
 });
 
 /**
@@ -619,12 +560,8 @@ export const zPutMailAccountsByMailAccountIdCredentialsResponse = z.object({
     data: z.null()
 });
 
-export const zGetMailAccountsByMailAccountIdMailboxesData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+export const zGetMailAccountsByMailAccountIdMailboxesPath = z.object({
+    mailAccountID: z.number().gt(0)
 });
 
 /**
@@ -641,7 +578,7 @@ export const zGetMailAccountsByMailAccountIdMailboxesResponse = z.object({
         parent: z.array(z.string()),
         parentPath: z.string(),
         flags: z.array(z.string()),
-        specialUse: z.optional(z.string()),
+        specialUse: z.string().optional(),
         status: z.object({
             messages: z.number().gte(0),
             recent: z.number().gte(0),
@@ -650,14 +587,12 @@ export const zGetMailAccountsByMailAccountIdMailboxesResponse = z.object({
     }))
 });
 
-export const zPostMailAccountsByMailAccountIdMailboxesData = z.object({
-    body: z.optional(z.object({
-        path: z.string()
-    })),
-    path: z.object({
-        mailAccountID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+export const zPostMailAccountsByMailAccountIdMailboxesBody = z.object({
+    path: z.string()
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesPath = z.object({
+    mailAccountID: z.number().gt(0)
 });
 
 /**
@@ -670,13 +605,9 @@ export const zPostMailAccountsByMailAccountIdMailboxesResponse = z.object({
     data: z.null()
 });
 
-export const zDeleteMailAccountsByMailAccountIdMailboxesByMailboxPathData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0),
-        mailboxPath: z.string()
-    }),
-    query: z.optional(z.never())
+export const zDeleteMailAccountsByMailAccountIdMailboxesByMailboxPathPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
 });
 
 /**
@@ -689,13 +620,9 @@ export const zDeleteMailAccountsByMailAccountIdMailboxesByMailboxPathResponse = 
     data: z.null()
 });
 
-export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0),
-        mailboxPath: z.string()
-    }),
-    query: z.optional(z.never())
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
 });
 
 /**
@@ -712,7 +639,7 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathResponse = z.o
         parent: z.array(z.string()),
         parentPath: z.string(),
         flags: z.array(z.string()),
-        specialUse: z.optional(z.string()),
+        specialUse: z.string().optional(),
         status: z.object({
             messages: z.number().gte(0),
             recent: z.number().gte(0),
@@ -721,15 +648,13 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathResponse = z.o
     })
 });
 
-export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathData = z.object({
-    body: z.optional(z.object({
-        path: z.string()
-    })),
-    path: z.object({
-        mailAccountID: z.number().gt(0),
-        mailboxPath: z.string()
-    }),
-    query: z.optional(z.never())
+export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathBody = z.object({
+    path: z.string()
+});
+
+export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
 });
 
 /**
@@ -742,13 +667,9 @@ export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathResponse = z.o
     data: z.null()
 });
 
-export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0),
-        mailboxPath: z.string()
-    }),
-    query: z.optional(z.never())
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
 });
 
 /**
@@ -765,18 +686,16 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathStatusResponse
     })
 });
 
-export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0),
-        mailboxPath: z.string()
-    }),
-    query: z.optional(z.object({
-        limit: z.optional(z.int().gte(1).lte(100)).default(10),
-        offset: z.optional(z.int().gte(0).lte(9007199254740991)).default(0),
-        order: z.optional(z.enum(['newest', 'oldest'])),
-        searchString: z.optional(z.string())
-    }))
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
+});
+
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsQuery = z.object({
+    limit: z.int().gte(1).lte(100).optional().default(10),
+    offset: z.int().gte(0).lte(9007199254740991).optional().default(0),
+    order: z.enum(['newest', 'oldest']).optional(),
+    searchString: z.string().optional()
 });
 
 /**
@@ -790,69 +709,151 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse 
         uid: z.number().gte(0),
         rawHeaders: z.record(z.string(), z.string()),
         rawFlags: z.array(z.string()),
-        from: z.optional(z.object({
-            name: z.optional(z.string()),
+        from: z.object({
+            name: z.string().optional(),
             address: z.string()
-        })),
+        }).optional(),
         to: z.array(z.object({
-            name: z.optional(z.string()),
+            name: z.string().optional(),
             address: z.string()
         })),
         cc: z.array(z.object({
-            name: z.optional(z.string()),
+            name: z.string().optional(),
             address: z.string()
         })),
         bcc: z.array(z.object({
-            name: z.optional(z.string()),
+            name: z.string().optional(),
             address: z.string()
         })),
-        subject: z.optional(z.string()),
-        references: z.optional(z.union([
+        subject: z.string().optional(),
+        references: z.union([
             z.string(),
             z.array(z.string())
-        ])),
-        date: z.optional(z.number()),
-        flags: z.optional(z.object({
-            seen: z.optional(z.boolean()),
-            answered: z.optional(z.boolean()),
-            flagged: z.optional(z.boolean()),
-            deleted: z.optional(z.boolean()),
-            draft: z.optional(z.boolean()),
-            recent: z.optional(z.boolean())
-        })),
-        replyTo: z.optional(z.array(z.object({
-            name: z.optional(z.string()),
+        ]).optional(),
+        date: z.number().optional(),
+        flags: z.object({
+            seen: z.boolean().optional(),
+            answered: z.boolean().optional(),
+            flagged: z.boolean().optional(),
+            deleted: z.boolean().optional(),
+            draft: z.boolean().optional(),
+            recent: z.boolean().optional()
+        }).optional(),
+        replyTo: z.array(z.object({
+            name: z.string().optional(),
             address: z.string()
-        }))),
-        messageId: z.optional(z.string()),
-        inReplyTo: z.optional(z.string()),
-        priority: z.optional(z.enum([
+        })).optional(),
+        messageId: z.string().optional(),
+        inReplyTo: z.string().optional(),
+        priority: z.enum([
             'normal',
             'low',
             'high'
-        ])),
+        ]).optional(),
         attachments: z.array(z.object({
-            filename: z.optional(z.string()),
+            filename: z.string().optional(),
             contentType: z.string(),
             size: z.number(),
-            contentId: z.optional(z.string()),
-            contentDisposition: z.optional(z.string())
+            contentId: z.string().optional(),
+            contentDisposition: z.string().optional()
         })),
         body: z.object({
-            text: z.optional(z.string()),
-            html: z.optional(z.string())
+            text: z.string().optional(),
+            html: z.string().optional()
         })
     }))
 });
 
-export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0),
-        mailboxPath: z.string(),
-        mailUID: z.number()
-    }),
-    query: z.optional(z.never())
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBody = z.object({
+    from: z.object({
+        name: z.string().optional(),
+        address: z.string()
+    }).optional(),
+    to: z.array(z.object({
+        name: z.string().optional(),
+        address: z.string()
+    })),
+    cc: z.array(z.object({
+        name: z.string().optional(),
+        address: z.string()
+    })),
+    bcc: z.array(z.object({
+        name: z.string().optional(),
+        address: z.string()
+    })),
+    subject: z.string().optional(),
+    references: z.union([
+        z.string(),
+        z.array(z.string())
+    ]).optional(),
+    flags: z.object({
+        seen: z.boolean().optional(),
+        answered: z.boolean().optional(),
+        flagged: z.boolean().optional(),
+        deleted: z.boolean().optional(),
+        draft: z.boolean().optional(),
+        recent: z.boolean().optional()
+    }).optional(),
+    replyTo: z.array(z.object({
+        name: z.string().optional(),
+        address: z.string()
+    })).optional(),
+    messageId: z.string().optional(),
+    inReplyTo: z.string().optional(),
+    priority: z.enum([
+        'normal',
+        'low',
+        'high'
+    ]).optional(),
+    body: z.object({
+        text: z.string().optional(),
+        html: z.string().optional()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
+});
+
+/**
+ * Mail created successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail created successfully'),
+    data: z.object({
+        uid: z.number()
+    })
+});
+
+export const zDeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number()
+});
+
+export const zDeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidQuery = z.object({
+    permanent: z.boolean().optional().default(false)
+});
+
+/**
+ * Mail deleted successfully
+ */
+export const zDeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail deleted successfully'),
+    data: z.object({
+        success: z.boolean()
+    })
+});
+
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number()
 });
 
 /**
@@ -866,67 +867,174 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
         uid: z.number().gte(0),
         rawHeaders: z.record(z.string(), z.string()),
         rawFlags: z.array(z.string()),
-        from: z.optional(z.object({
-            name: z.optional(z.string()),
+        from: z.object({
+            name: z.string().optional(),
             address: z.string()
-        })),
+        }).optional(),
         to: z.array(z.object({
-            name: z.optional(z.string()),
+            name: z.string().optional(),
             address: z.string()
         })),
         cc: z.array(z.object({
-            name: z.optional(z.string()),
+            name: z.string().optional(),
             address: z.string()
         })),
         bcc: z.array(z.object({
-            name: z.optional(z.string()),
+            name: z.string().optional(),
             address: z.string()
         })),
-        subject: z.optional(z.string()),
-        references: z.optional(z.union([
+        subject: z.string().optional(),
+        references: z.union([
             z.string(),
             z.array(z.string())
-        ])),
-        date: z.optional(z.number()),
-        flags: z.optional(z.object({
-            seen: z.optional(z.boolean()),
-            answered: z.optional(z.boolean()),
-            flagged: z.optional(z.boolean()),
-            deleted: z.optional(z.boolean()),
-            draft: z.optional(z.boolean()),
-            recent: z.optional(z.boolean())
-        })),
-        replyTo: z.optional(z.array(z.object({
-            name: z.optional(z.string()),
+        ]).optional(),
+        date: z.number().optional(),
+        flags: z.object({
+            seen: z.boolean().optional(),
+            answered: z.boolean().optional(),
+            flagged: z.boolean().optional(),
+            deleted: z.boolean().optional(),
+            draft: z.boolean().optional(),
+            recent: z.boolean().optional()
+        }).optional(),
+        replyTo: z.array(z.object({
+            name: z.string().optional(),
             address: z.string()
-        }))),
-        messageId: z.optional(z.string()),
-        inReplyTo: z.optional(z.string()),
-        priority: z.optional(z.enum([
+        })).optional(),
+        messageId: z.string().optional(),
+        inReplyTo: z.string().optional(),
+        priority: z.enum([
             'normal',
             'low',
             'high'
-        ])),
+        ]).optional(),
         attachments: z.array(z.object({
-            filename: z.optional(z.string()),
+            filename: z.string().optional(),
             contentType: z.string(),
             size: z.number(),
-            contentId: z.optional(z.string()),
-            contentDisposition: z.optional(z.string())
+            contentId: z.string().optional(),
+            contentDisposition: z.string().optional()
         })),
         body: z.object({
-            text: z.optional(z.string()),
-            html: z.optional(z.string())
+            text: z.string().optional(),
+            html: z.string().optional()
         })
     })
 });
 
-export const zGetMailAccountsByMailAccountIdIdentitiesData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidBody = z.object({
+    from: z.object({
+        name: z.string().optional(),
+        address: z.string()
+    }).optional(),
+    to: z.array(z.object({
+        name: z.string().optional(),
+        address: z.string()
+    })).optional(),
+    cc: z.array(z.object({
+        name: z.string().optional(),
+        address: z.string()
+    })).optional(),
+    bcc: z.array(z.object({
+        name: z.string().optional(),
+        address: z.string()
+    })).optional(),
+    subject: z.string().optional(),
+    references: z.union([
+        z.string(),
+        z.array(z.string())
+    ]).optional(),
+    flags: z.object({
+        seen: z.boolean().optional(),
+        answered: z.boolean().optional(),
+        flagged: z.boolean().optional(),
+        deleted: z.boolean().optional(),
+        draft: z.boolean().optional(),
+        recent: z.boolean().optional()
+    }).optional(),
+    replyTo: z.array(z.object({
+        name: z.string().optional(),
+        address: z.string()
+    })).optional(),
+    messageId: z.string().optional(),
+    inReplyTo: z.string().optional(),
+    priority: z.enum([
+        'normal',
+        'low',
+        'high'
+    ]).optional(),
+    body: z.object({
+        text: z.string().optional(),
+        html: z.string().optional()
+    }).optional()
+});
+
+export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number()
+});
+
+/**
+ * Mail updated successfully
+ */
+export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail updated successfully'),
+    data: z.object({
+        success: z.boolean(),
+        newUid: z.number().optional()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendBody = z.object({
+    moveToSent: z.boolean().optional().default(true),
+    deleteOriginal: z.boolean().optional().default(false)
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number()
+});
+
+/**
+ * Mail sent successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail sent successfully'),
+    data: z.object({
+        messageId: z.string().optional()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveBody = z.object({
+    targetMailbox: z.string()
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMovePath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number()
+});
+
+/**
+ * Mail moved successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail moved successfully'),
+    data: z.object({
+        newUid: z.number().optional()
+    })
+});
+
+export const zGetMailAccountsByMailAccountIdIdentitiesPath = z.object({
+    mailAccountID: z.number().gt(0)
 });
 
 /**
@@ -946,16 +1054,14 @@ export const zGetMailAccountsByMailAccountIdIdentitiesResponse = z.object({
     }))
 });
 
-export const zPostMailAccountsByMailAccountIdIdentitiesData = z.object({
-    body: z.optional(z.object({
-        display_name: z.string().min(1).max(255),
-        email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
-        is_default: z.boolean()
-    })),
-    path: z.object({
-        mailAccountID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+export const zPostMailAccountsByMailAccountIdIdentitiesBody = z.object({
+    display_name: z.string().min(1).max(255),
+    email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+    is_default: z.boolean()
+});
+
+export const zPostMailAccountsByMailAccountIdIdentitiesPath = z.object({
+    mailAccountID: z.number().gt(0)
 });
 
 /**
@@ -970,13 +1076,9 @@ export const zPostMailAccountsByMailAccountIdIdentitiesResponse = z.object({
     })
 });
 
-export const zDeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0),
-        mailIdentityID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+export const zDeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailIdentityID: z.number().gt(0)
 });
 
 /**
@@ -989,13 +1091,9 @@ export const zDeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdRespons
     data: z.null()
 });
 
-export const zGetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        mailAccountID: z.number().gt(0),
-        mailIdentityID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+export const zGetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailIdentityID: z.number().gt(0)
 });
 
 /**
@@ -1014,17 +1112,15 @@ export const zGetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse =
     })
 });
 
-export const zPutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData = z.object({
-    body: z.optional(z.object({
-        display_name: z.optional(z.string().min(1).max(255)),
-        email_address: z.optional(z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/)),
-        is_default: z.optional(z.boolean())
-    })),
-    path: z.object({
-        mailAccountID: z.number().gt(0),
-        mailIdentityID: z.number().gt(0)
-    }),
-    query: z.optional(z.never())
+export const zPutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdBody = z.object({
+    display_name: z.string().min(1).max(255).optional(),
+    email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/).optional(),
+    is_default: z.boolean().optional()
+});
+
+export const zPutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailIdentityID: z.number().gt(0)
 });
 
 /**
@@ -1037,15 +1133,250 @@ export const zPutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse =
     data: z.null()
 });
 
-export const zGetAdminUsersData = z.object({
-    body: z.optional(z.never()),
-    path: z.optional(z.never()),
-    query: z.optional(z.object({
-        role: z.optional(z.enum(['admin', 'user'])),
-        search: z.optional(z.string().min(1).max(64)),
-        limit: z.optional(z.int().gte(1).lte(100)),
-        offset: z.optional(z.int().gte(0).lte(9007199254740991))
-    }))
+export const zGetMailAccountsByMailAccountIdSearchPath = z.object({
+    mailAccountID: z.number().gt(0)
+});
+
+export const zGetMailAccountsByMailAccountIdSearchQuery = z.object({
+    q: z.string().min(1),
+    order: z.enum(['newest', 'oldest']).optional(),
+    limit: z.int().gte(1).lte(100).optional().default(25),
+    offset: z.int().gte(0).lte(9007199254740991).optional().default(0),
+    includeTrash: z.boolean().optional().default(false),
+    includeSpam: z.boolean().optional().default(false)
+});
+
+/**
+ * Search completed successfully
+ */
+export const zGetMailAccountsByMailAccountIdSearchResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Search completed successfully'),
+    data: z.object({
+        total: z.int().gte(0).lte(9007199254740991),
+        mailboxesSearched: z.int().gte(0).lte(9007199254740991),
+        results: z.array(z.object({
+            mailboxPath: z.string(),
+            mailboxName: z.string(),
+            specialUse: z.string().optional(),
+            mail: z.object({
+                uid: z.number().gte(0),
+                rawHeaders: z.record(z.string(), z.string()),
+                rawFlags: z.array(z.string()),
+                from: z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                }).optional(),
+                to: z.array(z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                })),
+                cc: z.array(z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                })),
+                bcc: z.array(z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                })),
+                subject: z.string().optional(),
+                references: z.union([
+                    z.string(),
+                    z.array(z.string())
+                ]).optional(),
+                date: z.number().optional(),
+                flags: z.object({
+                    seen: z.boolean().optional(),
+                    answered: z.boolean().optional(),
+                    flagged: z.boolean().optional(),
+                    deleted: z.boolean().optional(),
+                    draft: z.boolean().optional(),
+                    recent: z.boolean().optional()
+                }).optional(),
+                replyTo: z.array(z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                })).optional(),
+                messageId: z.string().optional(),
+                inReplyTo: z.string().optional(),
+                priority: z.enum([
+                    'normal',
+                    'low',
+                    'high'
+                ]).optional(),
+                attachments: z.array(z.object({
+                    filename: z.string().optional(),
+                    contentType: z.string(),
+                    size: z.number(),
+                    contentId: z.string().optional(),
+                    contentDisposition: z.string().optional()
+                })),
+                body: z.object({
+                    text: z.string().optional(),
+                    html: z.string().optional()
+                })
+            })
+        }))
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdSearchBody = z.object({
+    text: z.string().optional(),
+    subject: z.string().optional(),
+    from: z.string().optional(),
+    to: z.string().optional(),
+    body: z.string().optional(),
+    since: z.int().gt(0).lte(9007199254740991).optional(),
+    before: z.int().gt(0).lte(9007199254740991).optional(),
+    hasAttachment: z.boolean().optional(),
+    seen: z.boolean().optional(),
+    flagged: z.boolean().optional(),
+    answered: z.boolean().optional(),
+    draft: z.boolean().optional()
+});
+
+export const zPostMailAccountsByMailAccountIdSearchPath = z.object({
+    mailAccountID: z.number().gt(0)
+});
+
+export const zPostMailAccountsByMailAccountIdSearchQuery = z.object({
+    order: z.enum(['newest', 'oldest']).optional(),
+    limit: z.int().gte(1).lte(100).optional().default(50),
+    offset: z.int().gte(0).lte(9007199254740991).optional().default(0),
+    mailboxes: z.string().optional(),
+    excludeMailboxes: z.string().optional(),
+    includeTrash: z.boolean().optional().default(false),
+    includeSpam: z.boolean().optional().default(false),
+    includeDrafts: z.boolean().optional().default(true)
+});
+
+/**
+ * Search completed successfully
+ */
+export const zPostMailAccountsByMailAccountIdSearchResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Search completed successfully'),
+    data: z.object({
+        total: z.int().gte(0).lte(9007199254740991),
+        mailboxesSearched: z.int().gte(0).lte(9007199254740991),
+        results: z.array(z.object({
+            mailboxPath: z.string(),
+            mailboxName: z.string(),
+            specialUse: z.string().optional(),
+            mail: z.object({
+                uid: z.number().gte(0),
+                rawHeaders: z.record(z.string(), z.string()),
+                rawFlags: z.array(z.string()),
+                from: z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                }).optional(),
+                to: z.array(z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                })),
+                cc: z.array(z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                })),
+                bcc: z.array(z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                })),
+                subject: z.string().optional(),
+                references: z.union([
+                    z.string(),
+                    z.array(z.string())
+                ]).optional(),
+                date: z.number().optional(),
+                flags: z.object({
+                    seen: z.boolean().optional(),
+                    answered: z.boolean().optional(),
+                    flagged: z.boolean().optional(),
+                    deleted: z.boolean().optional(),
+                    draft: z.boolean().optional(),
+                    recent: z.boolean().optional()
+                }).optional(),
+                replyTo: z.array(z.object({
+                    name: z.string().optional(),
+                    address: z.string()
+                })).optional(),
+                messageId: z.string().optional(),
+                inReplyTo: z.string().optional(),
+                priority: z.enum([
+                    'normal',
+                    'low',
+                    'high'
+                ]).optional(),
+                attachments: z.array(z.object({
+                    filename: z.string().optional(),
+                    contentType: z.string(),
+                    size: z.number(),
+                    contentId: z.string().optional(),
+                    contentDisposition: z.string().optional()
+                })),
+                body: z.object({
+                    text: z.string().optional(),
+                    html: z.string().optional()
+                })
+            })
+        }))
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdSearchCountBody = z.object({
+    text: z.string().optional(),
+    subject: z.string().optional(),
+    from: z.string().optional(),
+    to: z.string().optional(),
+    body: z.string().optional(),
+    since: z.int().gt(0).lte(9007199254740991).optional(),
+    before: z.int().gt(0).lte(9007199254740991).optional(),
+    hasAttachment: z.boolean().optional(),
+    seen: z.boolean().optional(),
+    flagged: z.boolean().optional(),
+    answered: z.boolean().optional(),
+    draft: z.boolean().optional()
+});
+
+export const zPostMailAccountsByMailAccountIdSearchCountPath = z.object({
+    mailAccountID: z.number().gt(0)
+});
+
+export const zPostMailAccountsByMailAccountIdSearchCountQuery = z.object({
+    order: z.enum(['newest', 'oldest']).optional(),
+    mailboxes: z.string().optional(),
+    excludeMailboxes: z.string().optional(),
+    includeTrash: z.boolean().optional().default(false),
+    includeSpam: z.boolean().optional().default(false),
+    includeDrafts: z.boolean().optional().default(true)
+});
+
+/**
+ * Count completed successfully
+ */
+export const zPostMailAccountsByMailAccountIdSearchCountResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Count completed successfully'),
+    data: z.object({
+        total: z.int().gte(0).lte(9007199254740991),
+        mailboxesSearched: z.int().gte(0).lte(9007199254740991),
+        breakdown: z.array(z.object({
+            mailboxPath: z.string(),
+            mailboxName: z.string(),
+            count: z.int().gte(0).lte(9007199254740991)
+        }))
+    })
+});
+
+export const zGetAdminUsersQuery = z.object({
+    role: z.enum(['admin', 'user']).optional(),
+    search: z.string().min(1).max(64).optional(),
+    limit: z.int().gte(1).lte(100).optional(),
+    offset: z.int().gte(0).lte(9007199254740991).optional()
 });
 
 /**
@@ -1065,16 +1396,12 @@ export const zGetAdminUsersResponse = z.object({
     }))
 });
 
-export const zPostAdminUsersData = z.object({
-    body: z.optional(z.object({
-        username: z.string().min(5).max(40).regex(/^(?!.*[.-]{2})(?!.*--)(?!.*\.\.)[a-z0-9](?:[a-z0-9._-]{3,38}[a-z0-9_])?$/),
-        display_name: z.string().min(1).max(64),
-        email: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
-        role: z.optional(z.enum(['admin', 'user'])),
-        password: z.string().min(8).max(128)
-    })),
-    path: z.optional(z.never()),
-    query: z.optional(z.never())
+export const zPostAdminUsersBody = z.object({
+    username: z.string().min(5).max(40).regex(/^(?!.*[.-]{2})(?!.*--)(?!.*\.\.)[a-z0-9](?:[a-z0-9._-]{3,38}[a-z0-9_])?$/),
+    display_name: z.string().min(1).max(64),
+    email: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+    role: z.enum(['admin', 'user']).optional(),
+    password: z.string().min(8).max(128)
 });
 
 /**
@@ -1094,12 +1421,8 @@ export const zPostAdminUsersResponse = z.object({
     })
 });
 
-export const zDeleteAdminUsersByUserIdData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        userId: z.int().gt(0).lte(9007199254740991)
-    }),
-    query: z.optional(z.never())
+export const zDeleteAdminUsersByUserIdPath = z.object({
+    userId: z.int().gt(0).lte(9007199254740991)
 });
 
 /**
@@ -1112,12 +1435,8 @@ export const zDeleteAdminUsersByUserIdResponse = z.object({
     data: z.null()
 });
 
-export const zGetAdminUsersByUserIdData = z.object({
-    body: z.optional(z.never()),
-    path: z.object({
-        userId: z.int().gt(0).lte(9007199254740991)
-    }),
-    query: z.optional(z.never())
+export const zGetAdminUsersByUserIdPath = z.object({
+    userId: z.int().gt(0).lte(9007199254740991)
 });
 
 /**
@@ -1137,17 +1456,15 @@ export const zGetAdminUsersByUserIdResponse = z.object({
     })
 });
 
-export const zPutAdminUsersByUserIdData = z.object({
-    body: z.optional(z.object({
-        username: z.optional(z.string()),
-        display_name: z.optional(z.string()),
-        email: z.optional(z.string()),
-        role: z.optional(z.enum(['admin', 'user']))
-    })),
-    path: z.object({
-        userId: z.int().gt(0).lte(9007199254740991)
-    }),
-    query: z.optional(z.never())
+export const zPutAdminUsersByUserIdBody = z.object({
+    username: z.string().optional(),
+    display_name: z.string().optional(),
+    email: z.string().optional(),
+    role: z.enum(['admin', 'user']).optional()
+});
+
+export const zPutAdminUsersByUserIdPath = z.object({
+    userId: z.int().gt(0).lte(9007199254740991)
 });
 
 /**
@@ -1167,14 +1484,12 @@ export const zPutAdminUsersByUserIdResponse = z.object({
     })
 });
 
-export const zPutAdminUsersByUserIdPasswordData = z.object({
-    body: z.optional(z.object({
-        password: z.string().min(8).max(50).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
-    })),
-    path: z.object({
-        userId: z.int().gt(0).lte(9007199254740991)
-    }),
-    query: z.optional(z.never())
+export const zPutAdminUsersByUserIdPasswordBody = z.object({
+    password: z.string().min(8).max(50).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
+});
+
+export const zPutAdminUsersByUserIdPasswordPath = z.object({
+    userId: z.int().gt(0).lte(9007199254740991)
 });
 
 /**

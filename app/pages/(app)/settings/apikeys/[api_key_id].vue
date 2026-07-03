@@ -59,7 +59,7 @@ if (api_key_id === "new") {
 function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
 
     return api_key_id === "new" ? {
-        [`/apikeys/new`]: {
+        [`/settings/apikeys/new`]: {
             isNavLink: true,
             label: 'General',
             icon: 'i-lucide-info',
@@ -77,7 +77,7 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
             }
         }
     } : {
-        [`/apikeys/${api_key_id}`]: {
+        [`/settings/apikeys/${api_key_id}`]: {
             isNavLink: true,
             label: 'General',
             icon: 'i-lucide-info',
@@ -100,7 +100,7 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
 const subrouterPathDynamics = useSubrouterPathDynamics({
     baseTitle: `API Keys | Delivr`,
     basebreadcrumbItems: [
-        { label: 'API Keys', to: '/apikeys' }
+        { label: 'API Keys', to: '/settings/apikeys' }
     ],      
     routes: getRoutesConfig()
 });

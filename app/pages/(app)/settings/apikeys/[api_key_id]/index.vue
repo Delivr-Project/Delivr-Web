@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PostAccountApikeysResponses } from '~/api-client';
-import { zPostAccountApikeysData } from '~/api-client/zod.gen';
+import { zPostAccountApikeysBody } from '~/api-client/zod.gen';
 
 
 const toast = useToast();
@@ -9,7 +9,7 @@ const apiKey = useSubrouterInjectedData<APIKey, NewAPIKey>("api_key", true).inje
 const apiKey_data = apiKey.data;
 const apiKey_loading = apiKey.loading;
 
-const apiKey_form_schema = apiKey.isNew ? zPostAccountApikeysData.shape.body : null;
+const apiKey_form_schema = apiKey.isNew ? zPostAccountApikeysBody : null;
 const apiKey_form_state = ref<NewAPIKey>({
     description: apiKey_data.value.description,
     expires_at: apiKey_data.value.expires_at as any
@@ -43,7 +43,7 @@ async function onFormSubmit() {
 				api_key_creation_result_data.value = result.data 
 
 				// Redirect to the newly created ÁPI Key page
-				// navigateTo(`/apikeys/${result.data?.id}`);
+				// navigateTo(`/settings/apikeys/${result.data?.id}`);
 
 			} else {
 				throw new Error(result.message || 'Failed to create API Key');
@@ -118,7 +118,7 @@ async function onDeleteApiKey() {
 
 			deleteConfirmOpen.value = false;
 
-			await navigateTo('/apikeys');
+			await navigateTo('/settings/apikeys');
 
         } else {
             throw new Error(res.message || 'Failed to delete API Key.');
@@ -140,7 +140,7 @@ async function onAPIKeyReveal() {
 	const id = api_key_creation_result_data.value.id;
 	api_key_creation_result_data.value = null;
 	
-	navigateTo(`/apikeys/${id}`);
+	navigateTo(`/settings/apikeys/${id}`);
 }
 
 

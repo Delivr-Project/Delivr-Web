@@ -4,6 +4,7 @@ const _useDashboard = () => {
     const route = useRoute()
     const router = useRouter()
     const isNotificationsSlideoverOpen = ref(false)
+    const isMailSearchOpen = ref(false)
 
     defineShortcuts({
         'g-h': () => navigateTo('/'),
@@ -14,10 +15,12 @@ const _useDashboard = () => {
 
     watch(() => route.fullPath, () => {
         isNotificationsSlideoverOpen.value = false
+        isMailSearchOpen.value = false
     })
 
     return {
-        isNotificationsSlideoverOpen
+        isNotificationsSlideoverOpen,
+        isMailSearchOpen
     }
 }
 

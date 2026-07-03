@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailListItem } from '~/utils/types';
 import { Utils } from '~/utils';
+import MailDetailContent from '~/components/mail/MailDetailContent.vue';
+import { useMailViewMode } from '~/composables/useMailViewMode';
 
 const route = useRoute();
+const router = useRouter();
 const toast = useToast();
+const { isMailSearchOpen } = useDashboard();
+const viewMode = useMailViewMode();
 
 const folderPath = decodeURIComponent(route.params.folderPath as string);
 const systemFolderPath = folderPath.toLowerCase() === 'inbox' ? 'INBOX' : folderPath;
@@ -28,19 +33,18 @@ useSeoMeta({
 const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
 const accountId = mailAccount.data.value.id;
 
-// Strip HTML for text preview
+// ── Helpers ──
+
 function stripHtml(html: string): string {
     return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
 }
 
-// Build preview text from mail body
 function getPreview(mail: MailListItem): string {
     if (mail.body?.text) return Utils.truncate(stripHtml(mail.body.text), 120);
     if (mail.body?.html) return Utils.truncate(stripHtml(mail.body.html), 120);
     return 'No preview available';
 }
 
-// Format dates relative to now
 function formatRelativeDate(timestamp: number): string {
     const date = new Date(timestamp);
     const now = new Date();
@@ -54,16 +58,11 @@ function formatRelativeDate(timestamp: number): string {
     if (diffHours < 24) return `${diffHours}h`;
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays}d`;
-    return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+    return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
 }
 
-// Check mail flag helpers
 function isUnread(mail: MailListItem): boolean {
     return !mail.flags?.seen;
-}
-
-function isFlagged(mail: MailListItem): boolean {
-    return !!mail.flags?.flagged;
 }
 
 function hasAttachments(mail: MailListItem): boolean {
@@ -74,20 +73,6 @@ function hasAttachments(mail: MailListItem): boolean {
 
 const PAGE_SIZE = 25;
 const currentPage = ref(1);
-
-// ── Search ──
-
-const searchQuery = ref('');
-const searchDebounced = ref('');
-
-let _debounceTimer: ReturnType<typeof setTimeout> | null = null;
-watch(searchQuery, (val) => {
-    if (_debounceTimer) clearTimeout(_debounceTimer);
-    _debounceTimer = setTimeout(() => {
-        searchDebounced.value = val;
-        currentPage.value = 1; // Reset to first page on search
-    }, 400);
-});
 
 // ── Data fetching ──
 
@@ -103,7 +88,6 @@ const mails = await useAPIAsyncData<MailListItem[]>(
                 order: 'newest',
                 limit: PAGE_SIZE,
                 offset: (currentPage.value - 1) * PAGE_SIZE,
-                ...(searchDebounced.value ? { searchString: searchDebounced.value } : {}),
             }
         }));
         if (!response.success) {
@@ -118,8 +102,7 @@ const mails = await useAPIAsyncData<MailListItem[]>(
     }
 );
 
-// Re-fetch when search or page changes
-watch([searchDebounced, currentPage], () => {
+watch(currentPage, () => {
     mails.refresh();
 });
 
@@ -131,15 +114,11 @@ const hasNextPage = computed(() => mailList.value.length === PAGE_SIZE);
 const hasPrevPage = computed(() => currentPage.value > 1);
 
 function nextPage() {
-    if (hasNextPage.value) {
-        currentPage.value++;
-    }
+    if (hasNextPage.value) currentPage.value++;
 }
 
 function prevPage() {
-    if (hasPrevPage.value) {
-        currentPage.value--;
-    }
+    if (hasPrevPage.value) currentPage.value--;
 }
 
 // ── Selection state ──
@@ -152,11 +131,8 @@ function isSelected(uid: number): boolean {
 
 function toggleSelection(uid: number) {
     const newSet = new Set(selectedUids.value);
-    if (newSet.has(uid)) {
-        newSet.delete(uid);
-    } else {
-        newSet.add(uid);
-    }
+    if (newSet.has(uid)) newSet.delete(uid);
+    else newSet.add(uid);
     selectedUids.value = newSet;
 }
 
@@ -178,41 +154,9 @@ const someSelected = computed(() => selectedUids.value.size > 0 && selectedUids.
 
 // ── Bulk actions ──
 
-function handleBulkArchive() {
+function handleBulk(title: string) {
     toast.add({
-        title: 'Archive not available',
-        description: 'Bulk archive will be available soon.',
-        color: 'warning'
-    });
-}
-
-function handleBulkDelete() {
-    toast.add({
-        title: 'Delete not available',
-        description: 'Bulk delete will be available soon.',
-        color: 'warning'
-    });
-}
-
-function handleBulkMarkRead() {
-    toast.add({
-        title: 'Mark as read not available',
-        description: 'This feature will be available soon.',
-        color: 'warning'
-    });
-}
-
-function handleBulkMarkUnread() {
-    toast.add({
-        title: 'Mark as unread not available',
-        description: 'This feature will be available soon.',
-        color: 'warning'
-    });
-}
-
-function handleBulkSpam() {
-    toast.add({
-        title: 'Mark as spam not available',
+        title: `${title} not available`,
         description: 'This feature will be available soon.',
         color: 'warning'
     });
@@ -222,80 +166,75 @@ function handleBulkSpam() {
 
 const unreadCount = computed(() => mailList.value.filter(m => isUnread(m)).length);
 
+// ── View mode & active mail (split view) ──
+
+const activeMailUid = ref<number | null>(null);
+
+// Initialize active mail from `?selected=` query param.
+const initialSelected = route.query.selected;
+if (typeof initialSelected === 'string' && /^\d+$/.test(initialSelected)) {
+    activeMailUid.value = parseInt(initialSelected, 10);
+}
+
+function toggleViewMode() {
+    viewMode.value = viewMode.value === 'split' ? 'list' : 'split';
+    if (viewMode.value === 'list') {
+        activeMailUid.value = null;
+    }
+}
+
 // ── Navigation ──
 
 function openMail(uid: number) {
-    navigateTo(`/mail/${accountId}/folder/${encodeURIComponent(folderPath)}/${uid}`);
+    if (viewMode.value === 'split') {
+        activeMailUid.value = uid;
+        // Update URL (without navigation) so it's shareable/back-safe.
+        router.replace({ query: { ...route.query, selected: String(uid) } });
+    } else {
+        navigateTo(`/mail/${accountId}/folder/${encodeURIComponent(folderPath)}/${uid}`);
+    }
 }
 
+function closeActiveMail() {
+    activeMailUid.value = null;
+    const { selected, ...rest } = route.query;
+    void selected;
+    router.replace({ query: rest });
+}
+
+// If view mode switches to list while a mail is active, clear it.
+watch(viewMode, (mode) => {
+    if (mode === 'list') activeMailUid.value = null;
+});
 </script>
 
 <template>
     <UDashboardPanel>
         <template #header>
-            <!-- <UDashboardNavbar :ui='{
-                center: "w-full",
-            }'>
-            
-                <div class="grid grid-cols-[1fr_minmax(4rem,auto)_1fr] items-center w-full">
-
-                    <div class="justify-self-start flex items-center gap-1.5 min-w-0">
-
-                        <UIcon
-                            :name="folderIcon"
-                            class="iconify i-lucide:settings shrink-0 size-5 self-center me-1.5"
-                            data-slot="icon"
-                        />
-
-                        <h1
-                            class="flex items-center gap-1.5 font-semibold text-highlighted truncate"
-                            data-slot="title"
-                        >
-                            {{ uiFolderPath }}
-                        </h1>
-                    </div>
-
-                    <div class="justify-self-center">
-
-                        <UDashboardSearchButton
-                            class="bg-transparent ring-default"
-                            label="Search..."
-                        />
-                        
-                    </div>
-
-                    <div class="justify-self-end">
-                        <div class="px-2 mb-2">
-                            <UButton
-                                label="Compose"
-                                icon="i-lucide-pen-square"
-                                color="primary"
-                                variant="solid"
-                                size="md"
-                                class="w-full justify-start"
-                                :to="`/mail/${accountId}/compose`"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-            </UDashboardNavbar> -->
             <UDashboardNavbar
                 :title="uiFolderPath"
                 :icon="folderIcon"
                 :ui='{
-                    root: "grid grid-cols-[1fr_50%_1fr] sm:grid-cols-[1fr_20%_1fr] items-center",
-                    left: "justify-self-start",
-                    center: "justify-self-center w-full",
-                    right: "justify-self-end",
-
+                    root: "flex items-center gap-2 sm:gap-3",
+                    left: "flex items-center gap-1.5 min-w-0 flex-none",
+                    center: "flex flex-1 min-w-0 justify-center",
+                    right: "flex items-center shrink-0 gap-1.5",
                 }'
             >
                 <template #default>
-                    <UDashboardSearchButton
-                        class="bg-transparent ring-default w-full"
-                        label="Search..."
-                    />
+                    <UButton
+                        class="bg-transparent ring-default w-full max-w-md justify-start text-muted"
+                        color="neutral"
+                        variant="outline"
+                        icon="i-lucide-search"
+                        @click="isMailSearchOpen = true"
+                    >
+                        <span class="flex-1 text-left truncate">Search emails...</span>
+                        <span class="flex items-center gap-1 text-xs shrink-0">
+                            <UKbd value="meta" size="sm" />
+                            <UKbd value="K" size="sm" />
+                        </span>
+                    </UButton>
                 </template>
 
                 <template #right>
@@ -321,26 +260,37 @@ function openMail(uid: number) {
                         />
                     </div>
                 </template>
-
             </UDashboardNavbar>
         </template>
 
         <template #body>
-            <DashboardPageBody>
-                <!-- Toolbar: Search + Actions -->
-                <div class="flex items-center gap-3 mb-4">
-                    <UInput
-                        v-model="searchQuery"
-                        icon="i-lucide-search"
-                        placeholder="Search emails..."
-                        class="flex-1"
-                        size="md"
-                    />
+            <div class="flex flex-col h-full min-h-0">
+                <!-- Toolbar (shrink-0) -->
+                <div class="flex items-center gap-2 px-4 py-2 border-b border-default shrink-0">
+                    <div class="text-sm text-muted">
+                        <span class="font-medium text-default">{{ mailList.length }}</span>
+                        <span class="mx-1">·</span>
+                        <span>{{ unreadCount }} unread</span>
+                    </div>
+
+                    <div class="flex-1" />
+
+                    <!-- View mode toggle -->
+                    <UTooltip :text="viewMode === 'split' ? 'Switch to list view' : 'Switch to split view'">
+                        <UButton
+                            :icon="viewMode === 'split' ? 'i-lucide-columns-2' : 'i-lucide-rows-3'"
+                            color="neutral"
+                            variant="ghost"
+                            size="md"
+                            @click="toggleViewMode"
+                        />
+                    </UTooltip>
+
                     <UTooltip text="Refresh">
                         <UButton
                             icon="i-lucide-refresh-cw"
                             color="neutral"
-                            variant="outline"
+                            variant="ghost"
                             size="md"
                             :loading="mails.loading.value"
                             @click="mails.refresh()"
@@ -351,7 +301,7 @@ function openMail(uid: number) {
                 <!-- Bulk Actions Bar -->
                 <div
                     v-if="hasSelection"
-                    class="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-lg border border-primary/30 bg-primary/5"
+                    class="flex items-center gap-2 px-4 py-2 border-b border-default bg-primary/5 shrink-0"
                 >
                     <UCheckbox
                         :model-value="allSelected"
@@ -362,58 +312,27 @@ function openMail(uid: number) {
                         {{ selectedUids.size }} selected
                     </span>
                     <div class="flex-1" />
-                    
-                    <!-- Bulk action buttons -->
+
                     <div class="flex items-center gap-1">
                         <UTooltip text="Archive">
-                            <UButton
-                                icon="i-lucide-archive"
-                                color="neutral"
-                                variant="ghost"
-                                size="xs"
-                                @click="handleBulkArchive"
-                            />
+                            <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="xs" @click="handleBulk('Archive')" />
                         </UTooltip>
                         <UTooltip text="Mark as read">
-                            <UButton
-                                icon="i-lucide-mail-open"
-                                color="neutral"
-                                variant="ghost"
-                                size="xs"
-                                @click="handleBulkMarkRead"
-                            />
+                            <UButton icon="i-lucide-mail-open" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as read')" />
                         </UTooltip>
                         <UTooltip text="Mark as unread">
-                            <UButton
-                                icon="i-lucide-mail"
-                                color="neutral"
-                                variant="ghost"
-                                size="xs"
-                                @click="handleBulkMarkUnread"
-                            />
+                            <UButton icon="i-lucide-mail" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as unread')" />
                         </UTooltip>
                         <UTooltip text="Report spam">
-                            <UButton
-                                icon="i-lucide-shield-alert"
-                                color="neutral"
-                                variant="ghost"
-                                size="xs"
-                                @click="handleBulkSpam"
-                            />
+                            <UButton icon="i-lucide-shield-alert" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as spam')" />
                         </UTooltip>
                         <UTooltip text="Delete">
-                            <UButton
-                                icon="i-lucide-trash-2"
-                                color="error"
-                                variant="ghost"
-                                size="xs"
-                                @click="handleBulkDelete"
-                            />
+                            <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="xs" @click="handleBulk('Delete')" />
                         </UTooltip>
                     </div>
 
                     <div class="w-px h-5 bg-default mx-1" />
-                    
+
                     <UButton
                         icon="i-lucide-x"
                         color="neutral"
@@ -425,188 +344,267 @@ function openMail(uid: number) {
                     </UButton>
                 </div>
 
-                <!-- Mail List -->
-                <div class="rounded-lg border border-default overflow-hidden">
-                    <!-- Select All row -->
+                <!-- Main layout: list (+ optional detail in split mode) -->
+                <div
+                    class="flex flex-1 min-h-0"
+                    :class="viewMode === 'split' ? 'flex-col lg:flex-row' : 'flex-col'"
+                >
+                    <!-- Mail List Column -->
                     <div
-                        v-if="mailList.length > 0 && !hasSelection"
-                        class="flex items-center justify-between gap-3 px-4 py-2 border-b border-default bg-elevated"
+                        class="flex flex-col min-h-0"
+                        :class="viewMode === 'split'
+                            ? 'w-full lg:w-[38%] lg:min-w-88 lg:max-w-lg lg:border-r lg:border-default'
+                            : 'w-full'"
                     >
-                        <div class="flex items-center gap-3">
+                        <!-- Select-all bar -->
+                        <div
+                            v-if="mailList.length > 0 && !hasSelection"
+                            class="flex items-center gap-3 px-4 py-1.5 border-b border-default shrink-0"
+                        >
                             <UCheckbox
                                 :model-value="false"
                                 @update:model-value="toggleSelectAll"
                             />
                             <span class="text-xs text-muted">Select all</span>
+                            <div class="flex-1" />
+                            <span class="text-xs text-muted">Page {{ currentPage }}</span>
                         </div>
-                        <div class="flex items-center gap-2 text-xs text-muted">
-                            <span>Page {{ currentPage }}</span>
-                            <span>·</span>
-                            <span>{{ PAGE_SIZE }} per page</span>
+
+                        <!-- Empty state -->
+                        <div
+                            v-if="mailList.length === 0 && !mails.loading.value"
+                            class="flex flex-col items-center justify-center flex-1 py-16 px-4"
+                        >
+                            <UIcon :name="folderIcon" class="size-12 mb-4 text-dimmed" />
+                            <p class="text-muted text-sm mb-2">No emails in {{ uiFolderPath }}</p>
                         </div>
-                    </div>
 
-                    <!-- Empty state -->
-                    <div v-if="mailList.length === 0 && !mails.loading.value" class="flex flex-col items-center justify-center py-16 px-4">
-                        <UIcon :name="folderIcon" class="size-12 mb-4 text-dimmed" />
-                        <p class="text-muted text-sm mb-2">
-                            {{ searchQuery ? 'No emails match your search' : `No emails in ${uiFolderPath}` }}
-                        </p>
-                        <p v-if="searchQuery" class="text-xs text-dimmed">
-                            Try adjusting your search terms
-                        </p>
-                    </div>
-
-                    <!-- Loading skeleton -->
-                    <div v-else-if="mails.loading.value && mailList.length === 0" class="divide-y divide-default">
-                        <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-4 py-3.5">
-                            <USkeleton class="size-5 rounded" />
-                            <USkeleton class="size-9 rounded-full" />
-                            <div class="flex-1 space-y-2">
-                                <USkeleton class="h-4 w-1/3" />
-                                <USkeleton class="h-3.5 w-2/3" />
-                                <USkeleton class="h-3 w-1/2" />
+                        <!-- Loading skeleton -->
+                        <div
+                            v-else-if="mails.loading.value && mailList.length === 0"
+                            class="divide-y divide-default"
+                        >
+                            <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-4 py-2">
+                                <USkeleton class="size-4 rounded" />
+                                <USkeleton class="h-3.5 w-40" />
+                                <USkeleton class="h-3.5 flex-1" />
+                                <USkeleton class="h-3 w-10" />
                             </div>
-                            <USkeleton class="h-3 w-10" />
-                        </div>
-                    </div>
-
-                    <!-- Mail rows -->
-                    <div
-                        v-for="mail in mailList"
-                        :key="mail.uid"
-                        class="group flex items-start gap-3 px-4 py-3.5 border-b border-default last:border-b-0 cursor-pointer transition-all duration-150"
-                        :class="[
-                            isSelected(mail.uid)
-                                ? 'bg-primary/10 border-l-2 border-l-primary'
-                                : isUnread(mail)
-                                    ? 'bg-primary/5 hover:bg-primary/10'
-                                    : 'hover:bg-elevated'
-                        ]"
-                        @click="openMail(mail.uid)"
-                    >
-                        <!-- Checkbox -->
-                        <div class="pt-0.5" @click.stop>
-                            <UCheckbox
-                                :model-value="isSelected(mail.uid)"
-                                @update:model-value="toggleSelection(mail.uid)"
-                            />
                         </div>
 
-                        <!-- Avatar -->
-                        <Gravatar
-                            :email="mail.from?.address"
-                            size="md"
-                            class="shrink-0 mt-0.5"
-                        />
+                        <!-- Mail rows -->
+                        <div v-else class="flex-1 min-h-0 overflow-y-auto">
+                            <!-- ══ LIST MODE (Gmail-style dense single-line) ══ -->
+                            <template v-if="viewMode === 'list'">
+                                <div
+                                    v-for="mail in mailList"
+                                    :key="mail.uid"
+                                    class="group relative flex items-center gap-3 px-4 py-1.5 border-b border-default last:border-b-0 cursor-pointer transition-colors text-sm"
+                                    :class="[
+                                        isSelected(mail.uid)
+                                            ? 'bg-primary/10'
+                                            : 'hover:bg-elevated/60'
+                                    ]"
+                                    @click="openMail(mail.uid)"
+                                >
+                                    <!-- Checkbox -->
+                                    <div class="shrink-0" @click.stop>
+                                        <UCheckbox
+                                            :model-value="isSelected(mail.uid)"
+                                            @update:model-value="toggleSelection(mail.uid)"
+                                        />
+                                    </div>
 
-                        <!-- Content -->
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between gap-2 mb-0.5">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <span
-                                        class="truncate text-sm"
+                                    <!-- Sender -->
+                                    <div
+                                        class="shrink-0 w-40 md:w-48 truncate"
                                         :class="isUnread(mail) ? 'font-semibold text-default' : 'text-muted'"
                                     >
                                         {{ mail.from?.name || mail.from?.address || 'Unknown' }}
-                                    </span>
-                                    <UBadge v-if="isUnread(mail)" color="primary" size="xs" class="shrink-0">
-                                        New
-                                    </UBadge>
-                                    <UIcon
-                                        v-if="isFlagged(mail)"
-                                        name="i-lucide-star"
-                                        class="size-3.5 shrink-0 text-amber-500"
-                                    />
-                                </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
+                                    </div>
+
+                                    <!-- Subject + preview (single line) -->
+                                    <div class="flex-1 min-w-0 truncate">
+                                        <span :class="isUnread(mail) ? 'font-semibold text-default' : 'text-muted'">
+                                            {{ mail.subject || '(No subject)' }}
+                                        </span>
+                                        <span class="hidden sm:inline text-dimmed">
+                                            &nbsp;— {{ getPreview(mail) }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Attachment icon -->
                                     <UIcon
                                         v-if="hasAttachments(mail)"
                                         name="i-lucide-paperclip"
-                                        class="size-3.5 text-dimmed"
+                                        class="size-3.5 shrink-0 text-muted"
                                     />
-                                    <span class="text-xs text-muted">
+
+                                    <!-- Date (hides on row hover) -->
+                                    <div
+                                        class="shrink-0 w-14 text-right text-xs tabular-nums group-hover:invisible"
+                                        :class="isUnread(mail) ? 'font-semibold text-default' : 'text-muted'"
+                                    >
                                         {{ mail.date ? formatRelativeDate(mail.date) : '' }}
-                                    </span>
+                                    </div>
+
+                                    <!-- Quick actions on hover (overlay on top of date area, stays inside row) -->
+                                    <div
+                                        class="absolute right-4 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5"
+                                        @click.stop
+                                    >
+                                        <UTooltip text="Archive">
+                                            <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="xs" />
+                                        </UTooltip>
+                                        <UTooltip text="Delete">
+                                            <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" />
+                                        </UTooltip>
+                                        <UTooltip :text="isUnread(mail) ? 'Mark as read' : 'Mark as unread'">
+                                            <UButton
+                                                :icon="isUnread(mail) ? 'i-lucide-mail-open' : 'i-lucide-mail'"
+                                                color="neutral"
+                                                variant="ghost"
+                                                size="xs"
+                                            />
+                                        </UTooltip>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- ══ SPLIT MODE (compact 3-line) ══ -->
+                            <template v-else>
+                                <div
+                                    v-for="mail in mailList"
+                                    :key="mail.uid"
+                                    class="group relative flex flex-col gap-0.5 px-3 py-2 border-b border-default last:border-b-0 cursor-pointer transition-colors"
+                                    :class="[
+                                        activeMailUid === mail.uid
+                                            ? 'bg-primary/15 border-l-2 border-l-primary pl-2.5'
+                                            : isSelected(mail.uid)
+                                                ? 'bg-primary/10'
+                                                : 'hover:bg-elevated/60'
+                                    ]"
+                                    @click="openMail(mail.uid)"
+                                >
+                                    <!-- Row 1: Sender + date -->
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-1.5 min-w-0">
+                                            <div
+                                                v-if="isUnread(mail)"
+                                                class="size-2 rounded-full bg-primary shrink-0"
+                                            />
+                                            <span
+                                                class="truncate text-sm"
+                                                :class="isUnread(mail) ? 'font-semibold text-default' : 'text-muted'"
+                                            >
+                                                {{ mail.from?.name || mail.from?.address || 'Unknown' }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <UIcon
+                                                v-if="hasAttachments(mail)"
+                                                name="i-lucide-paperclip"
+                                                class="size-3 text-dimmed"
+                                            />
+                                            <span
+                                                class="text-[11px] tabular-nums"
+                                                :class="isUnread(mail) ? 'font-semibold text-default' : 'text-muted'"
+                                            >
+                                                {{ mail.date ? formatRelativeDate(mail.date) : '' }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 2: Subject -->
+                                    <div
+                                        class="text-sm truncate"
+                                        :class="isUnread(mail) ? 'font-medium text-default' : 'text-muted'"
+                                    >
+                                        {{ mail.subject || '(No subject)' }}
+                                    </div>
+
+                                    <!-- Row 3: Preview -->
+                                    <div class="text-xs text-dimmed truncate">
+                                        {{ getPreview(mail) }}
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="flex items-center justify-between px-3 py-1.5 border-t border-default shrink-0">
+                            <div class="text-xs text-muted">
+                                <span v-if="mailList.length > 0">
+                                    {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ (currentPage - 1) * PAGE_SIZE + mailList.length }}
+                                </span>
+                                <span v-else>—</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <UButton
+                                    icon="i-lucide-chevron-left"
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
+                                    :disabled="!hasPrevPage"
+                                    @click="prevPage"
+                                />
+                                <span class="text-xs text-muted px-1">{{ currentPage }}</span>
+                                <UButton
+                                    icon="i-lucide-chevron-right"
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
+                                    :disabled="!hasNextPage"
+                                    @click="nextPage"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detail Column (split view only) -->
+                    <div
+                        v-if="viewMode === 'split'"
+                        class="flex-1 min-h-0 min-w-0 hidden lg:flex lg:flex-col"
+                    >
+                        <MailDetailContent
+                            v-if="activeMailUid !== null"
+                            :key="activeMailUid"
+                            :account-id="accountId"
+                            :folder-path="folderPath"
+                            :mail-uid="activeMailUid"
+                            closable
+                            @close="closeActiveMail"
+                            @not-found="closeActiveMail"
+                        />
+                        <div v-else class="flex flex-col items-center justify-center h-full py-16 px-6 text-center">
+                            <div class="relative mb-6">
+                                <div class="absolute inset-0 bg-primary/10 blur-2xl rounded-full" />
+                                <div class="relative rounded-2xl border border-default p-6">
+                                    <UIcon name="i-lucide-mail-open" class="size-12 text-primary/70" />
                                 </div>
                             </div>
-                            <div
-                                class="text-sm truncate mb-0.5"
-                                :class="isUnread(mail) ? 'font-medium text-default' : 'text-muted'"
-                            >
-                                {{ mail.subject || '(No subject)' }}
+                            <p class="text-base font-semibold text-default mb-1.5">
+                                Nothing selected
+                            </p>
+                            <p class="text-sm text-muted max-w-sm mb-6">
+                                Pick an email from the list to read it here, or press
+                                <UKbd value="meta" size="sm" class="mx-0.5" /><UKbd value="K" size="sm" />
+                                to search across all your mail.
+                            </p>
+                            <div class="flex flex-col items-center gap-2 text-xs text-dimmed">
+                                <div class="flex items-center gap-2">
+                                    <UIcon name="i-lucide-inbox" class="size-3.5" />
+                                    <span>{{ mailList.length }} emails in this folder</span>
+                                </div>
+                                <div v-if="unreadCount > 0" class="flex items-center gap-2">
+                                    <div class="size-1.5 rounded-full bg-primary" />
+                                    <span>{{ unreadCount }} unread</span>
+                                </div>
                             </div>
-                            <div class="text-xs text-dimmed truncate">
-                                {{ getPreview(mail) }}
-                            </div>
-                        </div>
-
-                        <!-- Quick actions on hover -->
-                        <div class="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" @click.stop>
-                            <UTooltip text="Archive">
-                                <UButton
-                                    icon="i-lucide-archive"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="xs"
-                                />
-                            </UTooltip>
-                            <UTooltip text="Delete">
-                                <UButton
-                                    icon="i-lucide-trash-2"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="xs"
-                                />
-                            </UTooltip>
-                            <UTooltip :text="isUnread(mail) ? 'Mark as read' : 'Mark as unread'">
-                                <UButton
-                                    :icon="isUnread(mail) ? 'i-lucide-mail-open' : 'i-lucide-mail'"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="xs"
-                                />
-                            </UTooltip>
                         </div>
                     </div>
                 </div>
-
-                <!-- Pagination -->
-                <div class="flex items-center justify-between mt-4 pt-4 border-t border-default">
-                    <div class="text-sm text-muted">
-                        <span v-if="mailList.length > 0">
-                            Showing {{ (currentPage - 1) * PAGE_SIZE + 1 }} - {{ (currentPage - 1) * PAGE_SIZE + mailList.length }}
-                        </span>
-                        <span v-else>No results</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <UButton
-                            icon="i-lucide-chevron-left"
-                            color="neutral"
-                            variant="outline"
-                            size="sm"
-                            :disabled="!hasPrevPage"
-                            @click="prevPage"
-                        >
-                            Previous
-                        </UButton>
-                        <span class="text-sm text-muted px-2">
-                            Page {{ currentPage }}
-                        </span>
-                        <UButton
-                            icon="i-lucide-chevron-right"
-                            trailing
-                            color="neutral"
-                            variant="outline"
-                            size="sm"
-                            :disabled="!hasNextPage"
-                            @click="nextPage"
-                        >
-                            Next
-                        </UButton>
-                    </div>
-                </div>
-            </DashboardPageBody>
+            </div>
         </template>
     </UDashboardPanel>
 </template>
