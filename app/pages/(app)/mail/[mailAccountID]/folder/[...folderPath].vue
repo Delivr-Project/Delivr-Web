@@ -9,6 +9,7 @@ import {
 } from '~/utils/mailboxDisplay';
 import MailDetailContent from '~/components/mail/MailDetailContent.vue';
 import { useMailViewMode } from '~/composables/useMailViewMode';
+import { useMediaQuery } from '@vueuse/core';
 
 // Re-run setup when the folder path changes, but NOT when only the
 // `?selected=` query changes (opening a mail must not remount the list).
@@ -21,6 +22,11 @@ const router = useRouter();
 const toast = useToast();
 const { isMailSearchOpen } = useDashboard();
 const viewMode = useMailViewMode();
+
+// Below the `lg` breakpoint there's no room for the side-by-side split, so
+// mobile always uses a single list that opens mail full-screen — regardless of
+// the stored view mode.
+const isMobile = useMediaQuery('(max-width: 1023px)');
 
 const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
 const accountId = mailAccount.data.value.id;
@@ -213,9 +219,14 @@ function syncActiveMailFromQuery() {
 syncActiveMailFromQuery();
 watch(() => route.query.selected, syncActiveMailFromQuery);
 
-// In list mode, an open mail takes over the whole panel; in split mode it
-// shows in the detail column beside the list.
-const showListDetail = computed(() => viewMode.value === 'list' && activeMailUid.value !== null);
+// The compact 3-line "cards" list is used on mobile and in desktop split view;
+// desktop list view keeps its dense single-line rows.
+const cardLayout = computed(() => isMobile.value || viewMode.value === 'split');
+
+// On mobile (any mode) and in desktop list view, an opened mail takes over the
+// whole panel. Only desktop split view shows it in the side detail column.
+const fullScreenMail = computed(() => isMobile.value || viewMode.value === 'list');
+const showFullDetail = computed(() => activeMailUid.value !== null && fullScreenMail.value);
 
 function toggleViewMode() {
     viewMode.value = viewMode.value === 'split' ? 'list' : 'split';
@@ -226,12 +237,12 @@ function toggleViewMode() {
 function openMail(uid: number) {
     activeMailUid.value = uid;
     const query = { ...route.query, selected: String(uid) };
-    // Split view keeps history tidy (replace); list view pushes so the browser
-    // back button returns from the mail to the list, as the old route did.
-    if (viewMode.value === 'split') {
-        router.replace({ query });
-    } else {
+    // Full-screen open pushes so the back button returns to the list; the
+    // desktop split side-column just replaces (keeps history tidy).
+    if (fullScreenMail.value) {
         router.push({ query });
+    } else {
+        router.replace({ query });
     }
 }
 
@@ -265,7 +276,7 @@ function closeActiveMail() {
 
                 <template #leading>
                     <UButton
-                        v-if="showListDetail"
+                        v-if="showFullDetail"
                         icon="i-lucide-arrow-left"
                         color="neutral"
                         variant="ghost"
@@ -320,7 +331,7 @@ function closeActiveMail() {
             <div class="flex flex-col h-full min-h-0">
                 <!-- ══ LIST MODE with an open mail: full-panel detail ══ -->
                 <MailDetailContent
-                    v-if="showListDetail"
+                    v-if="showFullDetail"
                     :key="activeMailUid ?? undefined"
                     :account-id="accountId"
                     :folder-path="systemFolderPath"
@@ -343,8 +354,8 @@ function closeActiveMail() {
 
                         <div class="flex-1" />
 
-                        <!-- View mode toggle -->
-                        <UTooltip :text="viewMode === 'split' ? 'Switch to list view' : 'Switch to split view'">
+                        <!-- View mode toggle (desktop only; mobile is always single-list) -->
+                        <UTooltip v-if="!isMobile" :text="viewMode === 'split' ? 'Switch to list view' : 'Switch to split view'">
                             <UButton
                                 :icon="viewMode === 'split' ? 'i-lucide-columns-2' : 'i-lucide-rows-3'"
                                 color="neutral"
@@ -462,8 +473,8 @@ function closeActiveMail() {
 
                             <!-- Mail rows -->
                             <div v-else class="flex-1 min-h-0 overflow-y-auto">
-                                <!-- ══ LIST MODE (Gmail-style dense single-line) ══ -->
-                                <template v-if="viewMode === 'list'">
+                                <!-- ══ DENSE LIST (desktop list view only) ══ -->
+                                <template v-if="!cardLayout">
                                     <div
                                         v-for="mail in mailList"
                                         :key="mail.uid"
