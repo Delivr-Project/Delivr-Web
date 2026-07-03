@@ -1485,6 +1485,183 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses 
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses];
 
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveData = {
+    body: {
+        /**
+         * UIDs of the mails to move
+         */
+        uids: Array<number>;
+        /**
+         * The path of the target mailbox to move the mails to
+         */
+        targetMailbox: string;
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/bulk-move';
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveError = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveErrors[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveErrors];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponses = {
+    /**
+     * Mails moved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mails moved successfully';
+        data: {
+            success: boolean;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkMoveResponses];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyData = {
+    body: {
+        /**
+         * UIDs of the mails to copy
+         */
+        uids: Array<number>;
+        /**
+         * The path of the target mailbox to copy the mails to
+         */
+        targetMailbox: string;
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/bulk-copy';
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyError = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyErrors[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyErrors];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponses = {
+    /**
+     * Mails copied successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mails copied successfully';
+        data: {
+            success: boolean;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkCopyResponses];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteData = {
+    body: {
+        /**
+         * UIDs of the mails to delete
+         */
+        uids: Array<number>;
+        /**
+         * If true, permanently delete the mails. Otherwise, move to Trash.
+         */
+        permanent?: boolean;
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/bulk-delete';
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteError = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteErrors[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteErrors];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponses = {
+    /**
+     * Mails deleted successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mails deleted successfully';
+        data: {
+            success: boolean;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBulkDeleteResponses];
+
 export type DeleteMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData = {
     body?: never;
     path: {

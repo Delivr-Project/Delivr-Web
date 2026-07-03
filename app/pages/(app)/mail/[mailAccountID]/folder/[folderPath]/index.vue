@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailListItem } from '~/utils/types';
 import { Utils } from '~/utils';
+import { MailUtils } from '~/utils/mail';
 import MailDetailContent from '~/components/mail/MailDetailContent.vue';
 import { useMailViewMode } from '~/composables/useMailViewMode';
+import { useMailActions } from '~/composables/useMailActions';
+import { useMailDragState } from '~/composables/useMailDragState';
+import DashboardDeleteModal from '~/components/dashboard/DashboardDeleteModal.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -19,7 +23,7 @@ const folderIcon = computed(() => {
     if (lower === 'inbox') return 'i-lucide-inbox';
     if (lower === 'sent' || lower === 'sent mail' || lower === 'sent messages') return 'i-lucide-send';
     if (lower === 'drafts') return 'i-lucide-file-edit';
-    if (lower === 'trash' || lower === 'deleted' || lower === 'deleted messages') return 'i-lucide-trash-2';
+    if (MailUtils.isTrashFolder(folderPath)) return 'i-lucide-trash-2';
     if (lower === 'spam' || lower === 'junk') return 'i-lucide-shield-alert';
     if (lower === 'archive') return 'i-lucide-archive';
     return 'i-lucide-folder';
@@ -32,6 +36,13 @@ useSeoMeta({
 
 const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
 const accountId = mailAccount.data.value.id;
+
+const isTrashView = computed(() => {
+    const mailbox = mailAccount.data.value.mailboxes.find(mb => mb.path === systemFolderPath);
+    return mailbox?.specialUse === '\\Trash' || MailUtils.isTrashFolder(folderPath);
+});
+
+const mailActions = useMailActions(accountId);
 
 // ── Helpers ──
 
@@ -152,6 +163,13 @@ const hasSelection = computed(() => selectedUids.value.size > 0);
 const allSelected = computed(() => mailList.value.length > 0 && selectedUids.value.size === mailList.value.length);
 const someSelected = computed(() => selectedUids.value.size > 0 && selectedUids.value.size < mailList.value.length);
 
+// Prune selections that no longer exist after a refresh (moved/deleted mails).
+watch(mailList, (newList) => {
+    const validUids = new Set(newList.map(m => m.uid));
+    const pruned = new Set([...selectedUids.value].filter(uid => validUids.has(uid)));
+    if (pruned.size !== selectedUids.value.size) selectedUids.value = pruned;
+});
+
 // ── Bulk actions ──
 
 function handleBulk(title: string) {
@@ -160,6 +178,105 @@ function handleBulk(title: string) {
         description: 'This feature will be available soon.',
         color: 'warning'
     });
+}
+
+// ── Delete (button + keyboard) ──
+
+const showPermanentDeleteModal = ref(false);
+const pendingDeleteUids = ref<number[]>([]);
+
+async function performDelete(uids: number[], permanent: boolean) {
+    if (uids.length === 0) return;
+
+    const success = await mailActions.bulkDelete(systemFolderPath, uids, permanent);
+    if (!success) return;
+
+    if (activeMailUid.value !== null && uids.includes(activeMailUid.value)) {
+        closeActiveMail();
+    }
+    await mails.refresh();
+}
+
+function requestDelete(uids: number[]) {
+    if (uids.length === 0) return;
+
+    if (isTrashView.value) {
+        pendingDeleteUids.value = uids;
+        showPermanentDeleteModal.value = true;
+    } else {
+        void performDelete(uids, false);
+    }
+}
+
+async function confirmPermanentDelete() {
+    await performDelete(pendingDeleteUids.value, true);
+    pendingDeleteUids.value = [];
+}
+
+function handleDeleteSelection() {
+    requestDelete([...selectedUids.value]);
+}
+
+function handleDeleteMail(uid: number) {
+    requestDelete([uid]);
+}
+
+// ── Keyboard shortcut ──
+
+function isEditableTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    return target.isContentEditable
+        || target.tagName === 'INPUT'
+        || target.tagName === 'TEXTAREA'
+        || target.tagName === 'SELECT';
+}
+
+function onKeydown(event: KeyboardEvent) {
+    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+    if (isEditableTarget(event.target)) return;
+
+    if (hasSelection.value) {
+        event.preventDefault();
+        handleDeleteSelection();
+    } else if (activeMailUid.value !== null) {
+        event.preventDefault();
+        requestDelete([activeMailUid.value]);
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('keydown', onKeydown);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('keydown', onKeydown);
+});
+
+// ── Drag & drop (move via plain/Shift drag, copy via Ctrl drag) ──
+
+const dragState = useMailDragState();
+
+function dragUidsFor(mail: MailListItem): number[] {
+    if (hasSelection.value && isSelected(mail.uid)) {
+        return [...selectedUids.value];
+    }
+    return [mail.uid];
+}
+
+function onDragStart(event: DragEvent, mail: MailListItem) {
+    dragState.value = {
+        accountId,
+        sourceMailboxPath: systemFolderPath,
+        uids: dragUidsFor(mail)
+    };
+    if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'copyMove';
+        event.dataTransfer.setData('text/plain', String(mail.uid));
+    }
+}
+
+function onDragEnd() {
+    dragState.value = null;
 }
 
 // ── Unread count ──
@@ -327,7 +444,7 @@ watch(viewMode, (mode) => {
                             <UButton icon="i-lucide-shield-alert" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as spam')" />
                         </UTooltip>
                         <UTooltip text="Delete">
-                            <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="xs" @click="handleBulk('Delete')" />
+                            <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="xs" @click="handleDeleteSelection" />
                         </UTooltip>
                     </div>
 
@@ -399,6 +516,7 @@ watch(viewMode, (mode) => {
                                 <div
                                     v-for="mail in mailList"
                                     :key="mail.uid"
+                                    draggable="true"
                                     class="group relative flex items-center gap-3 px-4 py-1.5 border-b border-default last:border-b-0 cursor-pointer transition-colors text-sm"
                                     :class="[
                                         isSelected(mail.uid)
@@ -406,6 +524,8 @@ watch(viewMode, (mode) => {
                                             : 'hover:bg-elevated/60'
                                     ]"
                                     @click="openMail(mail.uid)"
+                                    @dragstart="onDragStart($event, mail)"
+                                    @dragend="onDragEnd"
                                 >
                                     <!-- Checkbox -->
                                     <div class="shrink-0" @click.stop>
@@ -457,7 +577,7 @@ watch(viewMode, (mode) => {
                                             <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="xs" />
                                         </UTooltip>
                                         <UTooltip text="Delete">
-                                            <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" />
+                                            <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" @click="handleDeleteMail(mail.uid)" />
                                         </UTooltip>
                                         <UTooltip :text="isUnread(mail) ? 'Mark as read' : 'Mark as unread'">
                                             <UButton
@@ -476,6 +596,7 @@ watch(viewMode, (mode) => {
                                 <div
                                     v-for="mail in mailList"
                                     :key="mail.uid"
+                                    draggable="true"
                                     class="group relative flex flex-col gap-0.5 px-3 py-2 border-b border-default last:border-b-0 cursor-pointer transition-colors"
                                     :class="[
                                         activeMailUid === mail.uid
@@ -485,6 +606,8 @@ watch(viewMode, (mode) => {
                                                 : 'hover:bg-elevated/60'
                                     ]"
                                     @click="openMail(mail.uid)"
+                                    @dragstart="onDragStart($event, mail)"
+                                    @dragend="onDragEnd"
                                 >
                                     <!-- Row 1: Sender + date -->
                                     <div class="flex items-center justify-between gap-2">
@@ -572,9 +695,11 @@ watch(viewMode, (mode) => {
                             :account-id="accountId"
                             :folder-path="folderPath"
                             :mail-uid="activeMailUid"
+                            :handle-keyboard-delete="false"
                             closable
                             @close="closeActiveMail"
                             @not-found="closeActiveMail"
+                            @deleted="closeActiveMail(); mails.refresh()"
                         />
                         <div v-else class="flex flex-col items-center justify-center h-full py-16 px-6 text-center">
                             <div class="relative mb-6">
@@ -607,4 +732,11 @@ watch(viewMode, (mode) => {
             </div>
         </template>
     </UDashboardPanel>
+
+    <DashboardDeleteModal
+        v-model:open="showPermanentDeleteModal"
+        title="Permanently delete email(s)"
+        warning-text="This will permanently remove the selected email(s). This action cannot be undone."
+        :on-delete="confirmPermanentDelete"
+    />
 </template>

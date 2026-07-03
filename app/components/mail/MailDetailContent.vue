@@ -3,19 +3,31 @@ import type { MailData } from '~/utils/types';
 import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
 import { useRemoteContentPolicyStore, extractDomain } from '~/composables/stores/useRemoteContentPolicyStore';
 import { Utils } from '~/utils';
+import { MailUtils } from '~/utils/mail';
+import { useMailActions } from '~/composables/useMailActions';
 import Gravatar from '~/components/Gravatar.vue';
+import DashboardDeleteModal from '~/components/dashboard/DashboardDeleteModal.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     accountId: number
     folderPath: string
     mailUid: number
     /** Show a close button in the header (emits `close`). */
     closable?: boolean
-}>();
+    /**
+     * Whether this component should own the Delete/Backspace keyboard shortcut.
+     * Set to `false` when embedded alongside a list that already handles it
+     * (e.g. split view), to avoid both handlers firing for the same keypress.
+     */
+    handleKeyboardDelete?: boolean
+}>(), {
+    handleKeyboardDelete: true
+});
 
 const emit = defineEmits<{
     close: []
     'not-found': []
+    deleted: []
 }>();
 
 const toast = useToast();
@@ -178,8 +190,54 @@ function notAvailable(title: string) {
     });
 }
 
+// ── Delete (button + keyboard) ──
+
+const mailActions = useMailActions(props.accountId);
+const showPermanentDeleteModal = ref(false);
+
+const isTrashFolder = computed(() => MailUtils.isTrashFolder(props.folderPath));
+
+async function deleteMail(permanent: boolean) {
+    const success = await mailActions.deleteMail(systemFolderPath.value, props.mailUid, permanent);
+    if (success) emit('deleted');
+}
+
+function handleDelete() {
+    if (isTrashFolder.value) {
+        showPermanentDeleteModal.value = true;
+    } else {
+        void deleteMail(false);
+    }
+}
+
+async function confirmPermanentDelete() {
+    await deleteMail(true);
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    return target.isContentEditable
+        || target.tagName === 'INPUT'
+        || target.tagName === 'TEXTAREA'
+        || target.tagName === 'SELECT';
+}
+
+function onKeydown(event: KeyboardEvent) {
+    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+    if (isEditableTarget(event.target)) return;
+    event.preventDefault();
+    handleDelete();
+}
+
+onMounted(() => {
+    if (props.handleKeyboardDelete) document.addEventListener('keydown', onKeydown);
+});
+
+onUnmounted(() => {
+    if (props.handleKeyboardDelete) document.removeEventListener('keydown', onKeydown);
+});
+
 const handleArchive = () => notAvailable('Archive');
-const handleDelete = () => notAvailable('Delete');
 const handleMarkUnread = () => notAvailable('Mark as unread');
 const handleSpam = () => notAvailable('Mark as spam');
 const handleReply = () => notAvailable('Reply');
@@ -497,4 +555,11 @@ defineExpose({ reload: loadMail });
             </div>
         </template>
     </div>
+
+    <DashboardDeleteModal
+        v-model:open="showPermanentDeleteModal"
+        title="Permanently delete email"
+        warning-text="This will permanently remove this email. This action cannot be undone."
+        :on-delete="confirmPermanentDelete"
+    />
 </template>

@@ -62,6 +62,7 @@ function goBack() {
                         :folder-path="folderPath"
                         :mail-uid="mailUID"
                         @not-found="goBack"
+                        @deleted="goBack"
                     />
                 </div>
             </DashboardPageBody>

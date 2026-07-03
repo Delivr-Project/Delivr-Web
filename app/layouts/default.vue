@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import MailAccountsMenu from '~/components/dashboard/MailAccountsMenu.vue';
+import MailFolderNav from '~/components/mail/MailFolderNav.vue';
 import MailSearch from '~/components/dashboard/MailSearch.vue';
 import NotificationsSlideover from '~/components/dashboard/NotificationsSlideover.vue';
 import UserMenu from '~/components/dashboard/UserMenu.vue';
@@ -31,48 +32,6 @@ const sidebarItems = computed(() => {
             to: "/",
         },
     ];
-
-    const inbox = mailboxes.value?.find(mb => mb.path.toLowerCase() === 'inbox');
-
-    const mailItems: NavigationMenuItem[] = [];
-
-    // NOTE: Compose button moved to separate prominent button in template
-
-    if (mailboxes.value.length === 0) {
-        mailItems.push({
-            label: 'No Folders to show',
-            icon: 'i-lucide-mail',
-            exact: false,
-        });
-    } else if (inbox) {
-        mailItems.push({
-            label: 'Inbox',
-            icon: 'i-lucide-inbox',
-            to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/inbox` : undefined,
-            badge: inbox.status.unseen > 0 ? inbox.status.unseen : undefined,
-            exact: false,
-        });
-    }
-
-    for (const mailbox of mailboxes.value) {
-        if (mailbox.path.toLowerCase() === 'inbox') continue;
-
-        const lowerPath = mailbox.path.toLowerCase();
-        let icon = 'i-lucide-folder';
-        if (lowerPath === 'sent' || lowerPath === 'sent mail' || lowerPath === 'sent messages') icon = 'i-lucide-send';
-        else if (lowerPath === 'drafts') icon = 'i-lucide-file-edit';
-        else if (lowerPath === 'trash' || lowerPath === 'deleted' || lowerPath === 'deleted messages') icon = 'i-lucide-trash-2';
-        else if (lowerPath === 'spam' || lowerPath === 'junk') icon = 'i-lucide-shield-alert';
-        else if (lowerPath === 'archive') icon = 'i-lucide-archive';
-
-        mailItems.push({
-            label: mailbox.name,
-            icon,
-            to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/${encodeURIComponent(mailbox.path)}` : undefined,
-            badge: mailbox.status.unseen > 0 ? mailbox.status.unseen : undefined,
-            exact: false,
-        });
-    }
 
     const adminItems: NavigationMenuItem[] = [
         {
@@ -126,7 +85,6 @@ const sidebarItems = computed(() => {
 
     return {
         basic: basicItems,
-        mail: mailItems,
         settings: settings,
         admin: adminItems,
         footer: footerItems,
@@ -223,10 +181,11 @@ const displaySidebars = computed(() => {
                             </UTooltip>
                         </div> -->
 
-                    <UNavigationMenu
+                    <MailFolderNav
+                        v-if="currentMailAccount"
                         :collapsed="collapsed"
-                        :items="sidebarItems.mail"
-                        orientation="vertical"
+                        :mailboxes="mailboxes"
+                        :account-id="currentMailAccount.id"
                         class="mt-0"
                     />
                 </div>
