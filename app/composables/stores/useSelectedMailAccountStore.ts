@@ -19,8 +19,8 @@ class SelectedMailAccountStore {
         }
 
         return useAwaitedComputed(async () => {
-            console.log("Computing selected mail account with ID:", this.selectedMailAccountID.value);
-            console.log("Available mail accounts:", this.mailAccountsRef!.value);
+//            console.log("Computing selected mail account with ID:", this.selectedMailAccountID.value);
+//            console.log("Available mail accounts:", this.mailAccountsRef!.value);
 
             if (!Array.isArray(this.mailAccountsRef!.value) || this.mailAccountsRef!.value.length === 0) {
                 return null;
