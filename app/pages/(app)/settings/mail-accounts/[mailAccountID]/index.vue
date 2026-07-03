@@ -382,7 +382,7 @@ async function testConfiguration() {
 											autocapitalize="off"
 											autocorrect="off"
 											spellcheck="false"
-											@click="show_imap_password = !show_imap_password"
+											@click="show_imap_password = !show_imap_password;"
 										/>
 									</template>
 								</UInput>
@@ -474,7 +474,7 @@ async function testConfiguration() {
 											autocapitalize="off"
 											autocorrect="off"
 											spellcheck="false"
-											@click="show_smtp_password = !show_smtp_password"
+											@click="show_smtp_password = !show_smtp_password;"
 										/>
 									</template>
 								</UInput>
@@ -550,7 +550,7 @@ async function testConfiguration() {
 						color="error" 
 						variant="soft"
 						icon="i-lucide-trash-2"
-						@click="deleteConfirmOpen = true"
+						@click="deleteConfirmOpen = true;"
 					/>
 				</div>
 			</div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PostMailAccountsByMailAccountIdSearchResponse } from '~/api-client/types.gen';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
+import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 import Gravatar from '~/components/Gravatar.vue';
 import { useDebounceFn, useLocalStorage } from '@vueuse/core';
 import { CalendarDate } from '@internationalized/date';
@@ -554,8 +555,18 @@ function clearAllFilters() {
 }
 
 function openMail(item: SearchResultItem) {
+    const accountId = currentMailAccount.value?.id;
+    if (accountId === undefined) return;
+
     const mailboxPath = item.mailboxPath || 'INBOX';
-    navigateTo(`/mail/${currentMailAccount.value?.id}/folder/${encodeURIComponent(mailboxPath)}/${item.mail.uid}`);
+    // Resolve the mailbox so we split on its real delimiter; the selected mail
+    // travels as a query param (the folder path is now a catch-all segment).
+    const mailbox = currentMailAccount.value?.mailboxes?.find(mb => mb.path === mailboxPath);
+    const folderSegments = mailbox
+        ? MailboxDisplayUtils.pathToUrlSegments(mailbox.path, mailbox.delimiter)
+        : encodeURIComponent(mailboxPath);
+
+    navigateTo(`/mail/${accountId}/folder/${folderSegments}?selected=${item.mail.uid}`);
     isOpen.value = false;
 }
 
@@ -676,7 +687,7 @@ watch(isOpen, (open) => {
                             color="neutral"
                             variant="ghost"
                             size="sm"
-                            @click="isOpen = false"
+                            @click="isOpen = false;"
                         />
                     </div>
 
@@ -717,7 +728,7 @@ watch(isOpen, (open) => {
                                 color="neutral"
                                 variant="ghost"
                                 size="xs"
-                                @click="sortOrder = sortOrder === 'newest' ? 'oldest' : 'newest'"
+                                @click="sortOrder = sortOrder === 'newest' ? 'oldest' : 'newest';"
                             >
                                 {{ sortOrder === 'newest' ? 'Newest' : 'Oldest' }}
                             </UButton>
@@ -877,7 +888,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.hasAttachment !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-paperclip"
-                                @click="filters.hasAttachment = filters.hasAttachment === null ? true : filters.hasAttachment === true ? false : null"
+                                @click="filters.hasAttachment = filters.hasAttachment === null ? true : filters.hasAttachment === true ? false : null;"
                             >
                                 {{ filters.hasAttachment === true ? 'Has attachments' : filters.hasAttachment === false ? 'No attachments' : 'Attachments' }}
                             </UButton>
@@ -887,7 +898,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.seen !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 :icon="filters.seen === false ? 'i-lucide-mail' : 'i-lucide-mail-open'"
-                                @click="filters.seen = filters.seen === null ? false : filters.seen === false ? true : null"
+                                @click="filters.seen = filters.seen === null ? false : filters.seen === false ? true : null;"
                             >
                                 {{ filters.seen === true ? 'Read' : filters.seen === false ? 'Unread' : 'Read status' }}
                             </UButton>
@@ -897,7 +908,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.flagged !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-star"
-                                @click="filters.flagged = filters.flagged === null ? true : filters.flagged === true ? false : null"
+                                @click="filters.flagged = filters.flagged === null ? true : filters.flagged === true ? false : null;"
                             >
                                 {{ filters.flagged === true ? 'Flagged' : filters.flagged === false ? 'Not flagged' : 'Flagged' }}
                             </UButton>
@@ -907,7 +918,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.answered !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-reply"
-                                @click="filters.answered = filters.answered === null ? true : filters.answered === true ? false : null"
+                                @click="filters.answered = filters.answered === null ? true : filters.answered === true ? false : null;"
                             >
                                 {{ filters.answered === true ? 'Replied' : filters.answered === false ? 'Not replied' : 'Replied' }}
                             </UButton>
@@ -917,7 +928,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.draft !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-file-edit"
-                                @click="filters.draft = filters.draft === null ? true : filters.draft === true ? false : null"
+                                @click="filters.draft = filters.draft === null ? true : filters.draft === true ? false : null;"
                             >
                                 {{ filters.draft === true ? 'Drafts' : filters.draft === false ? 'Not drafts' : 'Drafts' }}
                             </UButton>

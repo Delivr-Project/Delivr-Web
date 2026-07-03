@@ -8,8 +8,11 @@ import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
+import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 
 const route = useRoute();
+
+
 
 const userInfoStore = useUserInfoStore();
 const user = await userInfoStore.use();
@@ -54,24 +57,13 @@ const sidebarItems = computed(() => {
         });
     }
 
-    for (const mailbox of mailboxes.value) {
-        if (mailbox.path.toLowerCase() === 'inbox') continue;
-
-        const lowerPath = mailbox.path.toLowerCase();
-        let icon = 'i-lucide-folder';
-        if (lowerPath === 'sent' || lowerPath === 'sent mail' || lowerPath === 'sent messages') icon = 'i-lucide-send';
-        else if (lowerPath === 'drafts') icon = 'i-lucide-file-edit';
-        else if (lowerPath === 'trash' || lowerPath === 'deleted' || lowerPath === 'deleted messages') icon = 'i-lucide-trash-2';
-        else if (lowerPath === 'spam' || lowerPath === 'junk') icon = 'i-lucide-shield-alert';
-        else if (lowerPath === 'archive') icon = 'i-lucide-archive';
-
-        mailItems.push({
-            label: mailbox.name,
-            icon,
-            to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/${encodeURIComponent(mailbox.path)}` : undefined,
-            badge: mailbox.status.unseen > 0 ? mailbox.status.unseen : undefined,
-            exact: false,
-        });
+    // Build the remaining folders as a nested tree (Inbox is pinned above).
+    // Hierarchy, leaf names and delimiters are all derived in buildMailboxTree.
+    const accountId = currentMailAccount.value?.id;
+    if (accountId !== undefined) {
+        for (const node of MailboxDisplayUtils.buildMailboxTree(mailboxes.value)) {
+            mailItems.push(MailboxDisplayUtils.toNavItem(route.path, node, accountId));
+        }
     }
 
     const adminItems: NavigationMenuItem[] = [
@@ -113,6 +105,10 @@ const sidebarItems = computed(() => {
             label: "API Keys",
             to: "/settings/apikeys",
             icon: "i-lucide-key",
+            // The detail/create pages (/settings/apikeys/new, /settings/apikeys/:id)
+            // are sibling routes, not children, so router-based active matching
+            // misses them. Force active on any apikeys sub-route.
+            active: route.path.startsWith("/settings/apikeys"),
         }
     ];
 
@@ -163,8 +159,8 @@ const displaySidebars = computed(() => {
                 content: 'main-bg-color',
                 footer: 'border-t border-default main-bg-color',
             }"
-            :min-size="10"
-            :default-size="18"
+            :min-size="18"
+            :default-size="20"
             :max-size="30"
         >
             <template #header="{ collapsed }">
@@ -224,6 +220,7 @@ const displaySidebars = computed(() => {
                         </div> -->
 
                     <UNavigationMenu
+                        :key="currentMailAccount?.id"
                         :collapsed="collapsed"
                         :items="sidebarItems.mail"
                         orientation="vertical"

@@ -268,7 +268,7 @@ function getRoleColor(role: AdminUser["role"]) {
                         label="New User"
                         icon="i-lucide-user-plus"
                         color="primary"
-                        @click="showCreateModal = true"
+                        @click="showCreateModal = true;"
                     />
                 </template>
             </UDashboardNavbar>
@@ -339,7 +339,7 @@ function getRoleColor(role: AdminUser["role"]) {
                         <UButton
                             label="Create User"
                             color="primary"
-                            @click="showCreateModal = true"
+                            @click="showCreateModal = true;"
                         />
                     </template>
                 </UEmpty>
@@ -407,7 +407,7 @@ function getRoleColor(role: AdminUser["role"]) {
                     label="Cancel"
                     color="neutral"
                     variant="ghost"
-                    @click="showCreateModal = false"
+                    @click="showCreateModal = false;"
                 />
                 <UButton
                     type="submit"
@@ -442,7 +442,7 @@ function getRoleColor(role: AdminUser["role"]) {
                     label="Cancel"
                     color="neutral"
                     variant="ghost"
-                    @click="showEditModal = false"
+                    @click="showEditModal = false;"
                 />
                 <UButton
                     label="Save"
@@ -475,7 +475,7 @@ function getRoleColor(role: AdminUser["role"]) {
                     label="Cancel"
                     color="neutral"
                     variant="ghost"
-                    @click="showPasswordModal = false"
+                    @click="showPasswordModal = false;"
                 />
                 <UButton
                     label="Update Password"

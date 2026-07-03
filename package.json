@@ -10,6 +10,7 @@
         "preview": "nuxt preview",
         "postinstall": "nuxt prepare",
         "api-client:generate": "openapi-ts",
+        "typecheck": "nuxt typecheck && tsc -p ./tsconfig/tsconfig.typecheck.json && echo 'Typecheck passed!'",
         "test": "bun test"
     },
     "dependencies": {
@@ -27,7 +28,8 @@
     },
     "devDependencies": {
         "@iconify-json/lucide": "^1.2.102",
-        "@types/dompurify": "^3.2.0"
+        "@types/dompurify": "^3.2.0",
+        "vue-tsc": "^3.3.6"
     },
     "patchedDependencies": {
         "@hey-api/openapi-ts@0.92.3": "patches/@hey-api%2Fopenapi-ts@0.92.3.patch"
