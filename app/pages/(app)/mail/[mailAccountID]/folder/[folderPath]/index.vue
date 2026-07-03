@@ -6,7 +6,6 @@ import MailDetailContent from '~/components/mail/MailDetailContent.vue';
 import { useMailViewMode } from '~/composables/useMailViewMode';
 import { useMailActions } from '~/composables/useMailActions';
 import { useMailDragState } from '~/composables/useMailDragState';
-import { useMailListPageSizeStore, type MailListPageSize } from '~/composables/stores/useMailListPageSizeStore';
 import DashboardDeleteModal from '~/components/dashboard/DashboardDeleteModal.vue';
 
 const route = useRoute();
@@ -87,20 +86,17 @@ function hasAttachments(mail: MailListItem): boolean {
 // used as the per-request chunk size when the "all" page size is selected.
 const MAX_API_PAGE_SIZE = 100;
 
-const PAGE_SIZE_ITEMS: { label: string; value: MailListPageSize }[] = [
+const PAGE_SIZE_ITEMS: { label: string; value: MailPaginationUtils.PageSize }[] = [
     { label: '25', value: 25 },
     { label: '50', value: 50 },
     { label: '100', value: 100 },
     { label: 'All', value: 'all' },
 ];
 
-const pageSizeStore = useMailListPageSizeStore();
-const pageSizePref = await pageSizeStore.use();
-
-const pageSize = computed<MailListPageSize>({
-    get: () => pageSizePref.value?.pageSize ?? 25,
-    set: (value) => void pageSizeStore.update({ pageSize: value })
-});
+// Intentionally a plain local ref, not persisted anywhere (no localStorage, no
+// backend preference) — this is a per-visit-only choice that resets back to
+// the 25 default every time this page is opened.
+const pageSize = ref<MailPaginationUtils.PageSize>(25);
 
 const currentPage = ref(1);
 

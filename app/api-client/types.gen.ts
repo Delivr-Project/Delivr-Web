@@ -623,65 +623,6 @@ export type PutAccountPreferencesRemoteContentPolicyResponses = {
 
 export type PutAccountPreferencesRemoteContentPolicyResponse = PutAccountPreferencesRemoteContentPolicyResponses[keyof PutAccountPreferencesRemoteContentPolicyResponses];
 
-export type GetAccountPreferencesMailListPageSizeData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/account/preferences/mail-list-page-size';
-};
-
-export type GetAccountPreferencesMailListPageSizeResponses = {
-    /**
-     * Mail list page size retrieved successfully
-     */
-    200: {
-        success: true;
-        code: 200;
-        message: 'Mail list page size retrieved successfully';
-        data: {
-            pageSize?: 25 | 50 | 100 | 'all';
-        };
-    };
-};
-
-export type GetAccountPreferencesMailListPageSizeResponse = GetAccountPreferencesMailListPageSizeResponses[keyof GetAccountPreferencesMailListPageSizeResponses];
-
-export type PutAccountPreferencesMailListPageSizeData = {
-    body: {
-        pageSize?: 25 | 50 | 100 | 'all';
-    };
-    path?: never;
-    query?: never;
-    url: '/account/preferences/mail-list-page-size';
-};
-
-export type PutAccountPreferencesMailListPageSizeErrors = {
-    /**
-     * Bad Request: Syntax or validation error in request
-     */
-    400: {
-        success: false;
-        code: 400;
-        message: 'Bad Request: Syntax or validation error in request';
-    };
-};
-
-export type PutAccountPreferencesMailListPageSizeError = PutAccountPreferencesMailListPageSizeErrors[keyof PutAccountPreferencesMailListPageSizeErrors];
-
-export type PutAccountPreferencesMailListPageSizeResponses = {
-    /**
-     * Mail list page size updated successfully
-     */
-    200: {
-        success: true;
-        code: 200;
-        message: 'Mail list page size updated successfully';
-        data: null;
-    };
-};
-
-export type PutAccountPreferencesMailListPageSizeResponse = PutAccountPreferencesMailListPageSizeResponses[keyof PutAccountPreferencesMailListPageSizeResponses];
-
 export type GetMailAccountsData = {
     body?: never;
     path?: never;
