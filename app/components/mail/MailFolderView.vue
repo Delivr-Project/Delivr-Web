@@ -1,24 +1,30 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailListItem } from '~/utils/types';
 import { Utils } from '~/utils';
-import {
-    MailboxDisplayUtils
-} from '~/utils/mailboxDisplay';
+import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 import MailDetailContent from '~/components/mail/MailDetailContent.vue';
-import { useMailViewMode } from '~/composables/useMailViewMode';
+import { useEffectiveMailViewMode, type MailViewMode } from '~/composables/useMailViewMode';
 import { useMediaQuery } from '@vueuse/core';
 
-// Re-run setup when the folder path changes, but NOT when only the
-// `?selected=` query changes (opening a mail must not remount the list).
-definePageMeta({
-    key: (route) => route.path,
-});
+const props = defineProps<{
+    /** Raw folder route param (possibly slash-joined encoded segments). */
+    folderPathParam: string | string[] | undefined;
+    /** Explicit UID to display. When null/undefined the detail pane is empty in split view. */
+    mailUid: number | null;
+    /** When true we render full-screen detail only (used by the child mail route). */
+    fullScreen?: boolean;
+}>();
+
+const emit = defineEmits<{
+    close: [];
+}>();
 
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 const { isMailSearchOpen } = useDashboard();
-const viewMode = useMailViewMode();
+const storedViewMode = useMailViewMode();
+const viewMode = useEffectiveMailViewMode();
 
 // Below the `lg` breakpoint there's no room for the side-by-side split, so
 // mobile always uses a single list that opens mail full-screen — regardless of
@@ -30,20 +36,17 @@ const accountId = mailAccount.data.value.id;
 const mailboxes = computed(() => mailAccount.data.value.mailboxes || []);
 
 // ── Resolve which mailbox these URL segments point at ──
-// The catch-all param gives already-decoded segments (e.g. ["INBOX", "Work"]).
-// We resolve them back to a real mailbox so we use its true IMAP path
-// (with the correct delimiter) for API calls and its leaf name for display.
-const folderSegments = MailboxDisplayUtils.normalizeFolderParam(route.params.folderPath);
-const currentMailbox = computed(() => MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, folderSegments));
+const folderSegments = computed(() => MailboxDisplayUtils.parseFolderParam(props.folderPathParam));
+const currentMailbox = computed(() => MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, folderSegments.value));
 const systemFolderPath = computed(() =>
-    currentMailbox.value?.path ?? folderSegments.join(mailboxes.value[0]?.delimiter || '/')
+    currentMailbox.value?.path ?? folderSegments.value.join(mailboxes.value[0]?.delimiter || '/')
 );
 const folderTitle = computed(() =>
-    currentMailbox.value ? MailboxDisplayUtils.leafName(currentMailbox.value) : (folderSegments[folderSegments.length - 1] ?? 'Folder')
+    currentMailbox.value
+        ? MailboxDisplayUtils.leafName(currentMailbox.value)
+        : (folderSegments.value[folderSegments.value.length - 1] ?? 'Folder')
 );
 
-// Breadcrumb trail shown in place of the plain folder title. Falls back to a
-// single crumb (the raw segment) when the folder isn't in the mailbox list.
 const breadcrumbItems = computed(() =>
     currentMailbox.value
         ? MailboxDisplayUtils.crumbs(currentMailbox.value, mailboxes.value, accountId)
@@ -111,7 +114,7 @@ const currentPage = ref(1);
 // ── Data fetching ──
 
 const mails = await useAPIAsyncData<MailListItem[]>(
-    `/mail-accounts/${accountId}/mailboxes/${systemFolderPath.value}/mails`,
+    `mail-folder-${accountId}-${systemFolderPath.value}-${currentPage.value}`,
     async () => {
         const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
             path: {
@@ -136,7 +139,7 @@ const mails = await useAPIAsyncData<MailListItem[]>(
     }
 );
 
-watch(currentPage, () => {
+watch([currentPage, systemFolderPath], () => {
     mails.refresh();
 });
 
@@ -200,21 +203,8 @@ function handleBulk(title: string) {
 
 const unreadCount = computed(() => mailList.value.filter(m => isUnread(m)).length);
 
-// ── Active mail (driven by the `?selected=` query param) ──
-// A single mail route no longer exists; selection lives in the URL query so it
-// deep-links and back-navigates in both split and list view modes.
-
-const activeMailUid = ref<number | null>(null);
-
-function syncActiveMailFromQuery() {
-    const selected = route.query.selected;
-    activeMailUid.value = typeof selected === 'string' && /^\d+$/.test(selected)
-        ? parseInt(selected, 10)
-        : null;
-}
-
-syncActiveMailFromQuery();
-watch(() => route.query.selected, syncActiveMailFromQuery);
+// ── Active mail ──
+const activeMailUid = computed(() => props.mailUid ?? null);
 
 // The compact 3-line "cards" list is used on mobile and in desktop split view;
 // desktop list view keeps its dense single-line rows.
@@ -222,32 +212,49 @@ const cardLayout = computed(() => isMobile.value || viewMode.value === 'split');
 
 // On mobile (any mode) and in desktop list view, an opened mail takes over the
 // whole panel. Only desktop split view shows it in the side detail column.
-const fullScreenMail = computed(() => isMobile.value || viewMode.value === 'list');
+const fullScreenMail = computed(() => isMobile.value || viewMode.value === 'list' || props.fullScreen);
 const showFullDetail = computed(() => activeMailUid.value !== null && fullScreenMail.value);
 
+function setViewMode(mode: MailViewMode) {
+    storedViewMode.value = mode;
+}
+
 function toggleViewMode() {
-    viewMode.value = viewMode.value === 'split' ? 'list' : 'split';
+    storedViewMode.value = viewMode.value === 'split' ? 'list' : 'split';
+}
+
+function encodedFolderPath(): string {
+    const mb = currentMailbox.value;
+    const delimiter = mb?.delimiter || mailboxes.value[0]?.delimiter || '/';
+    return mb
+        ? MailboxDisplayUtils.pathToUrlSegment(mb.path, delimiter)
+        : MailboxDisplayUtils.pathToUrlSegment(folderSegments.value.join(delimiter), delimiter);
+}
+
+function mailRoute(uid: number): string {
+    return `/mail/${accountId}/folder/${encodedFolderPath()}/${uid}`;
+}
+
+function folderRoute(): string {
+    return `/mail/${accountId}/folder/${encodedFolderPath()}`;
 }
 
 // ── Navigation ──
 
 function openMail(uid: number) {
-    activeMailUid.value = uid;
-    const query = { ...route.query, selected: String(uid) };
-    // Full-screen open pushes so the back button returns to the list; the
-    // desktop split side-column just replaces (keeps history tidy).
     if (fullScreenMail.value) {
-        router.push({ query });
+        router.push(mailRoute(uid));
     } else {
-        router.replace({ query });
+        router.replace(mailRoute(uid));
     }
 }
 
 function closeActiveMail() {
-    activeMailUid.value = null;
-    const { selected, ...rest } = route.query;
-    void selected;
-    router.replace({ query: rest });
+    if (props.fullScreen) {
+        emit('close');
+    } else {
+        router.replace(folderRoute());
+    }
 }
 </script>
 
