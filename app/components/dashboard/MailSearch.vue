@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PostMailAccountsByMailAccountIdSearchResponse } from '~/api-client/types.gen';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
-import { pathToUrlSegments } from '~/utils/mailboxDisplay';
+import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 import Gravatar from '~/components/Gravatar.vue';
 import { useDebounceFn, useLocalStorage } from '@vueuse/core';
 import { CalendarDate } from '@internationalized/date';
@@ -563,7 +563,7 @@ function openMail(item: SearchResultItem) {
     // travels as a query param (the folder path is now a catch-all segment).
     const mailbox = currentMailAccount.value?.mailboxes?.find(mb => mb.path === mailboxPath);
     const folderSegments = mailbox
-        ? pathToUrlSegments(mailbox.path, mailbox.delimiter)
+        ? MailboxDisplayUtils.pathToUrlSegments(mailbox.path, mailbox.delimiter)
         : encodeURIComponent(mailboxPath);
 
     navigateTo(`/mail/${accountId}/folder/${folderSegments}?selected=${item.mail.uid}`);
@@ -687,7 +687,7 @@ watch(isOpen, (open) => {
                             color="neutral"
                             variant="ghost"
                             size="sm"
-                            @click="isOpen = false"
+                            @click="isOpen = false;"
                         />
                     </div>
 
@@ -728,7 +728,7 @@ watch(isOpen, (open) => {
                                 color="neutral"
                                 variant="ghost"
                                 size="xs"
-                                @click="sortOrder = sortOrder === 'newest' ? 'oldest' : 'newest'"
+                                @click="sortOrder = sortOrder === 'newest' ? 'oldest' : 'newest';"
                             >
                                 {{ sortOrder === 'newest' ? 'Newest' : 'Oldest' }}
                             </UButton>
@@ -888,7 +888,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.hasAttachment !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-paperclip"
-                                @click="filters.hasAttachment = filters.hasAttachment === null ? true : filters.hasAttachment === true ? false : null"
+                                @click="filters.hasAttachment = filters.hasAttachment === null ? true : filters.hasAttachment === true ? false : null;"
                             >
                                 {{ filters.hasAttachment === true ? 'Has attachments' : filters.hasAttachment === false ? 'No attachments' : 'Attachments' }}
                             </UButton>
@@ -898,7 +898,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.seen !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 :icon="filters.seen === false ? 'i-lucide-mail' : 'i-lucide-mail-open'"
-                                @click="filters.seen = filters.seen === null ? false : filters.seen === false ? true : null"
+                                @click="filters.seen = filters.seen === null ? false : filters.seen === false ? true : null;"
                             >
                                 {{ filters.seen === true ? 'Read' : filters.seen === false ? 'Unread' : 'Read status' }}
                             </UButton>
@@ -908,7 +908,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.flagged !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-star"
-                                @click="filters.flagged = filters.flagged === null ? true : filters.flagged === true ? false : null"
+                                @click="filters.flagged = filters.flagged === null ? true : filters.flagged === true ? false : null;"
                             >
                                 {{ filters.flagged === true ? 'Flagged' : filters.flagged === false ? 'Not flagged' : 'Flagged' }}
                             </UButton>
@@ -918,7 +918,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.answered !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-reply"
-                                @click="filters.answered = filters.answered === null ? true : filters.answered === true ? false : null"
+                                @click="filters.answered = filters.answered === null ? true : filters.answered === true ? false : null;"
                             >
                                 {{ filters.answered === true ? 'Replied' : filters.answered === false ? 'Not replied' : 'Replied' }}
                             </UButton>
@@ -928,7 +928,7 @@ watch(isOpen, (open) => {
                                 :variant="filters.draft !== null ? 'solid' : 'outline'"
                                 size="xs"
                                 icon="i-lucide-file-edit"
-                                @click="filters.draft = filters.draft === null ? true : filters.draft === true ? false : null"
+                                @click="filters.draft = filters.draft === null ? true : filters.draft === true ? false : null;"
                             >
                                 {{ filters.draft === true ? 'Drafts' : filters.draft === false ? 'Not drafts' : 'Drafts' }}
                             </UButton>

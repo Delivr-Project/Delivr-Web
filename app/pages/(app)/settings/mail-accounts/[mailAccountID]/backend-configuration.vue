@@ -188,12 +188,19 @@ async function testConfiguration() {
 									:type="show_imap_password ? 'text' : 'password'" placeholder="••••••••"
 									class="w-full" :ui="{ trailing: 'pe-1' }">
 									<template #trailing>
-										<UButton color="neutral" variant="link" size="sm"
+										<UButton
+											color="neutral"
+											variant="link"
+											size="sm"
 											:icon="show_imap_password ? 'i-lucide-eye-off' : 'i-lucide-eye'"
 											:aria-label="show_imap_password ? 'Hide password' : 'Show password'"
-											:aria-pressed="show_imap_password" aria-controls="password"
-											autocomplete="new-password" autocapitalize="off" autocorrect="off"
-											spellcheck="false" @click="show_imap_password = !show_imap_password" />
+											:aria-pressed="show_imap_password"
+											aria-controls="password"
+											autocomplete="new-password"
+											autocapitalize="off"
+											autocorrect="off"
+											spellcheck="false" @click="show_imap_password = !show_imap_password;"
+										/>
 									</template>
 								</UInput>
 							</UFormField>
@@ -220,33 +227,54 @@ async function testConfiguration() {
 
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<UFormField name="smtp_host" label="SMTP Host" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.smtp_host" placeholder="smtp.example.com"
-									class="w-full" />
+								<UInput
+									v-model="mailAccount_form_state.smtp_host"
+									placeholder="smtp.example.com"
+									class="w-full"
+									/>
 							</UFormField>
 
 							<UFormField name="smtp_port" label="SMTP Port" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.smtp_port" type="number" placeholder="587"
-									class="w-full" />
+								<UInput
+									v-model="mailAccount_form_state.smtp_port"
+									type="number"
+									placeholder="587"
+									class="w-full"
+								/>
 							</UFormField>
 						</div>
 
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<UFormField name="smtp_username" label="SMTP Username" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.smtp_username" placeholder="user@example.com"
-									class="w-full" />
+								<UInput
+									v-model="mailAccount_form_state.smtp_username"
+									placeholder="user@example.com"
+									class="w-full"
+								/>
 							</UFormField>
 
 							<UFormField name="smtp_password" label="SMTP Password" required class="flex flex-col gap-1">
-								<UInput v-model="mailAccount_form_state.smtp_password"
-									:type="show_smtp_password ? 'text' : 'password'" placeholder="••••••••"
-									class="w-full" :ui="{ trailing: 'pe-1' }">
+								<UInput
+									v-model="mailAccount_form_state.smtp_password"
+									:type="show_smtp_password ? 'text' : 'password'"
+									placeholder="••••••••"
+									class="w-full" :ui="{ trailing: 'pe-1' }"
+								>
 									<template #trailing>
-										<UButton color="neutral" variant="link" size="sm"
+										<UButton
+											color="neutral"
+											variant="link"
+											size="sm"
 											:icon="show_smtp_password ? 'i-lucide-eye-off' : 'i-lucide-eye'"
 											:aria-label="show_smtp_password ? 'Hide password' : 'Show password'"
-											:aria-pressed="show_smtp_password" aria-controls="password"
-											autocomplete="new-password" autocapitalize="off" autocorrect="off"
-											spellcheck="false" @click="show_smtp_password = !show_smtp_password" />
+											:aria-pressed="show_smtp_password"
+											aria-controls="password"
+											autocomplete="new-password"
+											autocapitalize="off"
+											autocorrect="off"
+											spellcheck="false"
+											@click="show_smtp_password = !show_smtp_password;"
+										/>
 									</template>
 								</UInput>
 							</UFormField>

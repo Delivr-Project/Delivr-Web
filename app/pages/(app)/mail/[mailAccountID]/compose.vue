@@ -279,7 +279,7 @@ onUnmounted(() => {
                                     color="neutral"
                                     variant="ghost"
                                     size="xs"
-                                    @click="showCc = true"
+                                    @click="showCc = true;"
                                 />
                                 <UButton
                                     v-if="!showBcc"
@@ -287,7 +287,7 @@ onUnmounted(() => {
                                     color="neutral"
                                     variant="ghost"
                                     size="xs"
-                                    @click="showBcc = true"
+                                    @click="showBcc = true;"
                                 />
                             </div>
                         </div>

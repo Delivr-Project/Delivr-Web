@@ -255,7 +255,7 @@ async function onDeleteAccount() {
 								color="error" 
 								variant="soft"
 								icon="i-lucide-trash-2"
-								@click="deleteConfirmOpen = true"
+								@click="deleteConfirmOpen = true;"
 							/>
 						</div>
 					</div>

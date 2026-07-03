@@ -8,46 +8,11 @@ import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
-import { buildMailboxTree, folderUrl, type MailboxTreeNode } from '~/utils/mailboxDisplay';
+import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 
 const route = useRoute();
 
-function folderIconFor(node: MailboxTreeNode): string {
-    const special = node.mailbox?.specialUse?.replace(/^\\/, '').toLowerCase();
-    const lower = (special ?? node.name).toLowerCase();
-    if (lower === 'sent' || lower === 'sent mail' || lower === 'sent messages') return 'i-lucide-send';
-    if (lower === 'drafts') return 'i-lucide-file-edit';
-    if (lower === 'trash' || lower === 'deleted' || lower === 'deleted messages') return 'i-lucide-trash-2';
-    if (lower === 'spam' || lower === 'junk') return 'i-lucide-shield-alert';
-    if (lower === 'archive') return 'i-lucide-archive';
-    return 'i-lucide-folder';
-}
 
-// Does the active route point at this node or any of its descendants?
-// Used to auto-expand the ancestors of the folder currently being viewed.
-function subtreeContainsActive(node: MailboxTreeNode, accountId: number): boolean {
-    if (node.mailbox && route.path === folderUrl(accountId, node.mailbox)) return true;
-    return node.children.some((child) => subtreeContainsActive(child, accountId));
-}
-
-// Map a folder-tree node to a (possibly nested) navigation menu item.
-function toNavItem(node: MailboxTreeNode, accountId: number): NavigationMenuItem {
-    const unseen = node.unseenTotal;
-    const item: NavigationMenuItem = {
-        label: node.name,
-        icon: folderIconFor(node),
-        badge: unseen > 0 ? unseen : undefined,
-        exact: false,
-    };
-    if (node.mailbox) {
-        item.to = folderUrl(accountId, node.mailbox);
-    }
-    if (node.children.length > 0) {
-        item.children = node.children.map((child) => toNavItem(child, accountId));
-        item.defaultOpen = subtreeContainsActive(node, accountId);
-    }
-    return item;
-}
 
 const userInfoStore = useUserInfoStore();
 const user = await userInfoStore.use();
@@ -96,8 +61,8 @@ const sidebarItems = computed(() => {
     // Hierarchy, leaf names and delimiters are all derived in buildMailboxTree.
     const accountId = currentMailAccount.value?.id;
     if (accountId !== undefined) {
-        for (const node of buildMailboxTree(mailboxes.value)) {
-            mailItems.push(toNavItem(node, accountId));
+        for (const node of MailboxDisplayUtils.buildMailboxTree(mailboxes.value)) {
+            mailItems.push(MailboxDisplayUtils.toNavItem(route.path, node, accountId));
         }
     }
 

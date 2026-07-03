@@ -2,10 +2,7 @@
 import type { MailAccountWithMailboxes, MailListItem } from '~/utils/types';
 import { Utils } from '~/utils';
 import {
-    crumbs,
-    findMailboxByUrlSegments,
-    leafName,
-    normalizeFolderParam,
+    MailboxDisplayUtils
 } from '~/utils/mailboxDisplay';
 import MailDetailContent from '~/components/mail/MailDetailContent.vue';
 import { useMailViewMode } from '~/composables/useMailViewMode';
@@ -36,20 +33,20 @@ const mailboxes = computed(() => mailAccount.data.value.mailboxes || []);
 // The catch-all param gives already-decoded segments (e.g. ["INBOX", "Work"]).
 // We resolve them back to a real mailbox so we use its true IMAP path
 // (with the correct delimiter) for API calls and its leaf name for display.
-const folderSegments = normalizeFolderParam(route.params.folderPath);
-const currentMailbox = computed(() => findMailboxByUrlSegments(mailboxes.value, folderSegments));
+const folderSegments = MailboxDisplayUtils.normalizeFolderParam(route.params.folderPath);
+const currentMailbox = computed(() => MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, folderSegments));
 const systemFolderPath = computed(() =>
     currentMailbox.value?.path ?? folderSegments.join(mailboxes.value[0]?.delimiter || '/')
 );
 const folderTitle = computed(() =>
-    currentMailbox.value ? leafName(currentMailbox.value) : (folderSegments[folderSegments.length - 1] ?? 'Folder')
+    currentMailbox.value ? MailboxDisplayUtils.leafName(currentMailbox.value) : (folderSegments[folderSegments.length - 1] ?? 'Folder')
 );
 
 // Breadcrumb trail shown in place of the plain folder title. Falls back to a
 // single crumb (the raw segment) when the folder isn't in the mailbox list.
 const breadcrumbItems = computed(() =>
     currentMailbox.value
-        ? crumbs(currentMailbox.value, mailboxes.value, accountId)
+        ? MailboxDisplayUtils.crumbs(currentMailbox.value, mailboxes.value, accountId)
         : [{ label: folderTitle.value }]
 );
 
@@ -291,7 +288,7 @@ function closeActiveMail() {
                         color="neutral"
                         variant="outline"
                         icon="i-lucide-search"
-                        @click="isMailSearchOpen = true"
+                        @click="isMailSearchOpen = true;"
                     >
                         <span class="flex-1 text-left truncate">Search emails...</span>
                         <span class="flex items-center gap-1 text-xs shrink-0">
