@@ -560,13 +560,13 @@ function openMail(item: SearchResultItem) {
 
     const mailboxPath = item.mailboxPath || 'INBOX';
     // Resolve the mailbox so we split on its real delimiter; the selected mail
-    // travels as a query param (the folder path is now a catch-all segment).
+    // is now part of the route path.
     const mailbox = currentMailAccount.value?.mailboxes?.find(mb => mb.path === mailboxPath);
     const folderSegments = mailbox
         ? MailboxDisplayUtils.pathToUrlSegments(mailbox.path, mailbox.delimiter)
         : encodeURIComponent(mailboxPath);
 
-    navigateTo(`/mail/${accountId}/folder/${folderSegments}?selected=${item.mail.uid}`);
+    navigateTo(`/mail/${accountId}/folder/${folderSegments}/${item.mail.uid}`);
     isOpen.value = false;
 }
 

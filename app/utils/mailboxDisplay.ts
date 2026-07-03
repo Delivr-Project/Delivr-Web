@@ -42,6 +42,22 @@ export class MailboxDisplayUtils {
         return `/mail/${accountId}/folder/${this.pathToUrlSegments(mb.path, mb.delimiter)}`;
     }
 
+    /**
+     * Decode a single dynamic route segment that was produced by
+     * {@link pathToUrlSegments}. The segment may contain '/'-joined encoded
+     * pieces for nested folders (e.g. "INBOX/Work").
+     */
+    public static parseFolderParam(param: string | string[] | undefined): string[] {
+        const raw = Array.isArray(param) ? param[0] : param;
+        if (!raw) return [];
+        return raw
+            .split('/')
+            .map((s) => {
+                try { return decodeURIComponent(s); } catch { return s; }
+            })
+            .filter((s) => s.length > 0);
+    }
+
     public static normalizeFolderParam(param: unknown): string[] {
         const raw = Array.isArray(param) ? param : [param];
         return raw
@@ -182,7 +198,10 @@ export class MailboxDisplayUtils {
     // Does the active route point at this node or any of its descendants?
     // Used to auto-expand the ancestors of the folder currently being viewed.
     private static subtreeContainsActive(path: string, node: MailboxDisplayUtils.MailboxTreeNode, accountId: number): boolean {
-        if (node.mailbox && path === this.folderUrl(accountId, node.mailbox)) return true;
+        if (node.mailbox) {
+            const folderUrl = this.folderUrl(accountId, node.mailbox);
+            if (path === folderUrl || path.startsWith(`${folderUrl}/`)) return true;
+        }
         return node.children.some((child) => this.subtreeContainsActive(path, child, accountId));
     }
 
