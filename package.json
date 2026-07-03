@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "build": "nuxt build",
-        "start": "bun run .output/server/index.mjs",
+        "start": "PORT=14128 bun run .output/server/index.mjs",
         "dev": "nuxt dev --port 14128",
         "generate": "nuxt generate",
         "preview": "nuxt preview",
