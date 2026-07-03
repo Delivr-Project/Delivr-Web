@@ -1,7 +1,7 @@
 import { defineConfig } from '@hey-api/openapi-ts';
 
 export default defineConfig({
-    input: 'http://localhost:14123/docs/openapi',
+    input: 'http://localhost:14123/docs/v1/openapi',
     output: 'app/api-client',
     plugins: [
         '@hey-api/client-nuxt',

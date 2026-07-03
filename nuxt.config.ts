@@ -29,7 +29,7 @@ export default defineNuxtConfig({
 
 	runtimeConfig: {
 		public: {
-			apiUrl: process.env.DELIVR_API_URL || 'http://localhost:14123',
+			apiUrl: process.env.DELIVR_API_URL || 'http://localhost:14123/v1',
 			appUrl: process.env.DELIVR_APP_URL || 'http://localhost:14128',
 			isSignupEnabled: process.env.DELIVR_ENABLE_SIGNUP === 'true' ? true : false,
 		}
