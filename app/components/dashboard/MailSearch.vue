@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PostMailAccountsByMailAccountIdSearchResponse } from '~/api-client/types.gen';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
+import { pathToUrlSegments } from '~/utils/mailboxDisplay';
 import Gravatar from '~/components/Gravatar.vue';
 import { useDebounceFn, useLocalStorage } from '@vueuse/core';
 import { CalendarDate } from '@internationalized/date';
@@ -554,8 +555,18 @@ function clearAllFilters() {
 }
 
 function openMail(item: SearchResultItem) {
+    const accountId = currentMailAccount.value?.id;
+    if (accountId === undefined) return;
+
     const mailboxPath = item.mailboxPath || 'INBOX';
-    navigateTo(`/mail/${currentMailAccount.value?.id}/folder/${encodeURIComponent(mailboxPath)}/${item.mail.uid}`);
+    // Resolve the mailbox so we split on its real delimiter; the selected mail
+    // travels as a query param (the folder path is now a catch-all segment).
+    const mailbox = currentMailAccount.value?.mailboxes?.find(mb => mb.path === mailboxPath);
+    const folderSegments = mailbox
+        ? pathToUrlSegments(mailbox.path, mailbox.delimiter)
+        : encodeURIComponent(mailboxPath);
+
+    navigateTo(`/mail/${accountId}/folder/${folderSegments}?selected=${item.mail.uid}`);
     isOpen.value = false;
 }
 
