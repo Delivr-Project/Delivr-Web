@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailListItem } from '~/utils/types';
 import { Utils } from '~/utils';
-import { MailUtils } from '~/utils/mail';
+import { MailUtils, MailPaginationUtils } from '~/utils/mail';
 import MailDetailContent from '~/components/mail/MailDetailContent.vue';
 import { useMailViewMode } from '~/composables/useMailViewMode';
 import { useMailActions } from '~/composables/useMailActions';
@@ -83,14 +83,57 @@ function hasAttachments(mail: MailListItem): boolean {
 
 // ── Pagination ──
 
-const PAGE_SIZE = 25;
+// Cap on `limit` enforced by the backend (ApiHelperModels.ListAll.Query) — also
+// used as the per-request chunk size when the "all" page size is selected.
+const MAX_API_PAGE_SIZE = 100;
+
+const PAGE_SIZE_ITEMS: { label: string; value: MailPaginationUtils.PageSize }[] = [
+    { label: '25', value: 25 },
+    { label: '50', value: 50 },
+    { label: '100', value: 100 },
+    { label: 'All', value: 'all' },
+];
+
+// Intentionally a plain local ref, not persisted anywhere (no localStorage, no
+// backend preference) — this is a per-visit-only choice that resets back to
+// the 25 default every time this page is opened.
+const pageSize = ref<MailPaginationUtils.PageSize>(25);
+
 const currentPage = ref(1);
 
 // ── Data fetching ──
 
+// The backend caps `limit` at MAX_API_PAGE_SIZE per request, so "all" is
+// fetched as successive full-size chunks rather than a single call.
+async function fetchAllMails(): Promise<MailListItem[]> {
+    return MailPaginationUtils.fetchAllPages(MAX_API_PAGE_SIZE, async (offset, limit) => {
+        const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
+            path: {
+                mailAccountID: accountId,
+                mailboxPath: systemFolderPath,
+            },
+            query: { order: 'newest', limit, offset }
+        }));
+        if (!response.success) {
+            toast.add({
+                title: 'Error loading emails',
+                description: response.message || 'An unknown error occurred while fetching emails.',
+                color: 'error'
+            });
+            return null;
+        }
+        return response.data;
+    });
+}
+
 const mails = await useAPIAsyncData<MailListItem[]>(
     `/mail-accounts/${accountId}/mailboxes/${systemFolderPath}/mails`,
     async () => {
+        const size = pageSize.value;
+        if (size === 'all') {
+            return await fetchAllMails();
+        }
+
         const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
             path: {
                 mailAccountID: accountId,
@@ -98,8 +141,8 @@ const mails = await useAPIAsyncData<MailListItem[]>(
             },
             query: {
                 order: 'newest',
-                limit: PAGE_SIZE,
-                offset: (currentPage.value - 1) * PAGE_SIZE,
+                limit: size,
+                offset: (currentPage.value - 1) * size,
             }
         }));
         if (!response.success) {
@@ -118,12 +161,27 @@ watch(currentPage, () => {
     mails.refresh();
 });
 
+// Changing the page size always reloads immediately. If the current page is
+// already 1, resetting it wouldn't trigger the watcher above, so refresh
+// explicitly in that case — this way exactly one refresh happens either way.
+watch(pageSize, () => {
+    if (currentPage.value !== 1) {
+        currentPage.value = 1;
+    } else {
+        mails.refresh();
+    }
+});
+
 const mailList = mails.data;
 
 // ── Pagination controls ──
 
-const hasNextPage = computed(() => mailList.value.length === PAGE_SIZE);
-const hasPrevPage = computed(() => currentPage.value > 1);
+const hasNextPage = computed(() => MailPaginationUtils.hasNextPage(pageSize.value, mailList.value.length));
+const hasPrevPage = computed(() => MailPaginationUtils.hasPrevPage(pageSize.value, currentPage.value));
+
+const displayRange = computed(() =>
+    MailPaginationUtils.computeDisplayRange(currentPage.value, pageSize.value, mailList.value.length)
+);
 
 function nextPage() {
     if (hasNextPage.value) currentPage.value++;
@@ -665,31 +723,44 @@ watch(viewMode, (mode) => {
                         </div>
 
                         <!-- Pagination -->
-                        <div class="flex items-center justify-between px-3 py-1.5 border-t border-default shrink-0">
+                        <div class="flex items-center justify-between px-3 py-1.5 border-t border-default shrink-0 gap-2">
                             <div class="text-xs text-muted">
-                                <span v-if="mailList.length > 0">
-                                    {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ (currentPage - 1) * PAGE_SIZE + mailList.length }}
+                                <span v-if="displayRange">
+                                    {{ displayRange.start }}–{{ displayRange.end }}
                                 </span>
                                 <span v-else>—</span>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <UButton
-                                    icon="i-lucide-chevron-left"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="xs"
-                                    :disabled="!hasPrevPage"
-                                    @click="prevPage"
-                                />
-                                <span class="text-xs text-muted px-1">{{ currentPage }}</span>
-                                <UButton
-                                    icon="i-lucide-chevron-right"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="xs"
-                                    :disabled="!hasNextPage"
-                                    @click="nextPage"
-                                />
+
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-xs text-muted">Per page</span>
+                                    <USelect
+                                        v-model="pageSize"
+                                        :items="PAGE_SIZE_ITEMS"
+                                        size="xs"
+                                        class="w-18"
+                                    />
+                                </div>
+
+                                <div class="flex items-center gap-1">
+                                    <UButton
+                                        icon="i-lucide-chevron-left"
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="xs"
+                                        :disabled="!hasPrevPage"
+                                        @click="prevPage"
+                                    />
+                                    <span class="text-xs text-muted px-1">{{ currentPage }}</span>
+                                    <UButton
+                                        icon="i-lucide-chevron-right"
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="xs"
+                                        :disabled="!hasNextPage"
+                                        @click="nextPage"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
