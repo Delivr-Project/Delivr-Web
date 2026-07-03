@@ -1,15 +1,15 @@
 /**
- * Helpers for fetching mail attachments from the Delivr API.
+ * Helpers for viewing and downloading mail attachments.
  *
- * Attachments are streamed from the API on demand (the server never stores or
- * caches them). On the client we likewise only hold a transient `blob:` object
- * URL: the download path revokes it immediately after the click, while the
- * preview path revokes it on a short timer so the new tab has time to load it.
- * Either way nothing is persisted here.
- *
- * We use a direct authenticated `fetch` rather than the generated SDK because the
- * endpoint returns a binary body, and because an `<img src>`/download needs the
- * bytes as a Blob rather than parsed JSON.
+ * - Preview opens a real, same-origin, authenticated URL whose last path segment
+ *   is the filename (e.g. `/attachments/Report.pdf?...`), served by the nitro
+ *   route in `server/routes/attachments/[filename].get.ts`. That route reads the
+ *   session cookie and proxies the bytes from the API, so the tab shows a proper
+ *   filename instead of an opaque `blob:` UUID and still requires authentication.
+ * - Download fetches the bytes directly from the API with a bearer token (the
+ *   generated SDK returns JSON, so it can't be used for a binary body) and saves
+ *   them via a transient object URL that is revoked right after. Nothing is
+ *   persisted client-side.
  */
 
 export interface AttachmentRef {
@@ -20,11 +20,11 @@ export interface AttachmentRef {
 }
 
 /**
- * MIME types that are safe to render inline in a new tab. A `blob:` URL inherits
- * this app's origin, so opening active content (text/html, image/svg+xml, ...)
- * there would let it run script in-origin — an XSS vector. Only inert types are
- * allowlisted; everything else is downloaded instead of previewed. SVG is
- * deliberately excluded because it can carry scripts.
+ * MIME types that are safe to render inline. The preview route is same-origin with
+ * the app, so opening active content (text/html, image/svg+xml, ...) inline would
+ * let it run script in-origin — an XSS vector. Only inert types are allowlisted;
+ * everything else is downloaded instead. SVG is deliberately excluded because it
+ * can carry scripts. The server route enforces the same allowlist.
  */
 const PREVIEWABLE_MIME_TYPES = new Set([
     'application/pdf',
@@ -45,6 +45,7 @@ export function isPreviewableType(contentType?: string | null): boolean {
     return PREVIEWABLE_MIME_TYPES.has(type);
 }
 
+/** Direct API URL for the attachment's raw bytes (used for downloads via fetch). */
 function buildAttachmentUrl(ref: AttachmentRef, download: boolean): string {
     const apiUrl = useRuntimeConfig().public.apiUrl;
     const base = apiUrl.replace(/\/$/, '');
@@ -54,6 +55,18 @@ function buildAttachmentUrl(ref: AttachmentRef, download: boolean): string {
         `/mails/${ref.mailUid}` +
         `/attachments/${ref.attachmentId}`;
     return `${base}${path}${download ? '?download=true' : ''}`;
+}
+
+/**
+ * Same-origin preview URL served by the nitro proxy route. It mirrors the email's
+ * view route and ends in the filename (shown in the browser tab), e.g.
+ * `/mail/1/folder/INBOX%2FBekannte/68/attachment/Report.pdf`. The server resolves
+ * the filename to the attachment and authenticates via the session cookie.
+ */
+function buildPreviewUrl(ref: AttachmentRef, filename: string): string {
+    const folder = encodeURIComponent(ref.mailboxPath);
+    const name = encodeURIComponent(filename);
+    return `/mail/${ref.accountId}/folder/${folder}/${ref.mailUid}/attachment/${name}`;
 }
 
 /**
@@ -114,33 +127,21 @@ export function useMailAttachments() {
     }
 
     /**
-     * Preview an attachment. Inert types (PDF, raster images) are opened inline in
-     * a new tab; anything else — including active content like HTML or SVG that
-     * could execute script in this origin via the `blob:` URL — is downloaded
-     * instead. The allowlist is enforced on the fetched blob's actual type.
+     * Preview an attachment. Inert types (PDF, raster images) open inline in a new
+     * tab at a real, authenticated, filename-bearing URL. Anything else — including
+     * active content like HTML or SVG that could execute script in this origin — is
+     * downloaded instead. The server route enforces the same allowlist, so this
+     * check is only to avoid opening a blank tab that immediately downloads.
      */
-    async function openAttachment(ref: AttachmentRef, filename?: string): Promise<void> {
-        try {
-            const blob = await fetchAttachmentBlob(ref, false);
-
-            // Security: never render non-allowlisted types inline (XSS via blob: URL
-            // inheriting the app origin). Fall back to a download for those.
-            if (!isPreviewableType(blob.type)) {
-                triggerDownload(blob, filename);
-                return;
-            }
-
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank', 'noopener,noreferrer');
-            // Give the new tab time to load before releasing the object URL.
-            setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        } catch (e) {
-            toast.add({
-                title: 'Preview failed',
-                description: (e as Error).message || 'Could not open the attachment.',
-                color: 'error'
-            });
+    async function openAttachment(ref: AttachmentRef, filename?: string, contentType?: string | null): Promise<void> {
+        // The preview URL identifies the attachment by filename, so it needs one.
+        // Non-previewable or unnamed attachments fall back to the id-based download.
+        if (!isPreviewableType(contentType) || !filename) {
+            await downloadAttachment(ref, filename);
+            return;
         }
+
+        window.open(buildPreviewUrl(ref, filename), '_blank', 'noopener,noreferrer');
     }
 
     return { downloadAttachment, openAttachment };

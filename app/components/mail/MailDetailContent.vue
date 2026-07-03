@@ -198,8 +198,8 @@ async function handleDownloadAttachment(idx: number, filename?: string) {
     }
 }
 
-function handleOpenAttachment(idx: number, filename?: string) {
-    openAttachment(attachmentRef(idx), filename);
+function handleOpenAttachment(idx: number, filename?: string, contentType?: string) {
+    openAttachment(attachmentRef(idx), filename, contentType);
 }
 
 // ── Action handlers (placeholders) ──
@@ -491,7 +491,7 @@ defineExpose({ reload: loadMail });
                                     type="button"
                                     :aria-label="`Preview ${attachment.filename || 'attachment'}`"
                                     class="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                                    @click="handleOpenAttachment(idx, attachment.filename ?? undefined)"
+                                    @click="handleOpenAttachment(idx, attachment.filename ?? undefined, attachment.contentType)"
                                 >
                                     <div class="shrink-0 p-2 rounded-md bg-primary/10">
                                         <UIcon
