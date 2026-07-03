@@ -145,6 +145,24 @@ watch([currentPage, systemFolderPath], () => {
 
 const mailList = mails.data;
 
+// Detail pane instance (only one is mounted at a time) so refresh can re-sync it.
+const detailRef = ref<{ reload: () => void } | null>(null);
+
+// Refresh the list AND the currently open mail, so the list rows and the detail
+// pane's read/unread button reflect the same (server) state after a refresh.
+function handleRefresh() {
+    mails.refresh();
+    detailRef.value?.reload();
+}
+
+// Keep the list in sync when the detail pane changes a mail's flags (e.g.
+// read/unread toggle) — without a refetch. `mails.data` is a shallowRef (Nuxt 4
+// default `deep: false`), so we must reassign the array rather than mutate a nested
+// property, otherwise the list rows won't re-render.
+function handleFlagsChange(uid: number, flags: NonNullable<MailListItem['flags']>) {
+    mailList.value = mailList.value.map(m => m.uid === uid ? { ...m, flags } : m);
+}
+
 // ── Pagination controls ──
 
 const hasNextPage = computed(() => mailList.value.length === PAGE_SIZE);
@@ -336,6 +354,7 @@ function closeActiveMail() {
                 <!-- ══ LIST MODE with an open mail: full-panel detail ══ -->
                 <MailDetailContent
                     v-if="showFullDetail"
+                    ref="detailRef"
                     :key="activeMailUid ?? undefined"
                     :account-id="accountId"
                     :folder-path="systemFolderPath"
@@ -344,6 +363,7 @@ function closeActiveMail() {
                     class="flex-1 min-h-0"
                     @close="closeActiveMail"
                     @not-found="closeActiveMail"
+                    @flags-change="handleFlagsChange"
                 />
 
                 <!-- ══ Otherwise: the mail list (+ split detail column) ══ -->
@@ -376,7 +396,7 @@ function closeActiveMail() {
                                 variant="ghost"
                                 size="md"
                                 :loading="mails.loading.value"
-                                @click="mails.refresh()"
+                                @click="handleRefresh"
                             />
                         </UTooltip>
                     </div>
@@ -651,6 +671,7 @@ function closeActiveMail() {
                         >
                             <MailDetailContent
                                 v-if="activeMailUid !== null"
+                                ref="detailRef"
                                 :key="activeMailUid"
                                 :account-id="accountId"
                                 :folder-path="systemFolderPath"
@@ -658,6 +679,7 @@ function closeActiveMail() {
                                 closable
                                 @close="closeActiveMail"
                                 @not-found="closeActiveMail"
+                                @flags-change="handleFlagsChange"
                             />
                             <div v-else class="flex flex-col items-center justify-center h-full py-16 px-6 text-center">
                                 <div class="relative mb-6">
