@@ -194,8 +194,8 @@ const displaySidebars = computed(() => {
                 content: 'main-bg-color',
                 footer: 'border-t border-default main-bg-color',
             }"
-            :min-size="10"
-            :default-size="18"
+            :min-size="18"
+            :default-size="20"
             :max-size="30"
         >
             <template #header="{ collapsed }">
@@ -255,6 +255,7 @@ const displaySidebars = computed(() => {
                         </div> -->
 
                     <UNavigationMenu
+                        :key="currentMailAccount?.id"
                         :collapsed="collapsed"
                         :items="sidebarItems.mail"
                         orientation="vertical"
