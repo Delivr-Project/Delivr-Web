@@ -163,7 +163,7 @@ export class MailboxDisplayUtils {
             }
         }
 
-        roots.forEach(this.rollupUnseen);
+        roots.forEach((node) => this.rollupUnseen(node));
         return roots;
     }
 
