@@ -5,6 +5,7 @@ import { useRemoteContentPolicyStore, extractDomain } from '~/composables/stores
 import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
 import { Utils } from '~/utils';
 import Gravatar from '~/components/Gravatar.vue';
+import { useMailAttachments } from '~/composables/useMailAttachments';
 
 const props = defineProps<{
     accountId: number
@@ -36,15 +37,15 @@ const mailData = ref<MailData | null>(null);
 const autoMarkSeenStore = useAutoMarkSeenStore();
 autoMarkSeenStore.refreshIfNeeded();
 
-const AUTO_MARK_DELAY_MS = 1500;
-let autoMarkTimer: ReturnType<typeof setTimeout> | null = null;
+// const AUTO_MARK_DELAY_MS = 1500;
+// let autoMarkTimer: ReturnType<typeof setTimeout> | null = null;
 
-function cancelAutoMark() {
-    if (autoMarkTimer !== null) {
-        clearTimeout(autoMarkTimer);
-        autoMarkTimer = null;
-    }
-}
+// function cancelAutoMark() {
+//     if (autoMarkTimer !== null) {
+//         clearTimeout(autoMarkTimer);
+//         autoMarkTimer = null;
+//     }
+// }
 
 async function markSeen(uid: number) {
     const response = await useAPI(api =>
@@ -61,32 +62,38 @@ async function markSeen(uid: number) {
     if (response.success && mailData.value?.uid === uid) {
         mailData.value.flags = response.data.flags;
         emit('flags-change', uid, response.data.flags);
+    } else {
+        toast.add({
+            title: 'Failed to mark as read',
+            description: response.message || 'An unknown error occurred.',
+            color: 'error'
+        });
     }
 }
 
-// Mark the mail seen after a short dwell, unless the user leaves or toggles first.
-function scheduleAutoMarkSeen() {
-    cancelAutoMark();
-    if (!autoMarkSeenStore.enabled.value) return;
+// // Mark the mail seen after a short dwell, unless the user leaves or toggles first.
+// function scheduleAutoMarkSeen() {
+//     cancelAutoMark();
+//     if (!autoMarkSeenStore.enabled.value) return;
 
-    const mail = mailData.value;
-    if (!mail || mail.flags?.seen) return;
+//     const mail = mailData.value;
+//     if (!mail || mail.flags?.seen) return;
 
-    const uid = mail.uid;
-    autoMarkTimer = setTimeout(() => {
-        autoMarkTimer = null;
-        // Bail if the user navigated away or it was marked seen in the meantime.
-        if (mailData.value?.uid !== uid || mailData.value?.flags?.seen) return;
-        void markSeen(uid);
-    }, AUTO_MARK_DELAY_MS);
-}
+//     const uid = mail.uid;
+//     autoMarkTimer = setTimeout(() => {
+//         autoMarkTimer = null;
+//         // Bail if the user navigated away or it was marked seen in the meantime.
+//         if (mailData.value?.uid !== uid || mailData.value?.flags?.seen) return;
+//         void markSeen(uid);
+//     }, AUTO_MARK_DELAY_MS);
+// }
 
-onUnmounted(cancelAutoMark);
+// onUnmounted(cancelAutoMark);
 
 async function loadMail() {
     isLoading.value = true;
     // A different mail is loading — drop any pending auto-mark for the previous one.
-    cancelAutoMark();
+    // cancelAutoMark();
     try {
         const response = await useAPI(api =>
             api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid({
@@ -108,7 +115,10 @@ async function loadMail() {
             return;
         }
         mailData.value = response.data;
-        scheduleAutoMarkSeen();
+        // scheduleAutoMarkSeen();
+
+        await markSeen(props.mailUid);
+
     } finally {
         isLoading.value = false;
     }
@@ -239,8 +249,8 @@ const isTogglingRead = ref(false);
 async function handleToggleRead() {
     if (!mailData.value || isTogglingRead.value) return;
 
-    // A manual toggle takes precedence over any pending auto-mark.
-    cancelAutoMark();
+    // // A manual toggle takes precedence over any pending auto-mark.
+    // cancelAutoMark();
 
     const targetSeen = !isRead.value;
     isTogglingRead.value = true;
