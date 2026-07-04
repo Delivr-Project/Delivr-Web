@@ -2895,6 +2895,79 @@ export type PostMailAccountsByMailAccountIdSearchCountResponses = {
 
 export type PostMailAccountsByMailAccountIdSearchCountResponse = PostMailAccountsByMailAccountIdSearchCountResponses[keyof PostMailAccountsByMailAccountIdSearchCountResponses];
 
+export type GetBimiByDomainData = {
+    body?: never;
+    path: {
+        /**
+         * The sender domain to look up, e.g. "example.com"
+         */
+        domain: string;
+    };
+    query?: {
+        /**
+         * The BIMI selector to query (from a message's BIMI-Selector header, if any)
+         */
+        selector?: string;
+    };
+    url: '/bimi/{domain}';
+};
+
+export type GetBimiByDomainErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * No BIMI record found for the specified domain
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'No BIMI record found for the specified domain';
+    };
+};
+
+export type GetBimiByDomainError = GetBimiByDomainErrors[keyof GetBimiByDomainErrors];
+
+export type GetBimiByDomainResponses = {
+    /**
+     * BIMI record resolved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'BIMI record resolved successfully';
+        data: {
+            /**
+             * The sender domain the record was resolved for
+             */
+            domain: string;
+            /**
+             * The BIMI selector used for the lookup (default: "default")
+             */
+            selector: string;
+            /**
+             * BIMI record version
+             */
+            version: 'BIMI1';
+            /**
+             * HTTPS URL of the brand logo (SVG), usable directly as an avatar source
+             */
+            logoUrl: string;
+            /**
+             * HTTPS URL of the Verified Mark Certificate (VMC), if published
+             */
+            authorityUrl: string | null;
+        };
+    };
+};
+
+export type GetBimiByDomainResponse = GetBimiByDomainResponses[keyof GetBimiByDomainResponses];
+
 export type GetAdminUsersData = {
     body?: never;
     path?: never;

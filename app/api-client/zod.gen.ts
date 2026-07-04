@@ -1543,6 +1543,30 @@ export const zPostMailAccountsByMailAccountIdSearchCountResponse = z.object({
     })
 });
 
+export const zGetBimiByDomainPath = z.object({
+    domain: z.string().min(1).max(253)
+});
+
+export const zGetBimiByDomainQuery = z.object({
+    selector: z.string().min(1).max(63).optional().default('default')
+});
+
+/**
+ * BIMI record resolved successfully
+ */
+export const zGetBimiByDomainResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('BIMI record resolved successfully'),
+    data: z.object({
+        domain: z.string(),
+        selector: z.string(),
+        version: z.literal('BIMI1'),
+        logoUrl: z.url(),
+        authorityUrl: z.url().nullable()
+    })
+});
+
 export const zGetAdminUsersQuery = z.object({
     role: z.enum(['admin', 'user']).optional(),
     search: z.string().min(1).max(64).optional(),
