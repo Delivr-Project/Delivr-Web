@@ -9,6 +9,8 @@ import DelivrLogo from '~/components/img/DelivrLogo.vue';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
+import { useMailDrag } from '~/composables/useMailDrag';
+import type { Mailbox } from '~/utils/types';
 
 const route = useRoute();
 
@@ -24,6 +26,60 @@ const currentMailAccount = await currentMailAccountStore.use();
 const mailboxes = computed(() => currentMailAccount.value?.mailboxes || []);
 
 const { isMailSearchOpen } = useDashboard();
+
+// ── Drag & drop: sidebar folders act as drop targets for mails ──
+// The folder tree is rendered by UNavigationMenu, so instead of custom folder
+// components we delegate off the rendered <a href="…/folder/…"> links.
+
+const { dragging, dropOnMailbox } = useMailDrag();
+
+let highlightedEl: HTMLElement | null = null;
+function setHighlight(el: HTMLElement | null) {
+    if (highlightedEl === el) return;
+    highlightedEl?.classList.remove('mail-drop-target');
+    highlightedEl = el;
+    highlightedEl?.classList.add('mail-drop-target');
+}
+
+// Resolve the folder link (and its mailbox) under the cursor, if any.
+function resolveDropTarget(e: DragEvent): { anchor: HTMLElement; mailbox: Mailbox } | null {
+    const anchor = (e.target as HTMLElement | null)?.closest?.('a[href*="/folder/"]') as HTMLElement | null;
+    if (!anchor) return null;
+    const href = anchor.getAttribute('href') ?? '';
+    const match = href.match(/\/folder\/([^/?#]+)/);
+    if (!match || !match[1]) return null;
+    const segments = MailboxDisplayUtils.parseFolderParam(match[1]);
+    const mailbox = MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, segments);
+    return mailbox ? { anchor, mailbox } : null;
+}
+
+function onFolderDragOver(e: DragEvent) {
+    if (!dragging.value) return;
+    const target = resolveDropTarget(e);
+    if (target && target.mailbox.path !== dragging.value.sourceFolderPath) {
+        e.preventDefault(); // mark as a valid drop zone
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        setHighlight(target.anchor);
+    } else {
+        setHighlight(null);
+    }
+}
+
+function onFolderDrop(e: DragEvent) {
+    setHighlight(null);
+    if (!dragging.value) return;
+    const target = resolveDropTarget(e);
+    if (!target) return;
+    e.preventDefault();
+    dropOnMailbox(target.mailbox);
+}
+
+// Clear the highlight when the drag ends or leaves the folder area entirely.
+watch(dragging, (v) => { if (!v) setHighlight(null); });
+function onFolderDragLeave(e: DragEvent) {
+    const to = e.relatedTarget as Node | null;
+    if (!to || !(e.currentTarget as HTMLElement).contains(to)) setHighlight(null);
+}
 
 const sidebarItems = computed(() => {
 
@@ -219,13 +275,20 @@ const displaySidebars = computed(() => {
                             </UTooltip>
                         </div> -->
 
-                    <UNavigationMenu
-                        :key="currentMailAccount?.id"
-                        :collapsed="collapsed"
-                        :items="sidebarItems.mail"
-                        orientation="vertical"
-                        class="mt-0"
-                    />
+                    <!-- Drop zone: dragging mails onto a folder link moves them there. -->
+                    <div
+                        @dragover="onFolderDragOver"
+                        @drop="onFolderDrop"
+                        @dragleave="onFolderDragLeave"
+                    >
+                        <UNavigationMenu
+                            :key="currentMailAccount?.id"
+                            :collapsed="collapsed"
+                            :items="sidebarItems.mail"
+                            orientation="vertical"
+                            class="mt-0"
+                        />
+                    </div>
                 </div>
 
 
@@ -275,3 +338,13 @@ const displaySidebars = computed(() => {
 
     </UDashboardGroup>
 </template>
+
+<!-- Not scoped: the highlighted element is a link rendered inside UNavigationMenu. -->
+<style>
+.mail-drop-target {
+    outline: 2px solid var(--ui-primary);
+    outline-offset: -2px;
+    border-radius: var(--ui-radius, 0.375rem);
+    background-color: color-mix(in oklch, var(--ui-primary) 12%, transparent);
+}
+</style>

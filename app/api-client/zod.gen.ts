@@ -235,6 +235,32 @@ export const zPutAccountPreferencesRemoteContentPolicyResponse = z.object({
     data: z.null()
 });
 
+/**
+ * Auto-mark-as-seen preference retrieved successfully
+ */
+export const zGetAccountPreferencesAutoMarkSeenResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Auto-mark-as-seen preference retrieved successfully'),
+    data: z.object({
+        enabled: z.boolean().optional().default(true)
+    })
+});
+
+export const zPutAccountPreferencesAutoMarkSeenBody = z.object({
+    enabled: z.boolean().optional().default(true)
+});
+
+/**
+ * Auto-mark-as-seen preference updated successfully
+ */
+export const zPutAccountPreferencesAutoMarkSeenResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Auto-mark-as-seen preference updated successfully'),
+    data: z.null()
+});
+
 export const zGetMailAccountsQuery = z.object({
     withMailboxes: z.boolean().optional().default(false)
 });

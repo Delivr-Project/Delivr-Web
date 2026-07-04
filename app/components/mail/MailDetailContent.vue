@@ -2,6 +2,7 @@
 import type { MailData } from '~/utils/types';
 import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
 import { useRemoteContentPolicyStore, extractDomain } from '~/composables/stores/useRemoteContentPolicyStore';
+import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
 import { Utils } from '~/utils';
 import Gravatar from '~/components/Gravatar.vue';
 
@@ -29,8 +30,63 @@ const systemFolderPath = computed(() =>
 const isLoading = ref(true);
 const mailData = ref<MailData | null>(null);
 
+// ── Auto-mark-as-read ──
+// Global (per-user) preference; pre-warm so the flag is ready before the dwell
+// elapses (default is on, so an unloaded store would otherwise fire immediately).
+const autoMarkSeenStore = useAutoMarkSeenStore();
+autoMarkSeenStore.refreshIfNeeded();
+
+const AUTO_MARK_DELAY_MS = 1500;
+let autoMarkTimer: ReturnType<typeof setTimeout> | null = null;
+
+function cancelAutoMark() {
+    if (autoMarkTimer !== null) {
+        clearTimeout(autoMarkTimer);
+        autoMarkTimer = null;
+    }
+}
+
+async function markSeen(uid: number) {
+    const response = await useAPI(api =>
+        api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlags({
+            path: {
+                mailAccountID: props.accountId,
+                mailboxPath: systemFolderPath.value,
+                mailUID: uid,
+            },
+            body: { seen: true },
+        })
+    );
+    // Only apply if we're still on the same mail; keep the list in sync via the emit.
+    if (response.success && mailData.value?.uid === uid) {
+        mailData.value.flags = response.data.flags;
+        emit('flags-change', uid, response.data.flags);
+    }
+}
+
+// Mark the mail seen after a short dwell, unless the user leaves or toggles first.
+function scheduleAutoMarkSeen() {
+    cancelAutoMark();
+    if (!autoMarkSeenStore.enabled.value) return;
+
+    const mail = mailData.value;
+    if (!mail || mail.flags?.seen) return;
+
+    const uid = mail.uid;
+    autoMarkTimer = setTimeout(() => {
+        autoMarkTimer = null;
+        // Bail if the user navigated away or it was marked seen in the meantime.
+        if (mailData.value?.uid !== uid || mailData.value?.flags?.seen) return;
+        void markSeen(uid);
+    }, AUTO_MARK_DELAY_MS);
+}
+
+onUnmounted(cancelAutoMark);
+
 async function loadMail() {
     isLoading.value = true;
+    // A different mail is loading — drop any pending auto-mark for the previous one.
+    cancelAutoMark();
     try {
         const response = await useAPI(api =>
             api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid({
@@ -52,6 +108,7 @@ async function loadMail() {
             return;
         }
         mailData.value = response.data;
+        scheduleAutoMarkSeen();
     } finally {
         isLoading.value = false;
     }
@@ -182,6 +239,9 @@ const isTogglingRead = ref(false);
 async function handleToggleRead() {
     if (!mailData.value || isTogglingRead.value) return;
 
+    // A manual toggle takes precedence over any pending auto-mark.
+    cancelAutoMark();
+
     const targetSeen = !isRead.value;
     isTogglingRead.value = true;
     try {
@@ -260,7 +320,6 @@ function notAvailable(title: string) {
     });
 }
 
-const handleArchive = () => notAvailable('Archive');
 const handleDelete = () => notAvailable('Delete');
 const handleSpam = () => notAvailable('Mark as spam');
 const handleReply = () => notAvailable('Reply');
@@ -346,26 +405,9 @@ defineExpose({ reload: loadMail });
                 <div class="flex-1" />
 
                 <div class="flex items-center gap-0.5 shrink-0">
-                    <UTooltip text="Archive">
-                        <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="sm" @click="handleArchive" />
-                    </UTooltip>
-                    <UTooltip text="Delete">
-                        <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="sm" @click="handleDelete" />
-                    </UTooltip>
-                    <UTooltip :text="readActionLabel">
-                        <UButton
-                            :icon="readActionIcon"
-                            color="neutral"
-                            variant="ghost"
-                            size="sm"
-                            :loading="isTogglingRead"
-                            :aria-label="readActionLabel"
-                            @click="handleToggleRead"
-                        />
-                    </UTooltip>
-
-                    <div class="w-px h-5 bg-default mx-1" />
-
+                    <!-- Archive / Delete / Mark-read live in the list toolbar now
+                         (they act on the checked selection). Read toggle remains in
+                         the ⋮ menu below. -->
                     <UTooltip text="Reply">
                         <UButton icon="i-lucide-reply" color="neutral" variant="ghost" size="sm" @click="handleReply" />
                     </UTooltip>
