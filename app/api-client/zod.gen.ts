@@ -751,6 +751,7 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse 
             'high'
         ]).optional(),
         attachments: z.array(z.object({
+            id: z.number(),
             filename: z.string().optional(),
             contentType: z.string(),
             size: z.number(),
@@ -909,6 +910,7 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
             'high'
         ]).optional(),
         attachments: z.array(z.object({
+            id: z.number(),
             filename: z.string().optional(),
             contentType: z.string(),
             size: z.number(),
@@ -1033,6 +1035,79 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUi
     })
 });
 
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsBody = z.object({
+    seen: z.boolean().optional(),
+    answered: z.boolean().optional(),
+    flagged: z.boolean().optional(),
+    deleted: z.boolean().optional(),
+    draft: z.boolean().optional()
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number()
+});
+
+/**
+ * Mail flags updated successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail flags updated successfully'),
+    data: z.object({
+        success: z.boolean(),
+        flags: z.object({
+            seen: z.boolean().optional(),
+            answered: z.boolean().optional(),
+            flagged: z.boolean().optional(),
+            deleted: z.boolean().optional(),
+            draft: z.boolean().optional(),
+            recent: z.boolean().optional()
+        })
+    })
+});
+
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number()
+});
+
+/**
+ * Attachments retrieved successfully
+ */
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Attachments retrieved successfully'),
+    data: z.array(z.object({
+        id: z.number(),
+        filename: z.string().optional(),
+        contentType: z.string(),
+        size: z.number(),
+        contentId: z.string().optional(),
+        contentDisposition: z.string().optional()
+    }))
+});
+
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number(),
+    attachmentId: z.number().gte(0)
+});
+
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdQuery = z.object({
+    download: z.boolean().optional().default(false)
+});
+
+/**
+ * Attachment content stream
+ */
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdResponse = z.string();
+
 export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveBody = z.object({
     uids: z.array(z.number()).min(1),
     targetMailbox: z.string()
@@ -1094,6 +1169,34 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActio
     success: z.literal(true),
     code: z.literal(200),
     message: z.literal('Mails deleted successfully'),
+    data: z.object({
+        success: z.boolean()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsBody = z.object({
+    uids: z.array(z.number()).min(1),
+    flags: z.object({
+        seen: z.boolean().optional(),
+        answered: z.boolean().optional(),
+        flagged: z.boolean().optional(),
+        deleted: z.boolean().optional(),
+        draft: z.boolean().optional()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
+});
+
+/**
+ * Mail flags updated successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail flags updated successfully'),
     data: z.object({
         success: z.boolean()
     })
@@ -1272,6 +1375,7 @@ export const zGetMailAccountsByMailAccountIdSearchResponse = z.object({
                     'high'
                 ]).optional(),
                 attachments: z.array(z.object({
+                    id: z.number(),
                     filename: z.string().optional(),
                     contentType: z.string(),
                     size: z.number(),
@@ -1377,6 +1481,7 @@ export const zPostMailAccountsByMailAccountIdSearchResponse = z.object({
                     'high'
                 ]).optional(),
                 attachments: z.array(z.object({
+                    id: z.number(),
                     filename: z.string().optional(),
                     contentType: z.string(),
                     size: z.number(),

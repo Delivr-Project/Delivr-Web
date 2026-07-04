@@ -145,6 +145,24 @@ watch([currentPage, systemFolderPath], () => {
 
 const mailList = mails.data;
 
+// Detail pane instance (only one is mounted at a time) so refresh can re-sync it.
+const detailRef = ref<{ reload: () => void } | null>(null);
+
+// Refresh the list AND the currently open mail, so the list rows and the detail
+// pane's read/unread button reflect the same (server) state after a refresh.
+function handleRefresh() {
+    mails.refresh();
+    detailRef.value?.reload();
+}
+
+// Keep the list in sync when the detail pane changes a mail's flags (e.g.
+// read/unread toggle) — without a refetch. `mails.data` is a shallowRef (Nuxt 4
+// default `deep: false`), so we must reassign the array rather than mutate a nested
+// property, otherwise the list rows won't re-render.
+function handleFlagsChange(uid: number, flags: NonNullable<MailListItem['flags']>) {
+    mailList.value = mailList.value.map(m => m.uid === uid ? { ...m, flags } : m);
+}
+
 // ── Pagination controls ──
 
 const hasNextPage = computed(() => mailList.value.length === PAGE_SIZE);
@@ -189,7 +207,50 @@ const hasSelection = computed(() => selectedUids.value.size > 0);
 const allSelected = computed(() => mailList.value.length > 0 && selectedUids.value.size === mailList.value.length);
 const someSelected = computed(() => selectedUids.value.size > 0 && selectedUids.value.size < mailList.value.length);
 
+const isApplyingBulkFlags = ref(false);
+
 // ── Bulk actions ──
+
+async function setBulkFlags(seen: boolean) {
+    if (selectedUids.value.size === 0 || isApplyingBulkFlags.value) return;
+
+    isApplyingBulkFlags.value = true;
+    try {
+        const response = await useAPI(api =>
+            api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlags({
+                path: {
+                    mailAccountID: accountId,
+                    mailboxPath: systemFolderPath.value,
+                },
+                body: {
+                    uids: Array.from(selectedUids.value),
+                    flags: { seen },
+                },
+            })
+        );
+
+        if (!response.success) {
+            toast.add({
+                title: 'Failed to update emails',
+                description: response.message || 'An unknown error occurred.',
+                color: 'error'
+            });
+            return;
+        }
+
+        // Optimistically update the local list so the rows reflect the new
+        // read/unread state without a full refetch.
+        mailList.value = mailList.value.map(m =>
+            selectedUids.value.has(m.uid)
+                ? { ...m, flags: { ...m.flags, seen } }
+                : m
+        );
+
+        clearSelection();
+    } finally {
+        isApplyingBulkFlags.value = false;
+    }
+}
 
 function handleBulk(title: string) {
     toast.add({
@@ -336,6 +397,7 @@ function closeActiveMail() {
                 <!-- ══ LIST MODE with an open mail: full-panel detail ══ -->
                 <MailDetailContent
                     v-if="showFullDetail"
+                    ref="detailRef"
                     :key="activeMailUid ?? undefined"
                     :account-id="accountId"
                     :folder-path="systemFolderPath"
@@ -344,6 +406,7 @@ function closeActiveMail() {
                     class="flex-1 min-h-0"
                     @close="closeActiveMail"
                     @not-found="closeActiveMail"
+                    @flags-change="handleFlagsChange"
                 />
 
                 <!-- ══ Otherwise: the mail list (+ split detail column) ══ -->
@@ -376,7 +439,7 @@ function closeActiveMail() {
                                 variant="ghost"
                                 size="md"
                                 :loading="mails.loading.value"
-                                @click="mails.refresh()"
+                                @click="handleRefresh"
                             />
                         </UTooltip>
                     </div>
@@ -401,10 +464,10 @@ function closeActiveMail() {
                                 <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="xs" @click="handleBulk('Archive')" />
                             </UTooltip>
                             <UTooltip text="Mark as read">
-                                <UButton icon="i-lucide-mail-open" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as read')" />
+                                <UButton icon="i-lucide-mail-open" color="neutral" variant="ghost" size="xs" :loading="isApplyingBulkFlags" @click="setBulkFlags(true)" />
                             </UTooltip>
                             <UTooltip text="Mark as unread">
-                                <UButton icon="i-lucide-mail" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as unread')" />
+                                <UButton icon="i-lucide-mail" color="neutral" variant="ghost" size="xs" :loading="isApplyingBulkFlags" @click="setBulkFlags(false)" />
                             </UTooltip>
                             <UTooltip text="Report spam">
                                 <UButton icon="i-lucide-shield-alert" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as spam')" />
@@ -651,6 +714,7 @@ function closeActiveMail() {
                         >
                             <MailDetailContent
                                 v-if="activeMailUid !== null"
+                                ref="detailRef"
                                 :key="activeMailUid"
                                 :account-id="accountId"
                                 :folder-path="systemFolderPath"
@@ -658,6 +722,7 @@ function closeActiveMail() {
                                 closable
                                 @close="closeActiveMail"
                                 @not-found="closeActiveMail"
+                                @flags-change="handleFlagsChange"
                             />
                             <div v-else class="flex flex-col items-center justify-center h-full py-16 px-6 text-center">
                                 <div class="relative mb-6">
