@@ -16,6 +16,8 @@ const props = defineProps<{
 const emit = defineEmits<{
     close: []
     'not-found': []
+    /** Emitted after the mail's flags change (e.g. read/unread toggle) so the list can stay in sync. */
+    'flags-change': [uid: number, flags: NonNullable<MailData['flags']>]
 }>();
 
 const toast = useToast();
@@ -168,6 +170,52 @@ const hasHtmlBody = computed(() => !!mailData.value?.body?.html);
 const hasTextBody = computed(() => !!mailData.value?.body?.text);
 const hasAttachments = computed(() => (mailData.value?.attachments?.length ?? 0) > 0);
 
+// ── Read / unread toggle ──
+
+const isRead = computed(() => !!mailData.value?.flags?.seen);
+// The button reflects the action it performs: a read mail can be marked unread,
+// an unread mail can be marked read.
+const readActionLabel = computed(() => isRead.value ? 'Mark as unread' : 'Mark as read');
+const readActionIcon = computed(() => isRead.value ? 'i-lucide-mail' : 'i-lucide-mail-open');
+const isTogglingRead = ref(false);
+
+async function handleToggleRead() {
+    if (!mailData.value || isTogglingRead.value) return;
+
+    const targetSeen = !isRead.value;
+    isTogglingRead.value = true;
+    try {
+        const response = await useAPI(api =>
+            api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlags({
+                path: {
+                    mailAccountID: props.accountId,
+                    mailboxPath: systemFolderPath.value,
+                    mailUID: props.mailUid,
+                },
+                body: { seen: targetSeen },
+            })
+        );
+
+        if (!response.success) {
+            toast.add({
+                title: 'Failed to update read state',
+                description: response.message || 'An unknown error occurred.',
+                color: 'error'
+            });
+            return;
+        }
+
+        // Sync local state from the confirmed server flags, and notify the parent
+        // so the mail list reflects the new read state without a refetch.
+        if (mailData.value) {
+            mailData.value.flags = response.data.flags;
+        }
+        emit('flags-change', props.mailUid, response.data.flags);
+    } finally {
+        isTogglingRead.value = false;
+    }
+}
+
 // ── Attachments ──
 // Attachments are streamed from the API on demand and never stored/cached server-
 // side. The backend addresses each attachment by its index within the mail, which
@@ -214,7 +262,6 @@ function notAvailable(title: string) {
 
 const handleArchive = () => notAvailable('Archive');
 const handleDelete = () => notAvailable('Delete');
-const handleMarkUnread = () => notAvailable('Mark as unread');
 const handleSpam = () => notAvailable('Mark as spam');
 const handleReply = () => notAvailable('Reply');
 const handleReplyAll = () => notAvailable('Reply All');
@@ -223,9 +270,9 @@ const handlePrint = () => window.print();
 
 const moreActions = computed(() => [
     [{
-        label: 'Mark as unread',
-        icon: 'i-lucide-mail',
-        onSelect: handleMarkUnread,
+        label: readActionLabel.value,
+        icon: readActionIcon.value,
+        onSelect: handleToggleRead,
     }],
     [{
         label: 'Print',
@@ -305,8 +352,16 @@ defineExpose({ reload: loadMail });
                     <UTooltip text="Delete">
                         <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="sm" @click="handleDelete" />
                     </UTooltip>
-                    <UTooltip text="Mark as unread">
-                        <UButton icon="i-lucide-mail" color="neutral" variant="ghost" size="sm" @click="handleMarkUnread" />
+                    <UTooltip :text="readActionLabel">
+                        <UButton
+                            :icon="readActionIcon"
+                            color="neutral"
+                            variant="ghost"
+                            size="sm"
+                            :loading="isTogglingRead"
+                            :aria-label="readActionLabel"
+                            @click="handleToggleRead"
+                        />
                     </UTooltip>
 
                     <div class="w-px h-5 bg-default mx-1" />
