@@ -647,7 +647,7 @@ watch(isOpen, (open) => {
     <UModal
         v-model:open="isOpen"
         :ui="{
-            content: 'sm:max-w-4xl sm:max-h-[88vh]',
+            content: 'sm:max-w-4xl sm:max-h-[88vh] main-bg-color',
         }"
     >
         <template #content>
@@ -752,7 +752,7 @@ watch(isOpen, (open) => {
                             <button
                                 v-for="hint in quickSearchHints"
                                 :key="hint"
-                                class="px-1.5 py-0.5 text-xs rounded border border-dashed border-muted text-muted hover:border-primary hover:text-primary transition-colors"
+                                class="px-1.5 py-0.5 text-xs rounded border border-dashed border-muted text-muted hover:border-default hover:text-default hover:bg-elevated transition-colors"
                                 @click="addFilterHint(hint)"
                             >
                                 {{ hint }}
@@ -973,7 +973,7 @@ watch(isOpen, (open) => {
                 >
                     <div
                         v-if="activeFilterChips.length > 0"
-                        class="flex flex-wrap items-center gap-1.5 px-5 py-2.5 border-b border-default bg-primary/5"
+                        class="flex flex-wrap items-center gap-1.5 px-5 py-2.5 border-b border-default bg-elevated/50"
                     >
                         <span class="text-xs text-muted mr-1">Filters:</span>
                         <UBadge
@@ -1057,13 +1057,13 @@ watch(isOpen, (open) => {
                                 <button
                                     v-for="suggestion in suggestedSearches"
                                     :key="suggestion.label"
-                                    class="group flex items-center gap-3 p-3 rounded-lg border border-default hover:border-primary hover:bg-primary/5 transition-all text-left"
+                                    class="group flex items-center gap-3 p-3 rounded-lg border border-default hover:bg-elevated transition-all text-left"
                                     @click="suggestion.apply()"
                                 >
-                                    <div class="p-2 rounded-md bg-elevated group-hover:bg-primary/10 transition-colors">
+                                    <div class="flex items-center justify-center shrink-0 size-8 rounded-md bg-elevated group-hover:bg-accented transition-colors">
                                         <UIcon
                                             :name="suggestion.icon"
-                                            class="size-4 text-muted group-hover:text-primary transition-colors"
+                                            class="size-4 text-muted group-hover:text-default transition-colors"
                                         />
                                     </div>
                                     <span class="text-sm font-medium text-default">{{ suggestion.label }}</span>
@@ -1116,7 +1116,7 @@ watch(isOpen, (open) => {
                             :key="`${item.mailboxPath || 'unknown'}-${item.mail.uid}`"
                             :data-result-index="idx"
                             class="group flex items-start gap-3 px-5 py-3.5 cursor-pointer transition-colors"
-                            :class="activeResultIndex === idx ? 'bg-primary/10' : 'hover:bg-elevated'"
+                            :class="activeResultIndex === idx ? 'bg-accented' : 'hover:bg-elevated'"
                             @click="openMail(item)"
                             @mouseenter="activeResultIndex = idx"
                         >
@@ -1141,7 +1141,7 @@ watch(isOpen, (open) => {
                                         <UIcon
                                             v-if="isFlagged(item)"
                                             name="i-lucide-star"
-                                            class="size-3.5 shrink-0 text-amber-500"
+                                            class="size-3.5 shrink-0 text-primary"
                                         />
                                     </div>
                                     <div class="flex items-center gap-1.5 shrink-0">
