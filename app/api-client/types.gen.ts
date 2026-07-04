@@ -1818,6 +1818,74 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidM
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponses];
 
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsData = {
+    body: {
+        seen?: boolean;
+        answered?: boolean;
+        flagged?: boolean;
+        deleted?: boolean;
+        draft?: boolean;
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+        mailUID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}/flags';
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mail with specified UID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail with specified UID not found';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsError = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsErrors[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsErrors];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsResponses = {
+    /**
+     * Mail flags updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail flags updated successfully';
+        data: {
+            success: boolean;
+            /**
+             * The resulting flags after the update
+             */
+            flags: {
+                seen?: boolean;
+                answered?: boolean;
+                flagged?: boolean;
+                deleted?: boolean;
+                draft?: boolean;
+                recent?: boolean;
+            };
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsResponses];
+
 export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsData = {
     body?: never;
     path: {
@@ -2092,6 +2160,71 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActions
 };
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponses];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsData = {
+    body: {
+        /**
+         * UIDs of the mails to update
+         */
+        uids: Array<number>;
+        /**
+         * Flags to set or clear on the selected mails
+         */
+        flags: {
+            seen?: boolean;
+            answered?: boolean;
+            flagged?: boolean;
+            deleted?: boolean;
+            draft?: boolean;
+        };
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mail-bulk-actions/flags';
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsError = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsErrors[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsErrors];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsResponses = {
+    /**
+     * Mail flags updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Mail flags updated successfully';
+        data: {
+            success: boolean;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsResponses];
 
 export type GetMailAccountsByMailAccountIdIdentitiesData = {
     body?: never;
