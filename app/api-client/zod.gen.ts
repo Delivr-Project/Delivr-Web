@@ -1040,8 +1040,7 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUi
     answered: z.boolean().optional(),
     flagged: z.boolean().optional(),
     deleted: z.boolean().optional(),
-    draft: z.boolean().optional(),
-    recent: z.boolean().optional()
+    draft: z.boolean().optional()
 });
 
 export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlagsPath = z.object({
@@ -1170,6 +1169,34 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActio
     success: z.literal(true),
     code: z.literal(200),
     message: z.literal('Mails deleted successfully'),
+    data: z.object({
+        success: z.boolean()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsBody = z.object({
+    uids: z.array(z.number()).min(1),
+    flags: z.object({
+        seen: z.boolean().optional(),
+        answered: z.boolean().optional(),
+        flagged: z.boolean().optional(),
+        deleted: z.boolean().optional(),
+        draft: z.boolean().optional()
+    })
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
+});
+
+/**
+ * Mail flags updated successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Mail flags updated successfully'),
     data: z.object({
         success: z.boolean()
     })

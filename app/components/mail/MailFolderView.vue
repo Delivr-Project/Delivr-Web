@@ -207,7 +207,50 @@ const hasSelection = computed(() => selectedUids.value.size > 0);
 const allSelected = computed(() => mailList.value.length > 0 && selectedUids.value.size === mailList.value.length);
 const someSelected = computed(() => selectedUids.value.size > 0 && selectedUids.value.size < mailList.value.length);
 
+const isApplyingBulkFlags = ref(false);
+
 // ── Bulk actions ──
+
+async function setBulkFlags(seen: boolean) {
+    if (selectedUids.value.size === 0 || isApplyingBulkFlags.value) return;
+
+    isApplyingBulkFlags.value = true;
+    try {
+        const response = await useAPI(api =>
+            api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlags({
+                path: {
+                    mailAccountID: accountId,
+                    mailboxPath: systemFolderPath.value,
+                },
+                body: {
+                    uids: Array.from(selectedUids.value),
+                    flags: { seen },
+                },
+            })
+        );
+
+        if (!response.success) {
+            toast.add({
+                title: 'Failed to update emails',
+                description: response.message || 'An unknown error occurred.',
+                color: 'error'
+            });
+            return;
+        }
+
+        // Optimistically update the local list so the rows reflect the new
+        // read/unread state without a full refetch.
+        mailList.value = mailList.value.map(m =>
+            selectedUids.value.has(m.uid)
+                ? { ...m, flags: { ...m.flags, seen } }
+                : m
+        );
+
+        clearSelection();
+    } finally {
+        isApplyingBulkFlags.value = false;
+    }
+}
 
 function handleBulk(title: string) {
     toast.add({
@@ -421,10 +464,10 @@ function closeActiveMail() {
                                 <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="xs" @click="handleBulk('Archive')" />
                             </UTooltip>
                             <UTooltip text="Mark as read">
-                                <UButton icon="i-lucide-mail-open" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as read')" />
+                                <UButton icon="i-lucide-mail-open" color="neutral" variant="ghost" size="xs" :loading="isApplyingBulkFlags" @click="setBulkFlags(true)" />
                             </UTooltip>
                             <UTooltip text="Mark as unread">
-                                <UButton icon="i-lucide-mail" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as unread')" />
+                                <UButton icon="i-lucide-mail" color="neutral" variant="ghost" size="xs" :loading="isApplyingBulkFlags" @click="setBulkFlags(false)" />
                             </UTooltip>
                             <UTooltip text="Report spam">
                                 <UButton icon="i-lucide-shield-alert" color="neutral" variant="ghost" size="xs" @click="handleBulk('Mark as spam')" />
