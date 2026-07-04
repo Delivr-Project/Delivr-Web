@@ -216,6 +216,40 @@ async function handleToggleRead() {
     }
 }
 
+// ── Attachments ──
+// Attachments are streamed from the API on demand and never stored/cached server-
+// side. The backend addresses each attachment by its index within the mail, which
+// matches this array's order — so the v-for index doubles as the attachment id.
+
+const { downloadAttachment, openAttachment } = useMailAttachments();
+const downloadingIdx = ref<number | null>(null);
+
+function isImageAttachment(contentType?: string): boolean {
+    return !!contentType?.startsWith('image/');
+}
+
+function attachmentRef(idx: number) {
+    return {
+        accountId: props.accountId,
+        mailboxPath: systemFolderPath.value,
+        mailUid: props.mailUid,
+        attachmentId: idx,
+    };
+}
+
+async function handleDownloadAttachment(idx: number, filename?: string) {
+    downloadingIdx.value = idx;
+    try {
+        await downloadAttachment(attachmentRef(idx), filename);
+    } finally {
+        downloadingIdx.value = null;
+    }
+}
+
+function handleOpenAttachment(idx: number, filename?: string, contentType?: string) {
+    openAttachment(attachmentRef(idx), filename, contentType);
+}
+
 // ── Action handlers (placeholders) ──
 
 function notAvailable(title: string) {
@@ -504,29 +538,42 @@ defineExpose({ reload: loadMail });
                             <div
                                 v-for="(attachment, idx) in mailData.attachments"
                                 :key="idx"
-                                class="flex items-center gap-3 p-3 rounded-lg border border-default hover:border-primary transition-colors cursor-pointer"
+                                class="flex items-center gap-3 p-3 rounded-lg border border-default hover:border-primary focus-within:border-primary transition-colors"
                             >
-                                <div class="shrink-0 p-2 rounded-md bg-primary/10">
-                                    <UIcon
-                                        :name="attachment.contentType?.startsWith('image/') ? 'i-lucide-image' : 'i-lucide-file'"
-                                        class="size-5 text-primary"
+                                <!-- Semantic button for preview: native keyboard/SR support,
+                                     kept a sibling of the download button (no nested controls). -->
+                                <button
+                                    type="button"
+                                    :aria-label="`Preview ${attachment.filename || 'attachment'}`"
+                                    class="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                    @click="handleOpenAttachment(idx, attachment.filename ?? undefined, attachment.contentType)"
+                                >
+                                    <div class="shrink-0 p-2 rounded-md bg-primary/10">
+                                        <UIcon
+                                            :name="isImageAttachment(attachment.contentType) ? 'i-lucide-image' : 'i-lucide-file'"
+                                            class="size-5 text-primary"
+                                        />
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm font-medium text-default truncate">
+                                            {{ attachment.filename || 'Unnamed file' }}
+                                        </div>
+                                        <div class="text-xs text-dimmed">
+                                            {{ Utils.formatFileSize(attachment.size) }}
+                                        </div>
+                                    </div>
+                                </button>
+                                <UTooltip text="Download">
+                                    <UButton
+                                        icon="i-lucide-download"
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="xs"
+                                        :aria-label="`Download ${attachment.filename || 'attachment'}`"
+                                        :loading="downloadingIdx === idx"
+                                        @click="handleDownloadAttachment(idx, attachment.filename ?? undefined)"
                                     />
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-medium text-default truncate">
-                                        {{ attachment.filename || 'Unnamed file' }}
-                                    </div>
-                                    <div class="text-xs text-dimmed">
-                                        {{ Utils.formatFileSize(attachment.size) }}
-                                    </div>
-                                </div>
-                                <UButton
-                                    icon="i-lucide-download"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="xs"
-                                    disabled
-                                />
+                                </UTooltip>
                             </div>
                         </div>
                     </div>

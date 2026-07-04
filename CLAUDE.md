@@ -49,6 +49,7 @@ app/
 │   │   └── useUserStore.ts
 │   ├── useAPI.ts
 │   ├── useAppCookies.ts
+│   ├── useMailAttachments.ts # Authed binary fetch/download of mail attachments
 │   ├── useAwaitedComputed.ts
 │   ├── useDashboard.ts
 │   ├── useDefaultOnFormError.ts
@@ -79,6 +80,11 @@ app/
     ├── types.gen.ts
     ├── zod.gen.ts
     └── core/                  # Core client utilities
+
+server/                        # Nitro server routes (run on the SSR server)
+└── routes/
+    └── mail/[mailAccountID]/folder/[folderPath]/[mailUID]/attachment/[filename].get.ts
+                               # Authenticated same-origin attachment preview proxy
 ```
 
 ## Commands
@@ -96,7 +102,11 @@ app/
 
 ## Key Conventions
 
-- **API Client**: Generated via `@hey-api/openapi-ts` from the Delivr API OpenAPI spec. **Do not hand-edit** `*.gen.ts` files. Regenerate with `bun run api-client:generate`.
+- **API Client**: Generated via `@hey-api/openapi-ts` from the Delivr API OpenAPI spec. **Do not hand-edit** `*.gen.ts` files. Regenerate with `bun run api-client:generate` (reads the spec from the running API at `http://localhost:14123/docs/v1/openapi`).
+- **Binary endpoints / attachments** (`useMailAttachments`): the generated SDK returns parsed JSON, so it isn't used for binary bodies.
+  - **Download** does a direct authenticated `fetch` to the API (bearer token from `useAppCookies`, base URL from `runtimeConfig.public.apiUrl`) → `Blob` → transient object URL revoked right after. Nothing is persisted client-side.
+  - **Preview** opens a real, same-origin URL that mirrors the email's view route and ends in the filename: `/mail/{accountId}/folder/{folderPath}/{mailUID}/attachment/{filename}` (the `folderPath` segment is `encodeURIComponent(imapPath)`). It's served by the nitro route `server/routes/mail/[mailAccountID]/folder/[folderPath]/[mailUID]/attachment/[filename].get.ts`, which authenticates via the `dla_session_token` cookie, resolves the filename to the attachment id via the API's attachments list, proxies the bytes with a bearer token, and streams them back — so a browser tab (which can't send an `Authorization` header) shows a proper filename instead of a `blob:` UUID and still requires auth. (The API addresses attachments by index, so the filename→id lookup costs one extra list call.)
+  - Inline preview is restricted to an allowlist of inert types (PDF + raster images, **not** SVG/HTML) to avoid script execution in the app origin; other types are forced to download. The allowlist is enforced **both** client-side (UX) and in the nitro route (security).
 - **Composables**: All composables in `app/composables/` are auto-imported by Nuxt. Stores use the `use*Store` naming convention.
 - **Components**: Auto-imported from `app/components/`. Organized by domain (dashboard/, mail/, form/, img/).
 - **Layouts**: `auth.vue` for unauthenticated routes, `default.vue` for the main dashboard.
