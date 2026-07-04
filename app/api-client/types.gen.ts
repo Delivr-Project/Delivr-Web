@@ -159,12 +159,12 @@ export type PostAuthResetPasswordErrors = {
         message: 'Bad Request: Syntax or validation error in request';
     };
     /**
-     * User for reset token not found
+     * You are already authenticated
      */
-    500: {
+    401: {
         success: false;
-        code: 500;
-        message: 'User for reset token not found';
+        code: 401;
+        message: 'You are already authenticated';
     };
 };
 
@@ -1381,6 +1381,7 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses =
             inReplyTo?: string;
             priority?: 'normal' | 'low' | 'high';
             attachments: Array<{
+                id: number;
                 filename?: string;
                 contentType: string;
                 size: number;
@@ -1609,6 +1610,7 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidRe
             inReplyTo?: string;
             priority?: 'normal' | 'low' | 'high';
             attachments: Array<{
+                id: number;
                 filename?: string;
                 contentType: string;
                 size: number;
@@ -1815,6 +1817,104 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidM
 };
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidMoveResponses];
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+        mailUID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}/attachments';
+};
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsErrors = {
+    /**
+     * Mail with specified UID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mail with specified UID not found';
+    };
+};
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsError = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsErrors[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsErrors];
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsResponses = {
+    /**
+     * Attachments retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Attachments retrieved successfully';
+        data: Array<{
+            id: number;
+            filename?: string;
+            contentType: string;
+            size: number;
+            contentId?: string;
+            contentDisposition?: string;
+        }>;
+    };
+};
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsResponses];
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+        mailUID: number;
+        attachmentId: number;
+    };
+    query?: {
+        /**
+         * If true, serves the attachment with Content-Disposition: attachment (forces a download) instead of inline.
+         */
+        download?: boolean;
+    };
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails/{mailUID}/attachments/{attachmentId}';
+};
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdErrors = {
+    /**
+     * Attachment with specified ID not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Attachment with specified ID not found';
+    };
+    /**
+     * Failed to fetch attachment
+     */
+    500: {
+        success: false;
+        code: 500;
+        message: 'Failed to fetch attachment';
+    };
+};
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdError = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdErrors[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdErrors];
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdResponses = {
+    /**
+     * Attachment content stream
+     */
+    200: Blob | File;
+};
+
+export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdResponses];
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveData = {
     body: {
@@ -2310,6 +2410,7 @@ export type GetMailAccountsByMailAccountIdSearchResponses = {
                     inReplyTo?: string;
                     priority?: 'normal' | 'low' | 'high';
                     attachments: Array<{
+                        id: number;
                         filename?: string;
                         contentType: string;
                         size: number;
@@ -2506,6 +2607,7 @@ export type PostMailAccountsByMailAccountIdSearchResponses = {
                     inReplyTo?: string;
                     priority?: 'normal' | 'low' | 'high';
                     attachments: Array<{
+                        id: number;
                         filename?: string;
                         contentType: string;
                         size: number;
@@ -2659,6 +2761,79 @@ export type PostMailAccountsByMailAccountIdSearchCountResponses = {
 };
 
 export type PostMailAccountsByMailAccountIdSearchCountResponse = PostMailAccountsByMailAccountIdSearchCountResponses[keyof PostMailAccountsByMailAccountIdSearchCountResponses];
+
+export type GetBimiByDomainData = {
+    body?: never;
+    path: {
+        /**
+         * The sender domain to look up, e.g. "example.com"
+         */
+        domain: string;
+    };
+    query?: {
+        /**
+         * The BIMI selector to query (from a message's BIMI-Selector header, if any)
+         */
+        selector?: string;
+    };
+    url: '/bimi/{domain}';
+};
+
+export type GetBimiByDomainErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * No BIMI record found for the specified domain
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'No BIMI record found for the specified domain';
+    };
+};
+
+export type GetBimiByDomainError = GetBimiByDomainErrors[keyof GetBimiByDomainErrors];
+
+export type GetBimiByDomainResponses = {
+    /**
+     * BIMI record resolved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'BIMI record resolved successfully';
+        data: {
+            /**
+             * The sender domain the record was resolved for
+             */
+            domain: string;
+            /**
+             * The BIMI selector used for the lookup (default: "default")
+             */
+            selector: string;
+            /**
+             * BIMI record version
+             */
+            version: 'BIMI1';
+            /**
+             * HTTPS URL of the brand logo (SVG), usable directly as an avatar source
+             */
+            logoUrl: string;
+            /**
+             * HTTPS URL of the Verified Mark Certificate (VMC), if published
+             */
+            authorityUrl: string | null;
+        };
+    };
+};
+
+export type GetBimiByDomainResponse = GetBimiByDomainResponses[keyof GetBimiByDomainResponses];
 
 export type GetAdminUsersData = {
     body?: never;

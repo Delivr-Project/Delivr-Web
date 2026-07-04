@@ -751,6 +751,7 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse 
             'high'
         ]).optional(),
         attachments: z.array(z.object({
+            id: z.number(),
             filename: z.string().optional(),
             contentType: z.string(),
             size: z.number(),
@@ -909,6 +910,7 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
             'high'
         ]).optional(),
         attachments: z.array(z.object({
+            id: z.number(),
             filename: z.string().optional(),
             contentType: z.string(),
             size: z.number(),
@@ -1032,6 +1034,45 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUi
         newUid: z.number().optional()
     })
 });
+
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number()
+});
+
+/**
+ * Attachments retrieved successfully
+ */
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Attachments retrieved successfully'),
+    data: z.array(z.object({
+        id: z.number(),
+        filename: z.string().optional(),
+        contentType: z.string(),
+        size: z.number(),
+        contentId: z.string().optional(),
+        contentDisposition: z.string().optional()
+    }))
+});
+
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string(),
+    mailUID: z.number(),
+    attachmentId: z.number().gte(0)
+});
+
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdQuery = z.object({
+    download: z.boolean().optional().default(false)
+});
+
+/**
+ * Attachment content stream
+ */
+export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidAttachmentsByAttachmentIdResponse = z.string();
 
 export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMoveBody = z.object({
     uids: z.array(z.number()).min(1),
@@ -1272,6 +1313,7 @@ export const zGetMailAccountsByMailAccountIdSearchResponse = z.object({
                     'high'
                 ]).optional(),
                 attachments: z.array(z.object({
+                    id: z.number(),
                     filename: z.string().optional(),
                     contentType: z.string(),
                     size: z.number(),
@@ -1377,6 +1419,7 @@ export const zPostMailAccountsByMailAccountIdSearchResponse = z.object({
                     'high'
                 ]).optional(),
                 attachments: z.array(z.object({
+                    id: z.number(),
                     filename: z.string().optional(),
                     contentType: z.string(),
                     size: z.number(),
@@ -1435,6 +1478,30 @@ export const zPostMailAccountsByMailAccountIdSearchCountResponse = z.object({
             mailboxName: z.string(),
             count: z.int().gte(0).lte(9007199254740991)
         }))
+    })
+});
+
+export const zGetBimiByDomainPath = z.object({
+    domain: z.string().min(1).max(253)
+});
+
+export const zGetBimiByDomainQuery = z.object({
+    selector: z.string().min(1).max(63).optional().default('default')
+});
+
+/**
+ * BIMI record resolved successfully
+ */
+export const zGetBimiByDomainResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('BIMI record resolved successfully'),
+    data: z.object({
+        domain: z.string(),
+        selector: z.string(),
+        version: z.literal('BIMI1'),
+        logoUrl: z.url(),
+        authorityUrl: z.url().nullable()
     })
 });
 

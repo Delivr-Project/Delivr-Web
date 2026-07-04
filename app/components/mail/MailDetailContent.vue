@@ -340,8 +340,9 @@ defineExpose({ reload: loadMail });
                     <!-- Sender card -->
                     <div class="rounded-lg border border-default p-4">
                         <div class="flex items-start gap-4">
-                            <Gravatar
+                            <SenderAvatar
                                 :email="mailData.from?.address"
+                                :domain="senderDomain ?? undefined"
                                 size="lg"
                                 class="shrink-0"
                             />
