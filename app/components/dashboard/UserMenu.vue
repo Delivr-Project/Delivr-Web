@@ -97,7 +97,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
         {
             label: 'Documentation',
             icon: 'i-lucide-book-open',
-            to: 'https://github.com/Delivr-Project',
+            to: 'https://docs.delivr.email',
             target: '_blank'
         },
         {
