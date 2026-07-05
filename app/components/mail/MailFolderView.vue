@@ -32,6 +32,10 @@ const viewMode = useEffectiveMailViewMode();
 // mobile always uses a single list that opens mail full-screen — regardless of
 // the stored view mode.
 const isMobile = useBreakpoints(breakpointsTailwind).smaller('lg');
+/**
+ * isSmallerThanMDScreen is used to determine if the screen size is smaller than the 'md' breakpoint. This is useful for adjusting the UI for very small screens, such as mobile devices, where certain elements may need to be hidden or displayed differently to ensure a good user experience.
+ */
+const isSmallerThanMDScreen = useBreakpoints(breakpointsTailwind).smaller('md');
 
 const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
 const accountId = mailAccount.data.value.id;
@@ -594,6 +598,10 @@ function closeActiveMail() {
 <template>
     <UDashboardPanel>
         <template #header>
+            <!-- possibly Dont show back button anymore as it is moved to mail toolbar. instead show folder icon on desktop and no icon on mobile -->
+            <!-- <UDashboardNavbar
+                :title="folderTitle"
+                :icon="isSmallerThanMDScreen ? undefined : folderIcon" -->
             <UDashboardNavbar
                 :title="folderTitle"
                 :icon="folderIcon"
@@ -612,20 +620,21 @@ function closeActiveMail() {
                 </template>
 
                 <template #leading>
-                    <UButton
+                    <!-- Dont show back button anymore as it is moved to mail toolbar. instead show folder icon on desktop and no icon on mobile -->
+                    <!-- <UButton
                         v-if="showFullDetail"
                         icon="i-lucide-arrow-left"
                         color="neutral"
                         variant="ghost"
                         size="sm"
                         @click="closeActiveMail"
-                    />
+                    /> -->
                 </template>
 
                 <template #default>
+                    <!-- Desktop: search bar with text + shortcut hint -->
                     <UButton
-                        /** on dekstop or tebalt */
-                        v-if="!isMobile"
+                        v-if="!isSmallerThanMDScreen"
                         class="bg-transparent ring-default w-full max-w-md justify-start text-muted"
                         color="neutral"
                         variant="outline"
@@ -641,6 +650,17 @@ function closeActiveMail() {
                 </template>
 
                 <template #right>
+
+                    <!-- Mobile: just the icon, no text or shortcut hint -->
+                    <UButton
+                        v-if="isSmallerThanMDScreen"
+                        size="md"
+                        color="neutral"
+                        variant="ghost"
+                        icon="i-lucide-search"
+                        @click="isMailSearchOpen = true;"
+                    />
+
                     <div class="block md:hidden">
                         <UButton
                             icon="i-lucide-pen-square"
