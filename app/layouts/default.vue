@@ -487,7 +487,7 @@ const displaySidebars = computed(() => {
                          a folder in the clear space below moves it into the Inbox,
                          so the zone grows (flex-1) to fill the sidebar. -->
                     <div
-                        class="flex-1 z-50"
+                        class="flex-1"
                         @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"
