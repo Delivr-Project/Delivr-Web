@@ -6,6 +6,7 @@ import NotificationsSlideover from '~/components/dashboard/NotificationsSlideove
 import UserMenu from '~/components/dashboard/UserMenu.vue';
 import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
+import { useFolderNestingStore } from '~/composables/stores/useFolderNestingStore';
 import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
@@ -27,6 +28,12 @@ const isAdmin = computed(() => user.value?.role === "admin");
 const currentMailAccountStore = useSelectedMailAccountStore();
 const currentMailAccount = await currentMailAccountStore.use();
 const mailboxes = computed(() => currentMailAccount.value?.mailboxes || []);
+
+// Preference: nest INBOX sub-folders under the Inbox item instead of lifting
+// them to top-level siblings. Reactive, so toggling it re-renders the tree.
+const folderNestingStore = useFolderNestingStore();
+await folderNestingStore.use();
+const nestUnderInbox = folderNestingStore.nestUnderInbox;
 
 const { isMailSearchOpen } = useDashboard();
 
@@ -101,6 +108,34 @@ function newFolderPath(src: Mailbox, target: Mailbox): string {
     return target.path + target.delimiter + leaf;
 }
 
+// The mailbox a folder drop resolves to: the folder link under the cursor, or
+// the Inbox when dropping into clear space (so a folder can be lifted out to
+// the Inbox without needing to aim at its link). `highlight` is the anchor to
+// outline as the destination, if one is on screen.
+function resolveFolderDropTarget(e: DragEvent): { mailbox: Mailbox; highlight: HTMLElement | null } | null {
+    const onFolder = resolveDropTarget(e);
+    if (onFolder) return { mailbox: onFolder.mailbox, highlight: onFolder.anchor };
+
+    const inbox = mailboxes.value.find(MailboxDisplayUtils.isInbox);
+    if (!inbox) return null;
+    const container = e.currentTarget as HTMLElement | null;
+    return { mailbox: inbox, highlight: container ? findInboxAnchor(container) : null };
+}
+
+// Locate the Inbox's rendered link within the drop zone, to highlight it as the
+// destination for a clear-space drop.
+function findInboxAnchor(container: HTMLElement): HTMLElement | null {
+    for (const anchor of container.querySelectorAll('a[href*="/folder/"]')) {
+        const href = anchor.getAttribute('href') ?? '';
+        const match = href.match(/\/folder\/([^/?#]+)/);
+        if (!match || !match[1]) continue;
+        const segments = MailboxDisplayUtils.parseFolderParam(match[1]);
+        const mb = MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, segments);
+        if (mb && MailboxDisplayUtils.isInbox(mb)) return anchor as HTMLElement;
+    }
+    return null;
+}
+
 async function moveFolder(src: Mailbox, target: Mailbox) {
     const accountId = currentMailAccount.value?.id;
     if (accountId === undefined) return;
@@ -144,12 +179,14 @@ function onFolderDragOver(e: DragEvent) {
         }
         return;
     }
-    // A folder being dragged onto another folder (re-nest it).
+    // A folder being dragged onto another folder — or into clear space, which
+    // re-nests it under the Inbox.
     if (draggedFolder.value) {
-        if (target && isValidFolderTarget(target.mailbox)) {
+        const folderTarget = resolveFolderDropTarget(e);
+        if (folderTarget && isValidFolderTarget(folderTarget.mailbox)) {
             e.preventDefault();
             if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-            setHighlight(target.anchor);
+            setHighlight(folderTarget.highlight);
         } else {
             setHighlight(null);
         }
@@ -158,18 +195,23 @@ function onFolderDragOver(e: DragEvent) {
 
 function onFolderDrop(e: DragEvent) {
     setHighlight(null);
-    const target = resolveDropTarget(e);
-    if (!target) return;
+    // Mails must be dropped onto an actual folder.
     if (dragging.value) {
+        const target = resolveDropTarget(e);
+        if (!target) return;
         e.preventDefault();
         dropOnMailbox(target.mailbox);
         return;
     }
-    if (draggedFolder.value && isValidFolderTarget(target.mailbox)) {
-        e.preventDefault();
-        const src = draggedFolder.value;
-        draggedFolder.value = null;
-        moveFolder(src, target.mailbox);
+    // Folders drop onto the folder under the cursor, or the Inbox in clear space.
+    if (draggedFolder.value) {
+        const folderTarget = resolveFolderDropTarget(e);
+        if (folderTarget && isValidFolderTarget(folderTarget.mailbox)) {
+            e.preventDefault();
+            const src = draggedFolder.value;
+            draggedFolder.value = null;
+            moveFolder(src, folderTarget.mailbox);
+        }
     }
 }
 
@@ -196,28 +238,36 @@ const sidebarItems = computed(() => {
 
     // NOTE: Compose button moved to separate prominent button in template
 
+    const accountId = currentMailAccount.value?.id;
+
     if (mailboxes.value.length === 0) {
         mailItems.push({
             label: 'No Folders to show',
             icon: 'i-lucide-mail',
             exact: false,
         });
-    } else if (inbox) {
-        mailItems.push({
-            label: 'Inbox',
-            icon: 'i-lucide-inbox',
-            to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/inbox` : undefined,
-            badge: inbox.status.unseen > 0 ? inbox.status.unseen : undefined,
-            exact: false,
-        });
-    }
-
-    // Build the remaining folders as a nested tree (Inbox is pinned above).
-    // Hierarchy, leaf names and delimiters are all derived in buildMailboxTree.
-    const accountId = currentMailAccount.value?.id;
-    if (accountId !== undefined) {
-        for (const node of MailboxDisplayUtils.buildMailboxTree(mailboxes.value)) {
-            mailItems.push(MailboxDisplayUtils.toNavItem(route.path, node, accountId));
+    } else if (nestUnderInbox.value) {
+        // Inbox lives inside the tree as the parent of its sub-folders.
+        if (accountId !== undefined) {
+            for (const node of MailboxDisplayUtils.buildMailboxTree(mailboxes.value, { nestUnderInbox: true })) {
+                mailItems.push(MailboxDisplayUtils.toNavItem(route.path, node, accountId));
+            }
+        }
+    } else {
+        // Pin the Inbox, then the remaining folders as top-level siblings.
+        if (inbox) {
+            mailItems.push({
+                label: 'Inbox',
+                icon: 'i-lucide-inbox',
+                to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/inbox` : undefined,
+                badge: inbox.status.unseen > 0 ? inbox.status.unseen : undefined,
+                exact: false,
+            });
+        }
+        if (accountId !== undefined) {
+            for (const node of MailboxDisplayUtils.buildMailboxTree(mailboxes.value)) {
+                mailItems.push(MailboxDisplayUtils.toNavItem(route.path, node, accountId));
+            }
         }
     }
 
@@ -360,7 +410,7 @@ const displaySidebars = computed(() => {
 
                 <div
                     v-if="displaySidebars.mailSidebar"
-                    class="flex flex-col main-bg-color"
+                    class="flex flex-col flex-1 min-h-0 main-bg-color"
                 >
                     <UNavigationMenu
                         :collapsed="collapsed"
@@ -399,8 +449,11 @@ const displaySidebars = computed(() => {
                         </div> -->
 
                     <!-- Drop zone: drag mails onto a folder to move them there, or
-                         drag a folder onto another folder to re-nest it. -->
+                         drag a folder onto another folder to re-nest it. Dropping
+                         a folder in the clear space below moves it into the Inbox,
+                         so the zone grows (flex-1) to fill the sidebar. -->
                     <div
+                        class="flex-1 pb-6"
                         @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"

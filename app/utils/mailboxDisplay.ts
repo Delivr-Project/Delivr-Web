@@ -140,7 +140,13 @@ export class MailboxDisplayUtils {
      * uses each mailbox's real path. Intermediate levels with no selectable
      * mailbox become non-navigable group headers.
      */
-    public static buildMailboxTree(mailboxes: Mailbox[]): MailboxTreeNode[] {
+    public static buildMailboxTree(mailboxes: Mailbox[], options?: { nestUnderInbox?: boolean }): MailboxTreeNode[] {
+        // When nesting is on, the Inbox is a real tree node whose sub-mailboxes
+        // (e.g. "INBOX.Sent") hang off it. When off (the default), the Inbox is
+        // excluded here — it is pinned separately — and INBOX-prefixed folders
+        // have that prefix stripped so they present as top-level siblings.
+        const nestUnderInbox = options?.nestUnderInbox ?? false;
+
         const inbox = mailboxes.find(MailboxDisplayUtils.isInbox);
         const defaultDelimiter = inbox?.delimiter || mailboxes[0]?.delimiter || '/';
         const inboxDelimiter = inbox?.delimiter || defaultDelimiter;
@@ -150,12 +156,12 @@ export class MailboxDisplayUtils {
         const byKey = new Map<string, MailboxTreeNode>();
 
         for (const mb of mailboxes) {
-            if (inbox && mb === inbox) continue;
+            if (!nestUnderInbox && inbox && mb === inbox) continue;
 
             const delimiter = mb.delimiter || defaultDelimiter;
 
             let displayPath = mb.path;
-            if (inboxPrefix && mb.path.toLowerCase().startsWith(inboxPrefix.toLowerCase())) {
+            if (!nestUnderInbox && inboxPrefix && mb.path.toLowerCase().startsWith(inboxPrefix.toLowerCase())) {
                 displayPath = mb.path.slice(inboxPrefix.length);
             }
 
@@ -182,10 +188,19 @@ export class MailboxDisplayUtils {
                 }
                 if (i === segments.length - 1) {
                     node.mailbox = mb;
-                    node.name = this.leafName(mb);
+                    node.name = this.isInbox(mb) ? 'Inbox' : this.leafName(mb);
                 }
                 level = node.children;
             }
+        }
+
+        // Keep the Inbox pinned to the top when it lives inside the tree.
+        if (nestUnderInbox) {
+            roots.sort((a, b) => {
+                const ai = a.mailbox && this.isInbox(a.mailbox) ? 0 : 1;
+                const bi = b.mailbox && this.isInbox(b.mailbox) ? 0 : 1;
+                return ai - bi;
+            });
         }
 
         roots.forEach((node) => this.rollupUnseen(node));
@@ -194,6 +209,7 @@ export class MailboxDisplayUtils {
 
 
     private static folderIconFor(node: MailboxTreeNode): string {
+        if (node.mailbox && this.isInbox(node.mailbox)) return 'i-lucide-inbox';
         const special = node.mailbox?.specialUse?.replace(/^\\/, '').toLowerCase();
         const lower = (special ?? node.name).toLowerCase();
         if (lower === 'sent' || lower === 'sent mail' || lower === 'sent messages') return 'i-lucide-send';
@@ -229,7 +245,9 @@ export class MailboxDisplayUtils {
         }
         if (node.children.length > 0) {
             item.children = node.children.map((child) => this.toNavItem(path, child, accountId));
-            item.defaultOpen = this.subtreeContainsActive(path, node, accountId);
+            // Open the Inbox by default so its nested sub-folders are visible.
+            item.defaultOpen = this.subtreeContainsActive(path, node, accountId)
+                || (node.mailbox ? this.isInbox(node.mailbox) : false);
         }
         return item;
     }
