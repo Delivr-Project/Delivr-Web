@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { FormSubmitEvent } from '@nuxt/ui'
 import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
 
 useSeoMeta({
@@ -6,13 +7,43 @@ useSeoMeta({
 	description: 'Manage your Delivr preferences',
 });
 
+const toast = useToast()
+
 // ── Auto-mark-as-read (global preference) ──
 const autoMarkSeenStore = useAutoMarkSeenStore();
 await autoMarkSeenStore.use();
-const autoMarkSeen = computed({
-	get: () => autoMarkSeenStore.enabled.value,
-	set: (value: boolean) => { autoMarkSeenStore.update({ enabled: value }); },
+
+// Local, staged copy — edits only persist when the user clicks Save.
+const state = reactive({
+	autoMarkSeen: autoMarkSeenStore.enabled.value,
 });
+
+const saving = ref(false)
+
+// Enable Save only when something actually changed.
+const isDirty = computed(() => state.autoMarkSeen !== autoMarkSeenStore.enabled.value)
+
+async function onSubmit(_event: FormSubmitEvent<typeof state>) {
+	saving.value = true
+	try {
+		await autoMarkSeenStore.update({ enabled: state.autoMarkSeen })
+		toast.add({
+			title: 'Preferences saved',
+			description: 'Your preferences have been updated.',
+			icon: 'i-lucide-check',
+			color: 'success',
+		})
+	} catch (error) {
+		toast.add({
+			title: 'Error',
+			description: 'An unexpected error occurred while saving your preferences.',
+			icon: 'i-lucide-alert-circle',
+			color: 'error',
+		})
+	} finally {
+		saving.value = false
+	}
+}
 </script>
 
 <template>
@@ -27,41 +58,55 @@ const autoMarkSeen = computed({
 
 		<template #body>
 			<DashboardPageBody>
-				<!-- Header -->
-				<div>
-					<h2 class="text-xl font-semibold text-white">Preferences</h2>
-					<p class="text-sm text-slate-400 mt-1">Fine-tune how mail and the app behave</p>
-				</div>
+				<UForm :state="state" @submit="onSubmit" class="flex flex-col gap-12">
+					<!-- Header -->
+					<div>
+						<h2 class="text-xl font-semibold text-white">Preferences</h2>
+						<p class="text-sm text-slate-400 mt-1">Fine-tune how mail and the app behave</p>
+					</div>
 
-				<!-- Mail Preferences Card -->
-				<div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
-					<div class="px-6 py-4 border-b border-slate-800">
-						<div class="flex items-center gap-3">
-							<div class="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-								<UIcon name="i-lucide-mail-open" class="w-5 h-5 text-sky-400" />
+					<!-- Mail Preferences Card -->
+					<div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+						<div class="px-6 py-4 border-b border-slate-800">
+							<div class="flex items-center gap-3">
+								<div class="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
+									<UIcon name="i-lucide-mail-open" class="w-5 h-5 text-sky-400" />
+								</div>
+								<div>
+									<h3 class="font-medium text-white">Mail Preferences</h3>
+									<p class="text-sm text-slate-400">Control how reading mail behaves</p>
+								</div>
 							</div>
-							<div>
-								<h3 class="font-medium text-white">Mail Preferences</h3>
-								<p class="text-sm text-slate-400">Control how reading mail behaves</p>
-							</div>
+						</div>
+
+						<div class="p-6">
+							<UFormField
+								name="autoMarkSeen"
+								label="Auto-mark as read"
+								description="Automatically mark an email as read shortly after you open it."
+								class="flex max-sm:flex-col justify-between items-start gap-4"
+								:ui='{
+									root: "w-full sm:w-auto",
+									container: "w-full sm:w-auto",
+								}'
+							>
+								<UCheckbox v-model="state.autoMarkSeen" />
+							</UFormField>
 						</div>
 					</div>
 
-					<div class="p-6">
-						<UFormField
-							name="autoMarkSeen"
-							label="Auto-mark as read"
-							description="Automatically mark an email as read shortly after you open it."
-							class="flex max-sm:flex-col justify-between items-start gap-4"
-							:ui='{
-								root: "w-full sm:w-auto",
-								container: "w-full sm:w-auto",
-							}'
-						>
-							<UCheckbox v-model="autoMarkSeen" />
-						</UFormField>
+					<!-- Save -->
+					<div class="flex justify-end">
+						<UButton
+							label="Save Changes"
+							type="submit"
+							color="primary"
+							icon="i-lucide-save"
+							:loading="saving"
+							:disabled="!isDirty"
+						/>
 					</div>
-				</div>
+				</UForm>
 			</DashboardPageBody>
 		</template>
 	</UDashboardPanel>
