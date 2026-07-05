@@ -44,11 +44,13 @@ const { isMailSearchOpen } = useDashboard();
 const { dragging, dropOnMailbox } = useMailDrag();
 
 let highlightedEl: HTMLElement | null = null;
-function setHighlight(el: HTMLElement | null) {
-    if (highlightedEl === el) return;
-    highlightedEl?.classList.remove('mail-drop-target');
+let highlightedClass = 'mail-drop-target';
+function setHighlight(el: HTMLElement | null, className = 'mail-drop-target') {
+    if (highlightedEl === el && highlightedClass === className) return;
+    highlightedEl?.classList.remove(highlightedClass);
     highlightedEl = el;
-    highlightedEl?.classList.add('mail-drop-target');
+    highlightedClass = className;
+    highlightedEl?.classList.add(className);
 }
 
 // Resolve the folder link (and its mailbox) under the cursor, if any.
@@ -92,58 +94,54 @@ function onFolderDragEnd() {
     setHighlight(null);
 }
 
-// A folder can't be dropped onto itself, its current parent (a no-op), or any of
-// its own descendants (that would orphan the subtree).
-function isValidFolderTarget(target: Mailbox): boolean {
+// A folder drop lands either inside another folder, or at the top level (root)
+// when dropped into the sidebar's clear space.
+type FolderMoveTarget =
+    | { kind: 'folder'; mailbox: Mailbox }
+    | { kind: 'root' };
+
+// The destination IMAP path: the source's own leaf name, placed under the target
+// folder — or bare at the root for a top-level move.
+function destinationPath(src: Mailbox, target: FolderMoveTarget): string {
+    const leaf = src.path.split(src.delimiter).pop() || src.path;
+    return target.kind === 'root' ? leaf : target.mailbox.path + target.mailbox.delimiter + leaf;
+}
+
+// A folder can't be dropped where it already is (a no-op), or onto itself / any
+// of its own descendants (that would orphan the subtree).
+function isValidFolderTarget(target: FolderMoveTarget): boolean {
     const src = draggedFolder.value;
     if (!src) return false;
-    if (target.path === src.path) return false;
-    if (target.path.startsWith(src.path + src.delimiter)) return false;
-    return newFolderPath(src, target) !== src.path;
-}
-
-// The re-nested IMAP path: source's leaf name placed under the target folder.
-function newFolderPath(src: Mailbox, target: Mailbox): string {
-    const leaf = src.path.split(src.delimiter).pop() || src.path;
-    return target.path + target.delimiter + leaf;
-}
-
-// The mailbox a folder drop resolves to: the folder link under the cursor, or
-// the Inbox when dropping into clear space (so a folder can be lifted out to
-// the Inbox without needing to aim at its link). `highlight` is the anchor to
-// outline as the destination, if one is on screen.
-function resolveFolderDropTarget(e: DragEvent): { mailbox: Mailbox; highlight: HTMLElement | null } | null {
-    const onFolder = resolveDropTarget(e);
-    if (onFolder) return { mailbox: onFolder.mailbox, highlight: onFolder.anchor };
-
-    const inbox = mailboxes.value.find(MailboxDisplayUtils.isInbox);
-    if (!inbox) return null;
-    const container = e.currentTarget as HTMLElement | null;
-    return { mailbox: inbox, highlight: container ? findInboxAnchor(container) : null };
-}
-
-// Locate the Inbox's rendered link within the drop zone, to highlight it as the
-// destination for a clear-space drop.
-function findInboxAnchor(container: HTMLElement): HTMLElement | null {
-    for (const anchor of container.querySelectorAll('a[href*="/folder/"]')) {
-        const href = anchor.getAttribute('href') ?? '';
-        const match = href.match(/\/folder\/([^/?#]+)/);
-        if (!match || !match[1]) continue;
-        const segments = MailboxDisplayUtils.parseFolderParam(match[1]);
-        const mb = MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, segments);
-        if (mb && MailboxDisplayUtils.isInbox(mb)) return anchor as HTMLElement;
+    if (target.kind === 'folder') {
+        if (target.mailbox.path === src.path) return false;
+        if (target.mailbox.path.startsWith(src.path + src.delimiter)) return false;
     }
-    return null;
+    return destinationPath(src, target) !== src.path;
 }
 
-async function moveFolder(src: Mailbox, target: Mailbox) {
+// Where a folder drop resolves: the folder link under the cursor, or the top
+// level when dropping into clear space. `highlight` is the element to outline.
+function resolveFolderDropTarget(e: DragEvent): { target: FolderMoveTarget; highlight: HTMLElement | null } | null {
+    const onFolder = resolveDropTarget(e);
+    if (onFolder) return { target: { kind: 'folder', mailbox: onFolder.mailbox }, highlight: onFolder.anchor };
+
+    // Clear space → top level. Outline the whole zone so the intent is visible.
+    const container = e.currentTarget as HTMLElement | null;
+    return { target: { kind: 'root' }, highlight: container };
+}
+
+function targetLabel(target: FolderMoveTarget): string {
+    return target.kind === 'root' ? 'the top level' : `“${MailboxDisplayUtils.leafName(target.mailbox)}”`;
+}
+
+async function moveFolder(src: Mailbox, target: FolderMoveTarget) {
     const accountId = currentMailAccount.value?.id;
     if (accountId === undefined) return;
 
     const response = await useAPI(api =>
         api.putMailAccountsByMailAccountIdMailboxesByMailboxPath({
             path: { mailAccountID: accountId, mailboxPath: src.path },
-            body: { path: newFolderPath(src, target) },
+            body: { path: destinationPath(src, target) },
         })
     );
 
@@ -158,12 +156,43 @@ async function moveFolder(src: Mailbox, target: Mailbox) {
 
     toast.add({
         title: 'Folder moved',
-        description: `“${MailboxDisplayUtils.leafName(src)}” moved into “${MailboxDisplayUtils.leafName(target)}”.`,
+        description: `“${MailboxDisplayUtils.leafName(src)}” moved to ${targetLabel(target)}.`,
         color: 'success',
     });
 
     // Reload mailboxes so the sidebar tree reflects the new hierarchy.
     await mailAccountsStore.refresh();
+}
+
+// A drop only stages the move; it isn't applied until the user confirms in the
+// dialog below (folder moves rename the IMAP path and carry sub-folders along,
+// so they warrant a second look).
+const pendingFolderMove = ref<{ src: Mailbox; target: FolderMoveTarget } | null>(null);
+const folderMoveConfirmOpen = ref(false);
+const isMovingFolder = ref(false);
+
+const pendingFolderMoveText = computed(() => {
+    const move = pendingFolderMove.value;
+    if (!move) return '';
+    return `Move “${MailboxDisplayUtils.leafName(move.src)}” to ${targetLabel(move.target)}?`;
+});
+
+async function confirmFolderMove() {
+    const move = pendingFolderMove.value;
+    if (!move) return;
+    isMovingFolder.value = true;
+    try {
+        await moveFolder(move.src, move.target);
+    } finally {
+        isMovingFolder.value = false;
+        folderMoveConfirmOpen.value = false;
+        pendingFolderMove.value = null;
+    }
+}
+
+function cancelFolderMove() {
+    folderMoveConfirmOpen.value = false;
+    pendingFolderMove.value = null;
 }
 
 function onFolderDragOver(e: DragEvent) {
@@ -180,13 +209,16 @@ function onFolderDragOver(e: DragEvent) {
         return;
     }
     // A folder being dragged onto another folder — or into clear space, which
-    // re-nests it under the Inbox.
+    // moves it to the top level.
     if (draggedFolder.value) {
         const folderTarget = resolveFolderDropTarget(e);
-        if (folderTarget && isValidFolderTarget(folderTarget.mailbox)) {
+        if (folderTarget && isValidFolderTarget(folderTarget.target)) {
             e.preventDefault();
             if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-            setHighlight(folderTarget.highlight);
+            setHighlight(
+                folderTarget.highlight,
+                folderTarget.target.kind === 'root' ? 'folder-root-drop-target' : 'mail-drop-target',
+            );
         } else {
             setHighlight(null);
         }
@@ -203,14 +235,16 @@ function onFolderDrop(e: DragEvent) {
         dropOnMailbox(target.mailbox);
         return;
     }
-    // Folders drop onto the folder under the cursor, or the Inbox in clear space.
+    // Folders drop onto the folder under the cursor, or the top level in clear space.
     if (draggedFolder.value) {
         const folderTarget = resolveFolderDropTarget(e);
-        if (folderTarget && isValidFolderTarget(folderTarget.mailbox)) {
+        if (folderTarget && isValidFolderTarget(folderTarget.target)) {
             e.preventDefault();
             const src = draggedFolder.value;
             draggedFolder.value = null;
-            moveFolder(src, folderTarget.mailbox);
+            // Stage the move and ask for confirmation before applying it.
+            pendingFolderMove.value = { src, target: folderTarget.target };
+            folderMoveConfirmOpen.value = true;
         }
     }
 }
@@ -515,6 +549,40 @@ const displaySidebars = computed(() => {
 
         <NotificationsSlideover />
 
+        <!-- Confirmation for a drag-and-drop folder move. -->
+        <DashboardModal
+            v-model:open="folderMoveConfirmOpen"
+            title="Move folder"
+            icon="i-lucide-folder-input"
+            icon-color="amber"
+            @update:open="(value: boolean) => { if (!value) cancelFolderMove(); }"
+        >
+            <p class="text-sm text-muted">
+                {{ pendingFolderMoveText }}
+            </p>
+            <p class="text-sm text-muted mt-2">
+                Any sub-folders move with it.
+            </p>
+
+            <template #footer>
+                <div class="flex justify-end gap-3">
+                    <UButton
+                        label="Cancel"
+                        color="neutral"
+                        variant="ghost"
+                        @click="cancelFolderMove"
+                    />
+                    <UButton
+                        label="Move folder"
+                        color="primary"
+                        icon="i-lucide-folder-input"
+                        :loading="isMovingFolder"
+                        @click="confirmFolderMove"
+                    />
+                </div>
+            </template>
+        </DashboardModal>
+
     </UDashboardGroup>
 </template>
 
@@ -525,5 +593,13 @@ const displaySidebars = computed(() => {
     outline-offset: -2px;
     border-radius: var(--ui-radius, 0.375rem);
     background-color: color-mix(in oklch, var(--ui-primary) 12%, transparent);
+}
+
+/* Dropping a folder into the sidebar's clear space moves it to the top level. */
+.folder-root-drop-target {
+    outline: 2px dashed var(--ui-primary);
+    outline-offset: -4px;
+    border-radius: var(--ui-radius, 0.375rem);
+    background-color: color-mix(in oklch, var(--ui-primary) 6%, transparent);
 }
 </style>
