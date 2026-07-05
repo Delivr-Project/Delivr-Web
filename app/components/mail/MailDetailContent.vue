@@ -157,6 +157,12 @@ function isUnread(m: MailData): boolean {
 const subject = computed(() => mailData.value?.subject || '(No subject)');
 const showDetails = ref(false);
 
+// While a mail is open, put its subject in the tab title. Until it loads (or once
+// this pane unmounts) the title falls back to the folder title set by the parent.
+useSeoMeta({
+    title: () => (mailData.value ? `${subject.value} | Delivr` : undefined),
+});
+
 // ── Remote image / content policy ──
 
 // Normally pre-warmed by the global auth middleware before this component ever

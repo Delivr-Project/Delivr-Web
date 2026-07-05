@@ -4,6 +4,11 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
 import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
 
+useSeoMeta({
+	title: 'Settings | Delivr',
+	description: 'Manage your account settings',
+});
+
 const profileSchema = z.object({
 	username: z.string().trim()
 		.min(5, 'Must be at least 5 characters')

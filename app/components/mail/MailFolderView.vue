@@ -729,7 +729,7 @@ function closeActiveMail() {
                             <div
                                 v-if="mailList.length > 0"
                                 class="flex items-center border-b border-default shrink-0"
-                                :class="cardLayout ? 'gap-2.5 px-3 py-1.5' : 'gap-3 px-4 py-1.5'"
+                                :class="cardLayout ? 'gap-2.5 px-4 py-1.5' : 'gap-3 px-4 py-1.5'"
                             >
                                 <UCheckbox
                                     :model-value="allSelected"
@@ -857,10 +857,10 @@ function closeActiveMail() {
                                     <div
                                         v-for="mail in mailList"
                                         :key="mail.uid"
-                                        class="group relative flex items-start gap-2.5 px-3 py-2 border-b border-default last:border-b-0 cursor-pointer transition-colors"
+                                        class="group relative flex items-start gap-2.5 px-4 py-2 border-b border-default last:border-b-0 cursor-pointer transition-colors"
                                         :class="[
                                             activeMailUid === mail.uid
-                                                ? 'bg-primary/15 border-l-2 border-l-primary pl-2.5'
+                                                ? 'bg-primary/15 border-l-2 border-l-primary pl-3.5'
                                                 : isSelected(mail.uid)
                                                     ? 'bg-primary/10'
                                                     : 'hover:bg-elevated/60'
