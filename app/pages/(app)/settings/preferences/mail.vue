@@ -137,7 +137,7 @@ async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 								<UCheckbox v-model="state.nestUnderInbox" />
 							</UFormField>
 
-							<USeparator />
+							<USeparator class="my-6" />
 
 							<UFormField
 								name="folderDragDrop"
