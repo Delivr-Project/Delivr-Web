@@ -71,6 +71,20 @@ class RemoteContentPolicyStore extends ModifiableAbstractStore<RemoteContentPoli
         return this.useRaw();
     }
 
+    /**
+     * Replaces the entire policy in one shot (handles adds, edits, and removals
+     * together) and persists it. Unlike {@link update}, keys absent from `data`
+     * are dropped rather than merged — use this to save a fully-edited policy.
+     */
+    async replace(data: RemoteContentPolicyData) {
+        const normalized: RemoteContentPolicyData = {
+            addresses: { ...data.addresses },
+            domains: { ...data.domains },
+        };
+        this.useRaw().value = normalized;
+        await this.persist(normalized);
+    }
+
     /** Merges the given partial rule maps into the current policy and persists it. */
     override async update(updates: Partial<RemoteContentPolicyData>) {
         await this.refreshIfNeeded();

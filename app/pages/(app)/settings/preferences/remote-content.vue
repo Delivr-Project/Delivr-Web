@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRemoteContentPolicyStore, type RemoteContentDecision } from '~/composables/stores/useRemoteContentPolicyStore';
+import { useRemoteContentPolicyStore, type RemoteContentDecision, type RemoteContentPolicyData } from '~/composables/stores/useRemoteContentPolicyStore';
 
 useSeoMeta({
 	title: 'Remote Content | Delivr',
@@ -11,12 +11,50 @@ const toast = useToast()
 const store = useRemoteContentPolicyStore();
 await store.use();
 
-// Existing rules, reactive off the store's raw state.
-const addressRules = computed(() => Object.entries(store.current.value?.addresses ?? {}));
-const domainRules = computed(() => Object.entries(store.current.value?.domains ?? {}));
-const hasRules = computed(() => addressRules.value.length > 0 || domainRules.value.length > 0);
+interface Rule {
+	value: string;
+	decision: RemoteContentDecision;
+}
 
-// ── Add-rule form ──
+// ── Staged, local copy — edits only persist when the user clicks Save. ──
+const addresses = ref<Rule[]>([]);
+const domains = ref<Rule[]>([]);
+
+// Build the local lists from the persisted policy.
+function snapshotFromStore(): { addresses: Rule[]; domains: Rule[] } {
+	const data = store.current.value;
+	return {
+		addresses: Object.entries(data?.addresses ?? {}).map(([value, decision]) => ({ value, decision })),
+		domains: Object.entries(data?.domains ?? {}).map(([value, decision]) => ({ value, decision })),
+	};
+}
+
+function resetFromStore() {
+	const snap = snapshotFromStore();
+	addresses.value = snap.addresses;
+	domains.value = snap.domains;
+}
+
+resetFromStore();
+
+const hasRules = computed(() => addresses.value.length > 0 || domains.value.length > 0);
+
+// Serialise a rule list into the map shape the API stores (last write wins).
+function toMap(rules: Rule[]): Record<string, RemoteContentDecision> {
+	const map: Record<string, RemoteContentDecision> = {};
+	for (const { value, decision } of rules) map[value] = decision;
+	return map;
+}
+
+// Compare the staged lists against what's persisted to drive the Save button.
+const isDirty = computed(() => {
+	const snap = snapshotFromStore();
+	const same = (a: Rule[], b: Rule[]) =>
+		JSON.stringify(toMap(a)) === JSON.stringify(toMap(b));
+	return !same(addresses.value, snap.addresses) || !same(domains.value, snap.domains);
+});
+
+// ── Add-rule form (stages into the local lists, no persistence) ──
 const typeItems = [
 	{ label: 'Address', value: 'address' },
 	{ label: 'Domain', value: 'domain' },
@@ -29,9 +67,8 @@ const decisionItems: { label: string; value: RemoteContentDecision }[] = [
 const newType = ref<'address' | 'domain'>('address');
 const newValue = ref('');
 const newDecision = ref<RemoteContentDecision>('allow');
-const adding = ref(false);
 
-async function addRule() {
+function addRule() {
 	const value = newValue.value.trim().toLowerCase();
 	if (!value) return;
 
@@ -45,34 +82,49 @@ async function addRule() {
 		return;
 	}
 
-	adding.value = true;
-	try {
-		if (newType.value === 'address') await store.setAddressPolicy(value, newDecision.value);
-		else await store.setDomainPolicy(value, newDecision.value);
-		toast.add({ title: 'Rule added', icon: 'i-lucide-check', color: 'success' });
-		newValue.value = '';
-	} catch (error) {
-		toast.add({ title: 'Error', description: 'Could not save the rule.', icon: 'i-lucide-alert-circle', color: 'error' });
-	} finally {
-		adding.value = false;
+	const list = newType.value === 'address' ? addresses : domains;
+	const existing = list.value.find(r => r.value === value);
+	if (existing) {
+		existing.decision = newDecision.value; // updating an existing entry
+	} else {
+		list.value.push({ value, decision: newDecision.value });
 	}
+	newValue.value = '';
 }
 
-// Inline decision change on an existing rule (setters merge + persist).
-async function changeAddress(address: string, decision: RemoteContentDecision) {
-	await store.setAddressPolicy(address, decision);
+function removeAddress(index: number) {
+	addresses.value.splice(index, 1);
 }
-async function changeDomain(domain: string, decision: RemoteContentDecision) {
-	await store.setDomainPolicy(domain, decision);
+function removeDomain(index: number) {
+	domains.value.splice(index, 1);
 }
 
-async function removeAddress(address: string) {
-	await store.clearAddress(address);
-	toast.add({ title: 'Rule removed', icon: 'i-lucide-check', color: 'success' });
-}
-async function removeDomain(domain: string) {
-	await store.clearDomain(domain);
-	toast.add({ title: 'Rule removed', icon: 'i-lucide-check', color: 'success' });
+// ── Save / discard ──
+const saving = ref(false);
+
+async function onSave() {
+	saving.value = true;
+	try {
+		await store.replace({
+			addresses: toMap(addresses.value),
+			domains: toMap(domains.value),
+		} satisfies RemoteContentPolicyData);
+		toast.add({
+			title: 'Preferences saved',
+			description: 'Your remote content rules have been updated.',
+			icon: 'i-lucide-check',
+			color: 'success',
+		});
+	} catch (error) {
+		toast.add({
+			title: 'Error',
+			description: 'An unexpected error occurred while saving your rules.',
+			icon: 'i-lucide-alert-circle',
+			color: 'error',
+		});
+	} finally {
+		saving.value = false;
+	}
 }
 </script>
 
@@ -123,9 +175,9 @@ async function removeDomain(domain: string) {
 							<USelect v-model="newDecision" :items="decisionItems" value-key="value" class="w-full sm:w-28" />
 							<UButton
 								label="Add"
-								color="primary"
+								color="neutral"
+								variant="subtle"
 								icon="i-lucide-plus"
-								:loading="adding"
 								:disabled="!newValue.trim()"
 								@click="addRule"
 							/>
@@ -157,55 +209,72 @@ async function removeDomain(domain: string) {
 						<div v-else class="flex flex-col divide-y divide-slate-800">
 							<!-- Addresses -->
 							<div
-								v-for="[address, decision] in addressRules"
-								:key="`addr-${address}`"
+								v-for="(rule, index) in addresses"
+								:key="`addr-${rule.value}`"
 								class="flex items-center gap-3 py-3 first:pt-0"
 							>
 								<UIcon name="i-lucide-at-sign" class="size-4 shrink-0 text-slate-500" />
-								<span class="flex-1 min-w-0 truncate text-sm text-white">{{ address }}</span>
+								<span class="flex-1 min-w-0 truncate text-sm text-white">{{ rule.value }}</span>
 								<USelect
-									:model-value="decision"
+									v-model="rule.decision"
 									:items="decisionItems"
 									value-key="value"
 									size="sm"
 									class="w-24"
-									@update:model-value="(d: RemoteContentDecision) => changeAddress(address, d)"
 								/>
 								<UButton
 									icon="i-lucide-trash-2"
 									color="neutral"
 									variant="ghost"
 									size="sm"
-									@click="removeAddress(address)"
+									@click="removeAddress(index)"
 								/>
 							</div>
 
 							<!-- Domains -->
 							<div
-								v-for="[domain, decision] in domainRules"
-								:key="`dom-${domain}`"
+								v-for="(rule, index) in domains"
+								:key="`dom-${rule.value}`"
 								class="flex items-center gap-3 py-3 first:pt-0"
 							>
 								<UIcon name="i-lucide-globe" class="size-4 shrink-0 text-slate-500" />
-								<span class="flex-1 min-w-0 truncate text-sm text-white">{{ domain }}</span>
+								<span class="flex-1 min-w-0 truncate text-sm text-white">{{ rule.value }}</span>
 								<USelect
-									:model-value="decision"
+									v-model="rule.decision"
 									:items="decisionItems"
 									value-key="value"
 									size="sm"
 									class="w-24"
-									@update:model-value="(d: RemoteContentDecision) => changeDomain(domain, d)"
 								/>
 								<UButton
 									icon="i-lucide-trash-2"
 									color="neutral"
 									variant="ghost"
 									size="sm"
-									@click="removeDomain(domain)"
+									@click="removeDomain(index)"
 								/>
 							</div>
 						</div>
 					</div>
+				</div>
+
+				<!-- Save / discard -->
+				<div class="flex justify-end gap-3">
+					<UButton
+						label="Discard"
+						color="neutral"
+						variant="ghost"
+						:disabled="!isDirty || saving"
+						@click="resetFromStore"
+					/>
+					<UButton
+						label="Save Changes"
+						color="primary"
+						icon="i-lucide-save"
+						:loading="saving"
+						:disabled="!isDirty"
+						@click="onSave"
+					/>
 				</div>
 			</DashboardPageBody>
 		</template>
