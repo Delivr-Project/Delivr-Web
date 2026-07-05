@@ -156,6 +156,10 @@ const sidebarItems = computed(() => {
             label: "Manage Mail Accounts",
             to: "/settings/mail-accounts",
             icon: "i-lucide-at-sign",
+            // The per-account pages (/settings/mail-accounts/:id and its
+            // nested backend-configuration) don't keep the parent link active
+            // under router-based matching. Force active on any sub-route.
+            active: route.path.startsWith("/settings/mail-accounts"),
         },
         {
             label: "API Keys",
