@@ -26,6 +26,10 @@ withDefaults(defineProps<{
     /** Below the lg breakpoint there's no split view, so hide the toggle. */
     isMobile: boolean;
     viewMode: MailViewMode;
+
+    /** Render a back link to the previous page (e.g. the folder list) instead of the
+     * view-mode + refresh controls. */
+    backLink?: string;
 }>(), { showCount: true });
 
 defineEmits<{
@@ -48,6 +52,17 @@ defineEmits<{
             <span class="mx-1">·</span>
             <span>{{ unreadCount }} unread</span>
         </div>
+
+        <div v-if="backLink" class="flex items-center gap-0.5 shrink-0">
+            <UButton
+                icon="i-lucide-arrow-left"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                :to="backLink"
+            />
+        </div>
+
 
         <div class="flex-1" />
 

@@ -682,6 +682,7 @@ function closeActiveMail() {
                     :show-mail-actions="activeMailUid !== null && !multiSelected"
                     :is-mobile="isMobile"
                     :view-mode="viewMode"
+                    :back-link="props.fullScreen ? folderRoute() : undefined"
                     @archive="archiveSelected"
                     @toggle-read="toggleTargetsSeen"
                     @delete="requestDelete"

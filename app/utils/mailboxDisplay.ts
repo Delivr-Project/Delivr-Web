@@ -222,6 +222,7 @@ export class MailboxDisplayUtils {
             icon: this.folderIconFor(node),
             badge: unseen > 0 ? unseen : undefined,
             exact: false,
+            active: node.mailbox ? path.startsWith(this.folderUrl(accountId, node.mailbox)) : false,
         };
         if (node.mailbox) {
             item.to = this.folderUrl(accountId, node.mailbox);
