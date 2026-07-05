@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
+import { useFolderDragDropStore } from '~/composables/stores/useFolderDragDropStore';
 import { useFolderNestingStore } from '~/composables/stores/useFolderNestingStore';
 
 useSeoMeta({
@@ -13,12 +14,14 @@ const toast = useToast()
 // ── Global preferences ──
 const autoMarkSeenStore = useAutoMarkSeenStore();
 const folderNestingStore = useFolderNestingStore();
-await Promise.all([autoMarkSeenStore.use(), folderNestingStore.use()]);
+const folderDragDropStore = useFolderDragDropStore();
+await Promise.all([autoMarkSeenStore.use(), folderNestingStore.use(), folderDragDropStore.use()]);
 
 // Local, staged copy — edits only persist when the user clicks Save.
 const state = reactive({
 	autoMarkSeen: autoMarkSeenStore.enabled.value,
 	nestUnderInbox: folderNestingStore.nestUnderInbox.value,
+	folderDragDrop: folderDragDropStore.enabled.value,
 });
 
 const saving = ref(false)
@@ -27,6 +30,7 @@ const saving = ref(false)
 const isDirty = computed(() =>
 	state.autoMarkSeen !== autoMarkSeenStore.enabled.value
 	|| state.nestUnderInbox !== folderNestingStore.nestUnderInbox.value
+	|| state.folderDragDrop !== folderDragDropStore.enabled.value
 )
 
 async function onSubmit(_event: FormSubmitEvent<typeof state>) {
@@ -35,6 +39,7 @@ async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 		await Promise.all([
 			autoMarkSeenStore.update({ enabled: state.autoMarkSeen }),
 			folderNestingStore.update({ nestUnderInbox: state.nestUnderInbox }),
+			folderDragDropStore.update({ enabled: state.folderDragDrop }),
 		])
 		toast.add({
 			title: 'Preferences saved',
@@ -130,6 +135,21 @@ async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 								}'
 							>
 								<UCheckbox v-model="state.nestUnderInbox" />
+							</UFormField>
+
+							<USeparator />
+
+							<UFormField
+								name="folderDragDrop"
+								label="Drag-and-drop folders"
+								description="Reorganise folders by dragging them in the sidebar — onto another folder to nest, or into the empty space to move to the top level."
+								class="flex max-sm:flex-col justify-between items-start gap-4"
+								:ui='{
+									root: "w-full sm:w-auto",
+									container: "w-full sm:w-auto",
+								}'
+							>
+								<UCheckbox v-model="state.folderDragDrop" />
 							</UFormField>
 						</div>
 					</div>

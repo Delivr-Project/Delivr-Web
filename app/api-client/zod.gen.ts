@@ -287,6 +287,32 @@ export const zPutAccountPreferencesFolderNestingResponse = z.object({
     data: z.null()
 });
 
+/**
+ * Folder drag-and-drop preference retrieved successfully
+ */
+export const zGetAccountPreferencesFolderDndResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Folder drag-and-drop preference retrieved successfully'),
+    data: z.object({
+        enabled: z.boolean().optional().default(false)
+    })
+});
+
+export const zPutAccountPreferencesFolderDndBody = z.object({
+    enabled: z.boolean().optional().default(false)
+});
+
+/**
+ * Folder drag-and-drop preference updated successfully
+ */
+export const zPutAccountPreferencesFolderDndResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Folder drag-and-drop preference updated successfully'),
+    data: z.null()
+});
+
 export const zGetMailAccountsQuery = z.object({
     withMailboxes: z.boolean().optional().default(false)
 });

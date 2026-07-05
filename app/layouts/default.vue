@@ -6,6 +6,7 @@ import NotificationsSlideover from '~/components/dashboard/NotificationsSlideove
 import UserMenu from '~/components/dashboard/UserMenu.vue';
 import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
+import { useFolderDragDropStore } from '~/composables/stores/useFolderDragDropStore';
 import { useFolderNestingStore } from '~/composables/stores/useFolderNestingStore';
 import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
@@ -34,6 +35,11 @@ const mailboxes = computed(() => currentMailAccount.value?.mailboxes || []);
 const folderNestingStore = useFolderNestingStore();
 await folderNestingStore.use();
 const nestUnderInbox = folderNestingStore.nestUnderInbox;
+
+// Preference: folder drag-and-drop is opt-in, so it's off unless enabled.
+const folderDragDropStore = useFolderDragDropStore();
+await folderDragDropStore.use();
+const folderDndEnabled = folderDragDropStore.enabled;
 
 const { isMailSearchOpen } = useDashboard();
 
@@ -74,6 +80,8 @@ function resolveDropTarget(e: DragEvent): { anchor: HTMLElement; mailbox: Mailbo
 const draggedFolder = ref<Mailbox | null>(null);
 
 function onFolderDragStart(e: DragEvent) {
+    // Folder drag-and-drop is opt-in; when off, folders aren't drag sources.
+    if (!folderDndEnabled.value) return;
     const target = resolveDropTarget(e);
     // Inbox can't be renamed on any IMAP server, so it isn't a drag source.
     if (!target || MailboxDisplayUtils.isInbox(target.mailbox)) return;
@@ -482,12 +490,12 @@ const displaySidebars = computed(() => {
                             </UTooltip>
                         </div> -->
 
-                    <!-- Drop zone: drag mails onto a folder to move them there, or
-                         drag a folder onto another folder to re-nest it. Dropping
-                         a folder in the clear space below moves it into the Inbox,
-                         so the zone grows (flex-1) to fill the sidebar. -->
+                    <!-- Drop zone: drag mails onto a folder to move them there. When
+                         folder drag-and-drop is enabled, dragging a folder re-nests
+                         it (onto another folder) or moves it to the top level (into
+                         the clear space), so the zone grows to give a drop area. -->
                     <div
-                        class="flex-1"
+                        :class="['flex-1', folderDndEnabled ? 'px-2 pb-6 min-h-[24rem]' : '']"
                         @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"

@@ -741,6 +741,65 @@ export type PutAccountPreferencesFolderNestingResponses = {
 
 export type PutAccountPreferencesFolderNestingResponse = PutAccountPreferencesFolderNestingResponses[keyof PutAccountPreferencesFolderNestingResponses];
 
+export type GetAccountPreferencesFolderDndData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/account/preferences/folder-dnd';
+};
+
+export type GetAccountPreferencesFolderDndResponses = {
+    /**
+     * Folder drag-and-drop preference retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Folder drag-and-drop preference retrieved successfully';
+        data: {
+            enabled?: boolean;
+        };
+    };
+};
+
+export type GetAccountPreferencesFolderDndResponse = GetAccountPreferencesFolderDndResponses[keyof GetAccountPreferencesFolderDndResponses];
+
+export type PutAccountPreferencesFolderDndData = {
+    body: {
+        enabled?: boolean;
+    };
+    path?: never;
+    query?: never;
+    url: '/account/preferences/folder-dnd';
+};
+
+export type PutAccountPreferencesFolderDndErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PutAccountPreferencesFolderDndError = PutAccountPreferencesFolderDndErrors[keyof PutAccountPreferencesFolderDndErrors];
+
+export type PutAccountPreferencesFolderDndResponses = {
+    /**
+     * Folder drag-and-drop preference updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Folder drag-and-drop preference updated successfully';
+        data: null;
+    };
+};
+
+export type PutAccountPreferencesFolderDndResponse = PutAccountPreferencesFolderDndResponses[keyof PutAccountPreferencesFolderDndResponses];
+
 export type GetMailAccountsData = {
     body?: never;
     path?: never;
