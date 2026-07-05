@@ -495,7 +495,7 @@ const displaySidebars = computed(() => {
                          it (onto another folder) or moves it to the top level (into
                          the clear space), so the zone grows to give a drop area. -->
                     <div
-                        :class="['flex-1', folderDndEnabled ? 'px-2 pb-6 min-h-[24rem]' : '']"
+                        class="flex-1"
                         @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"
