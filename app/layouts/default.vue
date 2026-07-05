@@ -376,11 +376,11 @@ const sidebarItems = computed(() => {
     ];
 
     const footerItems: NavigationMenuItem[] = [
-        // {
-        //     label: "Back to Home",
-        //     icon: "i-lucide-home",
-        //     to: "/",
-        // },
+        {
+            label: "Folder Settings",
+            icon: "i-lucide-settings",
+            to: `/settings/mail-accounts/${currentMailAccount.value?.id}/folder-settings`,
+        },
     ];
 
     return {
@@ -487,7 +487,7 @@ const displaySidebars = computed(() => {
                          a folder in the clear space below moves it into the Inbox,
                          so the zone grows (flex-1) to fill the sidebar. -->
                     <div
-                        class="flex-1 px-2 pb-6"
+                        class="flex-1 z-50"
                         @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"
@@ -531,11 +531,12 @@ const displaySidebars = computed(() => {
                     orientation="vertical"
                 />
 
-                <!-- <UNavigationMenu
-                        :collapsed="collapsed"
-                        :items="sidebarItems.footer"
-                        orientation="vertical"
-                    /> -->
+                <UNavigationMenu
+                    v-if="displaySidebars.mailSidebar"
+                    :collapsed="collapsed"
+                    :items="sidebarItems.footer"
+                    orientation="vertical"
+                />
 
             </template>
 
@@ -598,8 +599,8 @@ const displaySidebars = computed(() => {
 /* Dropping a folder into the sidebar's clear space moves it to the top level. */
 .folder-root-drop-target {
     outline: 2px dashed var(--ui-primary);
-    outline-offset: -4px;
-    border-radius: 0.85rem;
+    /* outline-offset: -4px; */
+    border-radius: 0.25rem;
     background-color: color-mix(in oklch, var(--ui-primary) 6%, transparent);
 }
 </style>
