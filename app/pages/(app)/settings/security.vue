@@ -3,6 +3,11 @@ import * as z from 'zod'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { useUserInfoStore } from '~/composables/stores/useUserStore'
 
+useSeoMeta({
+	title: 'Security | Delivr',
+	description: 'Manage your account security',
+})
+
 const toast = useToast()
 const overlay = useOverlay()
 

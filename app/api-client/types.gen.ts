@@ -623,6 +623,65 @@ export type PutAccountPreferencesRemoteContentPolicyResponses = {
 
 export type PutAccountPreferencesRemoteContentPolicyResponse = PutAccountPreferencesRemoteContentPolicyResponses[keyof PutAccountPreferencesRemoteContentPolicyResponses];
 
+export type GetAccountPreferencesAutoMarkSeenData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/account/preferences/auto-mark-seen';
+};
+
+export type GetAccountPreferencesAutoMarkSeenResponses = {
+    /**
+     * Auto-mark-as-seen preference retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Auto-mark-as-seen preference retrieved successfully';
+        data: {
+            enabled?: boolean;
+        };
+    };
+};
+
+export type GetAccountPreferencesAutoMarkSeenResponse = GetAccountPreferencesAutoMarkSeenResponses[keyof GetAccountPreferencesAutoMarkSeenResponses];
+
+export type PutAccountPreferencesAutoMarkSeenData = {
+    body: {
+        enabled?: boolean;
+    };
+    path?: never;
+    query?: never;
+    url: '/account/preferences/auto-mark-seen';
+};
+
+export type PutAccountPreferencesAutoMarkSeenErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PutAccountPreferencesAutoMarkSeenError = PutAccountPreferencesAutoMarkSeenErrors[keyof PutAccountPreferencesAutoMarkSeenErrors];
+
+export type PutAccountPreferencesAutoMarkSeenResponses = {
+    /**
+     * Auto-mark-as-seen preference updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Auto-mark-as-seen preference updated successfully';
+        data: null;
+    };
+};
+
+export type PutAccountPreferencesAutoMarkSeenResponse = PutAccountPreferencesAutoMarkSeenResponses[keyof PutAccountPreferencesAutoMarkSeenResponses];
+
 export type GetMailAccountsData = {
     body?: never;
     path?: never;

@@ -2,8 +2,10 @@
 import type { MailData } from '~/utils/types';
 import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
 import { useRemoteContentPolicyStore, extractDomain } from '~/composables/stores/useRemoteContentPolicyStore';
+import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
 import { Utils } from '~/utils';
 import Gravatar from '~/components/Gravatar.vue';
+import { useMailAttachments } from '~/composables/useMailAttachments';
 
 const props = defineProps<{
     accountId: number
@@ -11,6 +13,9 @@ const props = defineProps<{
     mailUid: number
     /** Show a close button in the header (emits `close`). */
     closable?: boolean
+    /** Hide the reply/forward/⋮ actions in the header (the parent renders them
+     *  elsewhere, e.g. the list toolbar in split view). */
+    hideActions?: boolean
 }>();
 
 const emit = defineEmits<{
@@ -29,8 +34,69 @@ const systemFolderPath = computed(() =>
 const isLoading = ref(true);
 const mailData = ref<MailData | null>(null);
 
+// ── Auto-mark-as-read ──
+// Global (per-user) preference; pre-warm so the flag is ready before the dwell
+// elapses (default is on, so an unloaded store would otherwise fire immediately).
+const autoMarkSeenStore = useAutoMarkSeenStore();
+autoMarkSeenStore.refreshIfNeeded();
+
+// const AUTO_MARK_DELAY_MS = 1500;
+// let autoMarkTimer: ReturnType<typeof setTimeout> | null = null;
+
+// function cancelAutoMark() {
+//     if (autoMarkTimer !== null) {
+//         clearTimeout(autoMarkTimer);
+//         autoMarkTimer = null;
+//     }
+// }
+
+async function markSeen(uid: number) {
+    const response = await useAPI(api =>
+        api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlags({
+            path: {
+                mailAccountID: props.accountId,
+                mailboxPath: systemFolderPath.value,
+                mailUID: uid,
+            },
+            body: { seen: true },
+        })
+    );
+    // Only apply if we're still on the same mail; keep the list in sync via the emit.
+    if (response.success && mailData.value?.uid === uid) {
+        mailData.value.flags = response.data.flags;
+        emit('flags-change', uid, response.data.flags);
+    } else {
+        toast.add({
+            title: 'Failed to mark as read',
+            description: response.message || 'An unknown error occurred.',
+            color: 'error'
+        });
+    }
+}
+
+// // Mark the mail seen after a short dwell, unless the user leaves or toggles first.
+// function scheduleAutoMarkSeen() {
+//     cancelAutoMark();
+//     if (!autoMarkSeenStore.enabled.value) return;
+
+//     const mail = mailData.value;
+//     if (!mail || mail.flags?.seen) return;
+
+//     const uid = mail.uid;
+//     autoMarkTimer = setTimeout(() => {
+//         autoMarkTimer = null;
+//         // Bail if the user navigated away or it was marked seen in the meantime.
+//         if (mailData.value?.uid !== uid || mailData.value?.flags?.seen) return;
+//         void markSeen(uid);
+//     }, AUTO_MARK_DELAY_MS);
+// }
+
+// onUnmounted(cancelAutoMark);
+
 async function loadMail() {
     isLoading.value = true;
+    // A different mail is loading — drop any pending auto-mark for the previous one.
+    // cancelAutoMark();
     try {
         const response = await useAPI(api =>
             api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid({
@@ -52,6 +118,10 @@ async function loadMail() {
             return;
         }
         mailData.value = response.data;
+        // scheduleAutoMarkSeen();
+
+        await markSeen(props.mailUid);
+
     } finally {
         isLoading.value = false;
     }
@@ -86,6 +156,12 @@ function isUnread(m: MailData): boolean {
 
 const subject = computed(() => mailData.value?.subject || '(No subject)');
 const showDetails = ref(false);
+
+// While a mail is open, put its subject in the tab title. Until it loads (or once
+// this pane unmounts) the title falls back to the folder title set by the parent.
+useSeoMeta({
+    title: () => (mailData.value ? `${subject.value} | Delivr` : undefined),
+});
 
 // ── Remote image / content policy ──
 
@@ -170,52 +246,6 @@ const hasHtmlBody = computed(() => !!mailData.value?.body?.html);
 const hasTextBody = computed(() => !!mailData.value?.body?.text);
 const hasAttachments = computed(() => (mailData.value?.attachments?.length ?? 0) > 0);
 
-// ── Read / unread toggle ──
-
-const isRead = computed(() => !!mailData.value?.flags?.seen);
-// The button reflects the action it performs: a read mail can be marked unread,
-// an unread mail can be marked read.
-const readActionLabel = computed(() => isRead.value ? 'Mark as unread' : 'Mark as read');
-const readActionIcon = computed(() => isRead.value ? 'i-lucide-mail' : 'i-lucide-mail-open');
-const isTogglingRead = ref(false);
-
-async function handleToggleRead() {
-    if (!mailData.value || isTogglingRead.value) return;
-
-    const targetSeen = !isRead.value;
-    isTogglingRead.value = true;
-    try {
-        const response = await useAPI(api =>
-            api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlags({
-                path: {
-                    mailAccountID: props.accountId,
-                    mailboxPath: systemFolderPath.value,
-                    mailUID: props.mailUid,
-                },
-                body: { seen: targetSeen },
-            })
-        );
-
-        if (!response.success) {
-            toast.add({
-                title: 'Failed to update read state',
-                description: response.message || 'An unknown error occurred.',
-                color: 'error'
-            });
-            return;
-        }
-
-        // Sync local state from the confirmed server flags, and notify the parent
-        // so the mail list reflects the new read state without a refetch.
-        if (mailData.value) {
-            mailData.value.flags = response.data.flags;
-        }
-        emit('flags-change', props.mailUid, response.data.flags);
-    } finally {
-        isTogglingRead.value = false;
-    }
-}
-
 // ── Attachments ──
 // Attachments are streamed from the API on demand and never stored/cached server-
 // side. The backend addresses each attachment by its index within the mail, which
@@ -260,38 +290,86 @@ function notAvailable(title: string) {
     });
 }
 
-const handleArchive = () => notAvailable('Archive');
-const handleDelete = () => notAvailable('Delete');
-const handleSpam = () => notAvailable('Mark as spam');
 const handleReply = () => notAvailable('Reply');
 const handleReplyAll = () => notAvailable('Reply All');
 const handleForward = () => notAvailable('Forward');
-const handlePrint = () => window.print();
 
-const moreActions = computed(() => [
-    [{
-        label: readActionLabel.value,
-        icon: readActionIcon.value,
-        onSelect: handleToggleRead,
-    }],
-    [{
-        label: 'Print',
-        icon: 'i-lucide-printer',
-        onSelect: handlePrint,
-    }],
-    [{
-        label: 'Report spam',
-        icon: 'i-lucide-shield-alert',
-        onSelect: handleSpam,
-    }, {
-        label: 'Delete',
-        icon: 'i-lucide-trash-2',
-        color: 'error' as const,
-        onSelect: handleDelete,
-    }],
-]);
+// ── Print (email only) ──
+// Render just this email into a detached iframe and print that, rather than
+// window.print() which would print the whole app page around it.
 
-defineExpose({ reload: loadMail });
+function escapeHtml(value: string): string {
+    return value.replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string)
+    );
+}
+
+function printEmail() {
+    const mail = mailData.value;
+    if (!mail) return;
+
+    // Light theme for paper (no dark-mode wrap); honour the current image policy.
+    const bodyHtml = mail.body?.html
+        ? useSanitizeHtml(mail.body.html, { wrapForDarkMode: false, blockRemoteContent: shouldBlockRemote.value }).html
+        : `<pre style="white-space:pre-wrap;font-family:inherit;margin:0;">${escapeHtml(mail.body?.text ?? '')}</pre>`;
+
+    const rows: string[] = [];
+    if (mail.from) rows.push(`<div><b>From:</b> ${escapeHtml(formatAddressList([mail.from]))}</div>`);
+    if (mail.to?.length) rows.push(`<div><b>To:</b> ${escapeHtml(formatAddressList(mail.to))}</div>`);
+    if (mail.cc?.length) rows.push(`<div><b>Cc:</b> ${escapeHtml(formatAddressList(mail.cc))}</div>`);
+    if (mail.date) rows.push(`<div><b>Date:</b> ${escapeHtml(formatFullDate(mail.date))}</div>`);
+
+    const docHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(subject.value)}</title>
+<style>
+  html,body{margin:0}
+  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#111;background:#fff;padding:24px;}
+  h1{font-size:20px;line-height:1.3;margin:0 0 12px;}
+  .meta{font-size:12px;color:#444;line-height:1.7;margin-bottom:16px;}
+  hr{border:0;border-top:1px solid #ddd;margin:16px 0;}
+  .body{font-size:14px;line-height:1.5;word-break:break-word;}
+  .body img{max-width:100%;height:auto;}
+  @page{margin:16mm;}
+</style></head>
+<body>
+  <h1>${escapeHtml(subject.value)}</h1>
+  <div class="meta">${rows.join('')}</div>
+  <hr>
+  <div class="body">${bodyHtml}</div>
+</body></html>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    iframe.onload = () => {
+        const win = iframe.contentWindow;
+        if (!win) { iframe.remove(); return; }
+        win.focus();
+        win.print();
+        const cleanup = () => iframe.remove();
+        win.addEventListener('afterprint', cleanup, { once: true });
+        setTimeout(cleanup, 60_000);
+    };
+    iframe.srcdoc = docHtml;
+    document.body.appendChild(iframe);
+}
+
+// Sync the displayed read/unread state from the parent (e.g. the list toolbar
+// toggled it) WITHOUT reloading — reloading would re-trigger auto-mark-as-read.
+function setSeen(seen: boolean) {
+    if (mailData.value) {
+        mailData.value.flags = { ...mailData.value.flags, seen };
+    }
+}
+
+defineExpose({
+    reload: loadMail,
+    setSeen,
+    // Exposed so the parent can render these actions in the list toolbar (split view).
+    reply: handleReply,
+    replyAll: handleReplyAll,
+    forward: handleForward,
+    print: printEmail,
+});
 </script>
 
 <template>
@@ -332,8 +410,10 @@ defineExpose({ reload: loadMail });
         </div>
 
         <template v-else>
-            <!-- Toolbar -->
-            <div class="flex items-center gap-1 px-3 py-2 border-b border-default shrink-0">
+            <!-- Toolbar — hidden in split view (hideActions): the close button and
+                 actions live in the list toolbar there, so the title starts right
+                 under it. Shown for the full-screen reading view. -->
+            <div v-if="!hideActions" class="flex items-center gap-1 px-3 py-2 border-b border-default shrink-0">
                 <UButton
                     v-if="closable"
                     icon="i-lucide-x"
@@ -346,26 +426,6 @@ defineExpose({ reload: loadMail });
                 <div class="flex-1" />
 
                 <div class="flex items-center gap-0.5 shrink-0">
-                    <UTooltip text="Archive">
-                        <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="sm" @click="handleArchive" />
-                    </UTooltip>
-                    <UTooltip text="Delete">
-                        <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="sm" @click="handleDelete" />
-                    </UTooltip>
-                    <UTooltip :text="readActionLabel">
-                        <UButton
-                            :icon="readActionIcon"
-                            color="neutral"
-                            variant="ghost"
-                            size="sm"
-                            :loading="isTogglingRead"
-                            :aria-label="readActionLabel"
-                            @click="handleToggleRead"
-                        />
-                    </UTooltip>
-
-                    <div class="w-px h-5 bg-default mx-1" />
-
                     <UTooltip text="Reply">
                         <UButton icon="i-lucide-reply" color="neutral" variant="ghost" size="sm" @click="handleReply" />
                     </UTooltip>
@@ -378,9 +438,9 @@ defineExpose({ reload: loadMail });
 
                     <div class="w-px h-5 bg-default mx-1" />
 
-                    <UDropdownMenu :items="moreActions">
-                        <UButton icon="i-lucide-ellipsis-vertical" color="neutral" variant="ghost" size="sm" />
-                    </UDropdownMenu>
+                    <UTooltip text="Print">
+                        <UButton icon="i-lucide-printer" color="neutral" variant="ghost" size="sm" @click="printEmail" />
+                    </UTooltip>
                 </div>
             </div>
 

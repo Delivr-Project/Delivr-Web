@@ -2,6 +2,12 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
+import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
+
+useSeoMeta({
+	title: 'Settings | Delivr',
+	description: 'Manage your account settings',
+});
 
 const profileSchema = z.object({
 	username: z.string().trim()
@@ -31,6 +37,14 @@ const profile = reactive<Partial<ProfileSchema>>({
 })
 
 const toast = useToast()
+
+// ── Auto-mark-as-read (global preference) ──
+const autoMarkSeenStore = useAutoMarkSeenStore();
+await autoMarkSeenStore.use();
+const autoMarkSeen = computed({
+	get: () => autoMarkSeenStore.enabled.value,
+	set: (value: boolean) => { autoMarkSeenStore.update({ enabled: value }); },
+});
 
 async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
 	loading.value = true
@@ -164,6 +178,36 @@ async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
 								/>
 							</div>
 						</UForm>
+					</div>
+				</div>
+
+				<!-- Mail Preferences Card -->
+				<div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">
+					<div class="px-6 py-4 border-b border-slate-800">
+						<div class="flex items-center gap-3">
+							<div class="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
+								<UIcon name="i-lucide-mail-open" class="w-5 h-5 text-sky-400" />
+							</div>
+							<div>
+								<h3 class="font-medium text-white">Mail Preferences</h3>
+								<p class="text-sm text-slate-400">Control how reading mail behaves</p>
+							</div>
+						</div>
+					</div>
+
+					<div class="p-6">
+						<UFormField
+							name="autoMarkSeen"
+							label="Auto-mark as read"
+							description="Automatically mark an email as read shortly after you open it."
+							class="flex max-sm:flex-col justify-between items-start gap-4"
+							:ui='{
+								root: "w-full sm:w-auto",
+								container: "w-full sm:w-auto",
+							}'
+						>
+							<UCheckbox v-model="autoMarkSeen" />
+						</UFormField>
 					</div>
 				</div>
 
