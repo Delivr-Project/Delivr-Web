@@ -150,7 +150,21 @@ const sidebarItems = computed(() => {
         {
             label: "Preferences",
             icon: "i-lucide-sliders-horizontal",
-            to: "/settings/preferences",
+            // Expandable group (submenu). Open it whenever we're on any
+            // preferences sub-route so the active child is visible.
+            defaultOpen: route.path.startsWith("/settings/preferences"),
+            children: [
+                {
+                    label: "Mail",
+                    icon: "i-lucide-mail",
+                    to: "/settings/preferences/mail",
+                },
+                {
+                    label: "Remote Content",
+                    icon: "i-lucide-image",
+                    to: "/settings/preferences/remote-content",
+                },
+            ],
         },
         {
             label: "Security",

@@ -3,8 +3,8 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
 
 useSeoMeta({
-	title: 'Preferences | Delivr',
-	description: 'Manage your Delivr preferences',
+	title: 'Mail Preferences | Delivr',
+	description: 'Control how reading mail behaves',
 });
 
 const toast = useToast()
@@ -29,7 +29,7 @@ async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 		await autoMarkSeenStore.update({ enabled: state.autoMarkSeen })
 		toast.add({
 			title: 'Preferences saved',
-			description: 'Your preferences have been updated.',
+			description: 'Your mail preferences have been updated.',
 			icon: 'i-lucide-check',
 			color: 'success',
 		})
@@ -50,9 +50,9 @@ async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 	<UDashboardPanel id="settings" :ui="{ body: 'lg:py-12 lg:gap-12 w-full lg:max-w-3xl mx-auto' }">
 		<template #header>
 			<DashboardPageHeader
-				title="Preferences"
-				icon="i-lucide-sliders-horizontal"
-				description="Control how Delivr behaves"
+				title="Mail Preferences"
+				icon="i-lucide-mail"
+				description="Control how reading mail behaves"
 			/>
 		</template>
 
@@ -61,8 +61,8 @@ async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 				<UForm :state="state" @submit="onSubmit" class="flex flex-col gap-12">
 					<!-- Header -->
 					<div>
-						<h2 class="text-xl font-semibold text-white">Preferences</h2>
-						<p class="text-sm text-slate-400 mt-1">Fine-tune how mail and the app behave</p>
+						<h2 class="text-xl font-semibold text-white">Mail Preferences</h2>
+						<p class="text-sm text-slate-400 mt-1">Control how reading mail behaves</p>
 					</div>
 
 					<!-- Mail Preferences Card -->
@@ -73,8 +73,8 @@ async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 									<UIcon name="i-lucide-mail-open" class="w-5 h-5 text-sky-400" />
 								</div>
 								<div>
-									<h3 class="font-medium text-white">Mail Preferences</h3>
-									<p class="text-sm text-slate-400">Control how reading mail behaves</p>
+									<h3 class="font-medium text-white">Reading</h3>
+									<p class="text-sm text-slate-400">How messages behave when you open them</p>
 								</div>
 							</div>
 						</div>
