@@ -153,6 +153,7 @@ const sidebarItems = computed(() => {
             // Expandable group (submenu). Open it whenever we're on any
             // preferences sub-route so the active child is visible.
             defaultOpen: route.path.startsWith("/settings/preferences"),
+            type: 'trigger',
             children: [
                 {
                     label: "Mail",
