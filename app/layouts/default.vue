@@ -148,6 +148,11 @@ const sidebarItems = computed(() => {
             exact: true,
         },
         {
+            label: "Preferences",
+            icon: "i-lucide-sliders-horizontal",
+            to: "/settings/preferences",
+        },
+        {
             label: "Security",
             icon: "i-lucide-shield",
             to: "/settings/security",
