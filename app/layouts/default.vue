@@ -487,7 +487,7 @@ const displaySidebars = computed(() => {
                          a folder in the clear space below moves it into the Inbox,
                          so the zone grows (flex-1) to fill the sidebar. -->
                     <div
-                        class="flex-1 pb-6"
+                        class="flex-1 px-2 pt-3 pb-6"
                         @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"
@@ -599,7 +599,7 @@ const displaySidebars = computed(() => {
 .folder-root-drop-target {
     outline: 2px dashed var(--ui-primary);
     outline-offset: -4px;
-    border-radius: var(--ui-radius, 0.375rem);
+    border-radius: 0.85rem;
     background-color: color-mix(in oklch, var(--ui-primary) 6%, transparent);
 }
 </style>
