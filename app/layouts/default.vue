@@ -6,6 +6,7 @@ import NotificationsSlideover from '~/components/dashboard/NotificationsSlideove
 import UserMenu from '~/components/dashboard/UserMenu.vue';
 import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
+import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
@@ -13,6 +14,8 @@ import { useMailDrag } from '~/composables/useMailDrag';
 import type { Mailbox } from '~/utils/types';
 
 const route = useRoute();
+const toast = useToast();
+const mailAccountsStore = useMailAccountsStore();
 
 
 
@@ -53,28 +56,124 @@ function resolveDropTarget(e: DragEvent): { anchor: HTMLElement; mailbox: Mailbo
     return mailbox ? { anchor, mailbox } : null;
 }
 
-function onFolderDragOver(e: DragEvent) {
-    if (!dragging.value) return;
+// ── Drag & drop: re-nest folders by dragging one onto another ──
+// Same delegation trick as the mail drop — no custom folder components, we hook
+// the folder links UNavigationMenu renders. The links are natively draggable,
+// so dragstart fires on them and we resolve the mailbox being dragged. Dropping
+// folder A onto folder B renames A's IMAP path to live directly under B.
+
+const draggedFolder = ref<Mailbox | null>(null);
+
+function onFolderDragStart(e: DragEvent) {
     const target = resolveDropTarget(e);
-    if (target && target.mailbox.path !== dragging.value.sourceFolderPath) {
-        e.preventDefault(); // mark as a valid drop zone
-        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-        setHighlight(target.anchor);
-    } else {
-        setHighlight(null);
+    // Inbox can't be renamed on any IMAP server, so it isn't a drag source.
+    if (!target || MailboxDisplayUtils.isInbox(target.mailbox)) return;
+    draggedFolder.value = target.mailbox;
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', target.mailbox.path);
+        // Use the folder row itself as the drag ghost so it tracks the cursor,
+        // instead of the browser's default link-URL image. Offset keeps the
+        // ghost pinned under the pointer where the grab started.
+        const rect = target.anchor.getBoundingClientRect();
+        e.dataTransfer.setDragImage(target.anchor, e.clientX - rect.left, e.clientY - rect.top);
+    }
+}
+
+function onFolderDragEnd() {
+    draggedFolder.value = null;
+    setHighlight(null);
+}
+
+// A folder can't be dropped onto itself, its current parent (a no-op), or any of
+// its own descendants (that would orphan the subtree).
+function isValidFolderTarget(target: Mailbox): boolean {
+    const src = draggedFolder.value;
+    if (!src) return false;
+    if (target.path === src.path) return false;
+    if (target.path.startsWith(src.path + src.delimiter)) return false;
+    return newFolderPath(src, target) !== src.path;
+}
+
+// The re-nested IMAP path: source's leaf name placed under the target folder.
+function newFolderPath(src: Mailbox, target: Mailbox): string {
+    const leaf = src.path.split(src.delimiter).pop() || src.path;
+    return target.path + target.delimiter + leaf;
+}
+
+async function moveFolder(src: Mailbox, target: Mailbox) {
+    const accountId = currentMailAccount.value?.id;
+    if (accountId === undefined) return;
+
+    const response = await useAPI(api =>
+        api.putMailAccountsByMailAccountIdMailboxesByMailboxPath({
+            path: { mailAccountID: accountId, mailboxPath: src.path },
+            body: { path: newFolderPath(src, target) },
+        })
+    );
+
+    if (!response.success) {
+        toast.add({
+            title: 'Failed to move folder',
+            description: response.message || 'An unknown error occurred.',
+            color: 'error',
+        });
+        return;
+    }
+
+    toast.add({
+        title: 'Folder moved',
+        description: `“${MailboxDisplayUtils.leafName(src)}” moved into “${MailboxDisplayUtils.leafName(target)}”.`,
+        color: 'success',
+    });
+
+    // Reload mailboxes so the sidebar tree reflects the new hierarchy.
+    await mailAccountsStore.refresh();
+}
+
+function onFolderDragOver(e: DragEvent) {
+    const target = resolveDropTarget(e);
+    // Mails being dragged onto a folder (move mails there).
+    if (dragging.value) {
+        if (target && target.mailbox.path !== dragging.value.sourceFolderPath) {
+            e.preventDefault(); // mark as a valid drop zone
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            setHighlight(target.anchor);
+        } else {
+            setHighlight(null);
+        }
+        return;
+    }
+    // A folder being dragged onto another folder (re-nest it).
+    if (draggedFolder.value) {
+        if (target && isValidFolderTarget(target.mailbox)) {
+            e.preventDefault();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            setHighlight(target.anchor);
+        } else {
+            setHighlight(null);
+        }
     }
 }
 
 function onFolderDrop(e: DragEvent) {
     setHighlight(null);
-    if (!dragging.value) return;
     const target = resolveDropTarget(e);
     if (!target) return;
-    e.preventDefault();
-    dropOnMailbox(target.mailbox);
+    if (dragging.value) {
+        e.preventDefault();
+        dropOnMailbox(target.mailbox);
+        return;
+    }
+    if (draggedFolder.value && isValidFolderTarget(target.mailbox)) {
+        e.preventDefault();
+        const src = draggedFolder.value;
+        draggedFolder.value = null;
+        moveFolder(src, target.mailbox);
+    }
 }
 
-// Clear the highlight when the drag ends or leaves the folder area entirely.
+// Clear the highlight when the mail drag ends or leaves the folder area entirely.
 watch(dragging, (v) => { if (!v) setHighlight(null); });
 function onFolderDragLeave(e: DragEvent) {
     const to = e.relatedTarget as Node | null;
@@ -299,11 +398,14 @@ const displaySidebars = computed(() => {
                             </UTooltip>
                         </div> -->
 
-                    <!-- Drop zone: dragging mails onto a folder link moves them there. -->
+                    <!-- Drop zone: drag mails onto a folder to move them there, or
+                         drag a folder onto another folder to re-nest it. -->
                     <div
+                        @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"
                         @dragleave="onFolderDragLeave"
+                        @dragend="onFolderDragEnd"
                     >
                         <UNavigationMenu
                             :key="currentMailAccount?.id"
