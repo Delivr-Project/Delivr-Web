@@ -613,10 +613,9 @@ function closeActiveMail() {
                 }'
             >
                 <template #title>
-                    <UBreadcrumb
-                        :items="breadcrumbItems"
-                        :ui="{ root: 'min-w-0', list: 'flex-nowrap', link: 'truncate' }"
-                    />
+                    <UBreadcrumb :items="breadcrumbItems" :ui='{
+                        link: "text-md"
+                    }' />
                 </template>
 
                 <template #leading>

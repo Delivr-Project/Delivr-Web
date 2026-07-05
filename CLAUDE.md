@@ -24,9 +24,13 @@ app/
 │       └── main.css          # Global styles
 ├── components/
 │   ├── Gravatar.vue
+│   ├── SenderAvatar.vue        # Sender avatar (Gravatar / BIMI brand logo / initials)
 │   ├── dashboard/           # Dashboard components
 │   │   ├── DashboardDeleteModal.vue
+│   │   ├── DashboardModal.vue
+│   │   ├── DashboardPageBody.vue
 │   │   ├── DashboardPageHeader.vue
+│   │   ├── DataTable.vue
 │   │   ├── MailAccountsMenu.vue
 │   │   ├── MailSearch.vue
 │   │   ├── NotificationsSlideover.vue
@@ -38,11 +42,13 @@ app/
 │   │   └── DelivrLogo.vue
 │   └── mail/
 │       ├── MailDetailContent.vue
-│       ├── MailFolderView.vue
+│       ├── MailFolderView.vue  # Folder list + split/list view modes, pagination, bulk actions, drag & drop
+│       ├── MailListItem.vue
 │       ├── MailList.vue
-│       └── MailListItem.vue
+│       └── MailToolbar.vue     # Shared toolbar (bulk/read/delete/refresh + reading-pane actions)
 ├── composables/
 │   ├── stores/               # State stores
+│   │   ├── useAutoMarkSeenStore.ts
 │   │   ├── useMailAccountsStore.ts
 │   │   ├── useRemoteContentPolicyStore.ts
 │   │   ├── useSelectedMailAccountStore.ts
@@ -50,7 +56,9 @@ app/
 │   ├── useAPI.ts
 │   ├── useAppCookies.ts
 │   ├── useMailAttachments.ts # Authed binary fetch/download of mail attachments
+│   ├── useMailDrag.ts        # Drag & drop state for moving mails between folders
 │   ├── useAwaitedComputed.ts
+│   ├── useBimiURL.ts         # Resolves a sender's BIMI brand-logo URL via the API
 │   ├── useDashboard.ts
 │   ├── useDefaultOnFormError.ts
 │   ├── useGravatarURL.ts
@@ -67,6 +75,12 @@ app/
 │   ├── auth.global.ts        # Global auth middleware
 │   └── rewrites.global.ts    # URL rewrite middleware
 ├── pages/                    # Auto-imported pages (Nuxt file-based routing)
+│   ├── (app)/                # Route group (no URL segment): main dashboard
+│   │   ├── index.vue
+│   │   ├── mail/[mailAccountID]/          # compose, index, folder/[folderPath]/{index,[mailUID]}
+│   │   └── settings/         # index, security, apikeys/*, mail-accounts/*
+│   ├── admin/                # index, users
+│   └── auth/                 # login, signup, forgot-password, reset-password
 ├── utils/
 │   ├── index.ts
 │   ├── abstractStore.ts      # Base store class
@@ -79,6 +93,7 @@ app/
     ├── sdk.gen.ts
     ├── types.gen.ts
     ├── zod.gen.ts
+    ├── client/                # Generated client core
     └── core/                  # Core client utilities
 
 server/                        # Nitro server routes (run on the SSR server)

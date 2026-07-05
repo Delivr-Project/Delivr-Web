@@ -148,6 +148,26 @@ const sidebarItems = computed(() => {
             exact: true,
         },
         {
+            label: "Preferences",
+            icon: "i-lucide-sliders-horizontal",
+            // Expandable group (submenu). Open it whenever we're on any
+            // preferences sub-route so the active child is visible.
+            defaultOpen: route.path.startsWith("/settings/preferences"),
+            type: 'trigger',
+            children: [
+                {
+                    label: "Mail",
+                    icon: "i-lucide-mail",
+                    to: "/settings/preferences/mail",
+                },
+                {
+                    label: "Remote Content",
+                    icon: "i-lucide-image",
+                    to: "/settings/preferences/remote-content",
+                },
+            ],
+        },
+        {
             label: "Security",
             icon: "i-lucide-shield",
             to: "/settings/security",
@@ -156,6 +176,10 @@ const sidebarItems = computed(() => {
             label: "Manage Mail Accounts",
             to: "/settings/mail-accounts",
             icon: "i-lucide-at-sign",
+            // The per-account pages (/settings/mail-accounts/:id and its
+            // nested backend-configuration) don't keep the parent link active
+            // under router-based matching. Force active on any sub-route.
+            active: route.path.startsWith("/settings/mail-accounts"),
         },
         {
             label: "API Keys",
