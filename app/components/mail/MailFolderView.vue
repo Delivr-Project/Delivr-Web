@@ -724,7 +724,7 @@ function closeActiveMail() {
                             class="flex flex-col min-h-0"
                             :class="viewMode === 'split'
                                 ? 'w-full lg:w-[38%] lg:min-w-88 lg:max-w-lg lg:border-r lg:border-default'
-                                : 'w-full'"
+                                : 'w-full flex-1'"
                         >
                             <!-- Selection / select-all header (padding matches the active row layout so checkboxes line up) -->
                             <div
