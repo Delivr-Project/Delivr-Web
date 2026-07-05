@@ -101,7 +101,7 @@ const items = computed<DropdownMenuItem[][]>(() => [
             target: '_blank'
         },
         {
-            label: 'GitHub repository',
+            label: 'GitHub repositorys',
             icon: 'i-simple-icons-github',
             to: 'https://github.com/Delivr-Project',
             target: '_blank'
