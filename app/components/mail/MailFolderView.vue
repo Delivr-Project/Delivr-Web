@@ -4,6 +4,7 @@ import { Utils } from '~/utils';
 import { useMailDrag } from '~/composables/useMailDrag';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 import MailDetailContent from '~/components/mail/MailDetailContent.vue';
+import MailToolbar from '~/components/mail/MailToolbar.vue';
 import { useEffectiveMailViewMode, type MailViewMode } from '~/composables/useMailViewMode';
 import { useMediaQuery } from '@vueuse/core';
 
@@ -171,7 +172,14 @@ watch(pageSize, () => {
 const mailList = mails.data;
 
 // Detail pane instance (only one is mounted at a time) so refresh can re-sync it.
-const detailRef = ref<{ reload: () => void } | null>(null);
+const detailRef = ref<{
+    reload: () => void;
+    setSeen: (seen: boolean) => void;
+    reply: () => void;
+    replyAll: () => void;
+    forward: () => void;
+    print: () => void;
+} | null>(null);
 
 // Refresh the list AND the currently open mail, so the list rows and the detail
 // pane's read/unread button reflect the same (server) state after a refresh.
@@ -185,6 +193,14 @@ function handleRefresh() {
 // default `deep: false`), so we must reassign the array rather than mutate a nested
 // property, otherwise the list rows won't re-render.
 function handleFlagsChange(uid: number, flags: NonNullable<MailListItem['flags']>) {
+    // Keep the sidebar unread badge live when the detail pane flips a flag
+    // (e.g. auto-mark-as-read on open, or its ⋮ read/unread toggle).
+    const prev = mailList.value.find(m => m.uid === uid);
+    if (prev) {
+        const wasUnread = isUnread(prev);
+        const nowUnread = !flags.seen;
+        if (wasUnread !== nowUnread) adjustMailboxUnseen(currentMailbox.value, nowUnread ? 1 : -1);
+    }
     mailList.value = mailList.value.map(m => m.uid === uid ? { ...m, flags } : m);
 }
 
@@ -244,10 +260,28 @@ const hasActionTarget = computed(() => effectiveActionUids.value.length > 0);
 
 const isApplyingBulkFlags = ref(false);
 
-// ── Bulk actions ──
+// ── Read / unread ──
 
-async function setBulkFlags(seen: boolean) {
+// Nudge a mailbox's unread badge on the shared account object so the sidebar
+// count stays live (same object the layout renders from). Clamped at zero.
+function adjustMailboxUnseen(mb: Mailbox | undefined | null, delta: number) {
+    if (!mb || delta === 0) return;
+    mb.status.unseen = Math.max(0, (mb.status.unseen ?? 0) + delta);
+}
+
+// Are all the current action targets already read? Drives the single toggle's
+// direction: all read → offer "Mark as unread", otherwise → "Mark as read".
+const targetsAllRead = computed(() => {
     const uids = effectiveActionUids.value;
+    if (uids.length === 0) return false;
+    const set = new Set(uids);
+    return mailList.value.filter(m => set.has(m.uid)).every(m => !isUnread(m));
+});
+const readToggleLabel = computed(() => targetsAllRead.value ? 'Mark as unread' : 'Mark as read');
+const readToggleIcon = computed(() => targetsAllRead.value ? 'i-lucide-mail' : 'i-lucide-mail-open');
+
+// Core: set the seen flag for a set of mails (optimistic list + sidebar badge).
+async function applySeen(uids: number[], seen: boolean) {
     if (uids.length === 0 || isApplyingBulkFlags.value) return;
 
     isApplyingBulkFlags.value = true;
@@ -274,23 +308,34 @@ async function setBulkFlags(seen: boolean) {
             return;
         }
 
-        // Optimistically update the local list so the rows reflect the new
-        // read/unread state without a full refetch.
+        // Move the sidebar badge by how many mails actually flipped state.
         const changed = new Set(uids);
-        mailList.value = mailList.value.map(m =>
-            changed.has(m.uid)
-                ? { ...m, flags: { ...m.flags, seen } }
-                : m
-        );
-        // Keep the open reading pane's read/unread state in sync too.
-        if (activeMailUid.value !== null && changed.has(activeMailUid.value)) {
-            detailRef.value?.reload();
-        }
+        const flipped = mailList.value.filter(m => changed.has(m.uid) && isUnread(m) !== !seen).length;
+        adjustMailboxUnseen(currentMailbox.value, seen ? -flipped : flipped);
 
-        clearSelection();
+        // Optimistically update the local list without a full refetch.
+        mailList.value = mailList.value.map(m =>
+            changed.has(m.uid) ? { ...m, flags: { ...m.flags, seen } } : m
+        );
+        // Sync the open reading pane's state locally. Must NOT reload() — that
+        // would re-run the detail's auto-mark-as-read and undo an "unread" toggle.
+        if (activeMailUid.value !== null && changed.has(activeMailUid.value)) {
+            detailRef.value?.setSeen(seen);
+        }
     } finally {
         isApplyingBulkFlags.value = false;
     }
+}
+
+// Toolbar single toggle: flips the whole target set to the opposite of "all read".
+async function toggleTargetsSeen() {
+    await applySeen(effectiveActionUids.value, !targetsAllRead.value);
+    clearSelection();
+}
+
+// Per-row hover toggle (dense list): flip just that one row.
+function toggleRowSeen(mail: MailListItem) {
+    applySeen([mail.uid], isUnread(mail));
 }
 
 // ── Bulk delete ──
@@ -340,6 +385,9 @@ async function deleteSelected(permanent: boolean) {
 
         // Optimistically drop the removed rows (mailList is a shallowRef, so reassign).
         const removed = new Set(uids);
+        // Removing unread mails lowers this folder's sidebar badge.
+        const unreadRemoved = mailList.value.filter(m => removed.has(m.uid) && isUnread(m)).length;
+        adjustMailboxUnseen(currentMailbox.value, -unreadRemoved);
         mailList.value = mailList.value.filter(m => !removed.has(m.uid));
         clearSelection();
         confirmSoftDeleteOpen.value = false;
@@ -409,6 +457,10 @@ async function moveToMailbox(target: Mailbox, uids: number[]) {
     }
 
     const moved = new Set(uids);
+    // Unread mails carry their badge from this folder to the destination.
+    const unreadMoved = mailList.value.filter(m => moved.has(m.uid) && isUnread(m)).length;
+    adjustMailboxUnseen(currentMailbox.value, -unreadMoved);
+    adjustMailboxUnseen(target, unreadMoved);
     mailList.value = mailList.value.filter(m => !moved.has(m.uid));
     // Drop moved mails out of the selection so the action bar reflects reality.
     if (selectedUids.value.size > 0) {
@@ -614,7 +666,35 @@ function closeActiveMail() {
 
         <template #body>
             <div class="flex flex-col h-full min-h-0">
-                <!-- ══ LIST MODE with an open mail: full-panel detail ══ -->
+                <!-- Toolbar (shrink-0) — shown above both the list and the
+                     full-screen reading view. -->
+                <MailToolbar
+                    :count="mailList.length"
+                    :unread-count="unreadCount"
+                    :show-count="!showFullDetail"
+                    :can-archive="canArchive"
+                    :has-action-target="hasActionTarget"
+                    :read-toggle-label="readToggleLabel"
+                    :read-toggle-icon="readToggleIcon"
+                    :is-applying-flags="isApplyingBulkFlags"
+                    :is-deleting="isDeleting"
+                    :is-refreshing="mails.loading.value"
+                    :show-mail-actions="activeMailUid !== null && !multiSelected"
+                    :is-mobile="isMobile"
+                    :view-mode="viewMode"
+                    @archive="archiveSelected"
+                    @toggle-read="toggleTargetsSeen"
+                    @delete="requestDelete"
+                    @reply="detailRef?.reply()"
+                    @reply-all="detailRef?.replyAll()"
+                    @forward="detailRef?.forward()"
+                    @print="detailRef?.print()"
+                    @toggle-view="toggleViewMode"
+                    @refresh="handleRefresh"
+                />
+
+                <!-- ══ LIST MODE with an open mail: full-panel detail (uses the
+                     shared toolbar above, so its own header is hidden) ══ -->
                 <MailDetailContent
                     v-if="showFullDetail"
                     ref="detailRef"
@@ -623,6 +703,7 @@ function closeActiveMail() {
                     :folder-path="systemFolderPath"
                     :mail-uid="activeMailUid!"
                     closable
+                    hide-actions
                     class="flex-1 min-h-0"
                     @close="closeActiveMail"
                     @not-found="closeActiveMail"
@@ -631,89 +712,6 @@ function closeActiveMail() {
 
                 <!-- ══ Otherwise: the mail list (+ split detail column) ══ -->
                 <template v-else>
-                    <!-- Toolbar (shrink-0) -->
-                    <div class="flex items-center gap-2 px-4 py-2 border-b border-default shrink-0">
-                        <div class="text-sm text-muted shrink-0">
-                            <span class="font-medium text-default">{{ mailList.length }}</span>
-                            <span class="mx-1">·</span>
-                            <span>{{ unreadCount }} unread</span>
-                        </div>
-
-                        <div class="flex-1" />
-
-                        <!-- Selection actions: operate on the checked email(s) — one or
-                             many — or the single email open in the reading pane.
-                             Disabled only when there's no target at all. -->
-                        <div class="flex items-center gap-0.5 shrink-0">
-                            <UTooltip :text="canArchive ? 'Archive' : 'No Archive folder'">
-                                <UButton
-                                    icon="i-lucide-archive"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="sm"
-                                    :disabled="!hasActionTarget || !canArchive"
-                                    @click="archiveSelected"
-                                />
-                            </UTooltip>
-                            <UTooltip text="Mark as read">
-                                <UButton
-                                    icon="i-lucide-mail-open"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="sm"
-                                    :disabled="!hasActionTarget"
-                                    :loading="isApplyingBulkFlags"
-                                    @click="setBulkFlags(true)"
-                                />
-                            </UTooltip>
-                            <UTooltip text="Mark as unread">
-                                <UButton
-                                    icon="i-lucide-mail"
-                                    color="neutral"
-                                    variant="ghost"
-                                    size="sm"
-                                    :disabled="!hasActionTarget"
-                                    :loading="isApplyingBulkFlags"
-                                    @click="setBulkFlags(false)"
-                                />
-                            </UTooltip>
-                            <UTooltip text="Delete">
-                                <UButton
-                                    icon="i-lucide-trash-2"
-                                    color="error"
-                                    variant="ghost"
-                                    size="sm"
-                                    :disabled="!hasActionTarget"
-                                    :loading="isDeleting"
-                                    @click="requestDelete"
-                                />
-                            </UTooltip>
-                        </div>
-
-                        <div class="w-px h-5 bg-default shrink-0" />
-
-                        <!-- View mode toggle (desktop only; mobile is always single-list) -->
-                        <UTooltip v-if="!isMobile" :text="viewMode === 'split' ? 'Switch to list view' : 'Switch to split view'">
-                            <UButton
-                                :icon="viewMode === 'split' ? 'i-lucide-columns-2' : 'i-lucide-rows-3'"
-                                color="neutral"
-                                variant="ghost"
-                                size="md"
-                                @click="toggleViewMode"
-                            />
-                        </UTooltip>
-
-                        <UTooltip text="Refresh">
-                            <UButton
-                                icon="i-lucide-refresh-cw"
-                                color="neutral"
-                                variant="ghost"
-                                size="md"
-                                :loading="mails.loading.value"
-                                @click="handleRefresh"
-                            />
-                        </UTooltip>
-                    </div>
 
                     <!-- Main layout: list (+ optional detail in split mode) -->
                     <div
@@ -846,6 +844,8 @@ function closeActiveMail() {
                                                     color="neutral"
                                                     variant="ghost"
                                                     size="xs"
+                                                    :loading="isApplyingBulkFlags"
+                                                    @click="toggleRowSeen(mail)"
                                                 />
                                             </UTooltip>
                                         </div>
@@ -973,6 +973,7 @@ function closeActiveMail() {
                                 :folder-path="systemFolderPath"
                                 :mail-uid="activeMailUid"
                                 closable
+                                hide-actions
                                 @close="closeActiveMail"
                                 @not-found="closeActiveMail"
                                 @flags-change="handleFlagsChange"
