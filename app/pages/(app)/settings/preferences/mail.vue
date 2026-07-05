@@ -72,7 +72,7 @@ async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 
 		<template #body>
 			<DashboardPageBody>
-				<UForm :state="state" @submit="onSubmit" class="flex flex-col gap-12">
+				<UForm :state="state" @submit="onSubmit" class="flex flex-col space-y-6">
 					<!-- Header -->
 					<div>
 						<h2 class="text-xl font-semibold text-white">Mail Preferences</h2>
