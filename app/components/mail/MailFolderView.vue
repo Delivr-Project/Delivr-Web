@@ -6,7 +6,7 @@ import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 import MailDetailContent from '~/components/mail/MailDetailContent.vue';
 import MailToolbar from '~/components/mail/MailToolbar.vue';
 import { useEffectiveMailViewMode, type MailViewMode } from '~/composables/useMailViewMode';
-import { useMediaQuery } from '@vueuse/core';
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 
 const props = defineProps<{
     /** Raw folder route param (possibly slash-joined encoded segments). */
@@ -31,7 +31,7 @@ const viewMode = useEffectiveMailViewMode();
 // Below the `lg` breakpoint there's no room for the side-by-side split, so
 // mobile always uses a single list that opens mail full-screen — regardless of
 // the stored view mode.
-const isMobile = useMediaQuery('(max-width: 1023px)');
+const isMobile = useBreakpoints(breakpointsTailwind).smaller('lg');
 
 const mailAccount = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
 const accountId = mailAccount.data.value.id;
@@ -624,6 +624,8 @@ function closeActiveMail() {
 
                 <template #default>
                     <UButton
+                        /** on dekstop or tebalt */
+                        v-if="!isMobile"
                         class="bg-transparent ring-default w-full max-w-md justify-start text-muted"
                         color="neutral"
                         variant="outline"

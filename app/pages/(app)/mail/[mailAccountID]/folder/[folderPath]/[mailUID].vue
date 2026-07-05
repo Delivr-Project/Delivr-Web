@@ -2,7 +2,7 @@
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 import MailFolderView from '~/components/mail/MailFolderView.vue';
 import { useEffectiveMailViewMode } from '~/composables/useMailViewMode';
-import { useMediaQuery } from '@vueuse/core';
+import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 
 definePageMeta({
     key: (route) => route.path,
@@ -19,7 +19,7 @@ const mailUid = computed(() => {
 });
 
 const viewMode = useEffectiveMailViewMode();
-const isMobile = useMediaQuery('(max-width: 1023px)');
+const isMobile = useBreakpoints(breakpointsTailwind).smaller('lg');
 const fullScreen = computed(() => isMobile.value || viewMode.value === 'list');
 
 function goBack() {
