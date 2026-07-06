@@ -96,6 +96,24 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
                 };
             }
         },
+        [`/settings/mail-accounts/${mailAccountID}/folder-settings`]: {
+            isNavLink: true,
+            label: 'Folders',
+            icon: 'i-lucide-folder-tree',
+            exact: true,
+            getDynamicValues() {
+                return {
+                    seoSettings: {
+                        title: `Mail Account ${account.value?.display_name} Folders`,
+                        description: `Create, move and delete folders and set special-folder mappings for ${account.value?.display_name} on Delivr`
+                    },
+                    breadcrumbItems: [
+                        { label: account.value?.display_name, to: `/settings/mail-accounts/${mailAccountID}` },
+                        { label: 'Folders' }
+                    ]
+                };
+            }
+        },
         [`/settings/mail-accounts/${mailAccountID}/backend-configuration`]: {
             isNavLink: true,
             label: 'Backend Configuration',

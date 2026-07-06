@@ -208,16 +208,24 @@ export class MailboxDisplayUtils {
     }
 
 
+    // The backend resolves and persists special-use (server \Flag → name
+    // heuristic → user override) and returns it authoritatively, so the client
+    // just trusts `specialUse` — no name guessing here.
+    public static specialUseIcon(specialUse: string | undefined): string {
+        switch (specialUse?.replace(/^\\/, '').toLowerCase()) {
+            case 'inbox': return 'i-lucide-inbox';
+            case 'sent': return 'i-lucide-send';
+            case 'drafts': return 'i-lucide-file-edit';
+            case 'trash': return 'i-lucide-trash-2';
+            case 'junk': return 'i-lucide-shield-alert';
+            case 'archive': return 'i-lucide-archive';
+            default: return 'i-lucide-folder';
+        }
+    }
+
     private static folderIconFor(node: MailboxTreeNode): string {
         if (node.mailbox && this.isInbox(node.mailbox)) return 'i-lucide-inbox';
-        const special = node.mailbox?.specialUse?.replace(/^\\/, '').toLowerCase();
-        const lower = (special ?? node.name).toLowerCase();
-        if (lower === 'sent' || lower === 'sent mail' || lower === 'sent messages') return 'i-lucide-send';
-        if (lower === 'drafts') return 'i-lucide-file-edit';
-        if (lower === 'trash' || lower === 'deleted' || lower === 'deleted messages') return 'i-lucide-trash-2';
-        if (lower === 'spam' || lower === 'junk') return 'i-lucide-shield-alert';
-        if (lower === 'archive') return 'i-lucide-archive';
-        return 'i-lucide-folder';
+        return this.specialUseIcon(node.mailbox?.specialUse);
     }
 
     // Does the active route point at this node or any of its descendants?
