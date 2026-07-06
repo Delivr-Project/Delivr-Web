@@ -1685,10 +1685,10 @@ export const zGetMailAccountsByMailAccountIdSpecialUseResponse = z.object({
 });
 
 export const zPutMailAccountsByMailAccountIdSpecialUseBody = z.object({
-    drafts: z.string().optional(),
-    sent: z.string().optional(),
-    spam: z.string().optional(),
-    trash: z.string().optional(),
+    drafts: z.string().nullish(),
+    sent: z.string().nullish(),
+    spam: z.string().nullish(),
+    trash: z.string().nullish(),
     archive: z.string().nullish()
 });
 

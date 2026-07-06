@@ -3122,10 +3122,10 @@ export type GetMailAccountsByMailAccountIdSpecialUseResponse = GetMailAccountsBy
 
 export type PutMailAccountsByMailAccountIdSpecialUseData = {
     body: {
-        drafts?: string;
-        sent?: string;
-        spam?: string;
-        trash?: string;
+        drafts?: string | null;
+        sent?: string | null;
+        spam?: string | null;
+        trash?: string | null;
         archive?: string | null;
     };
     path: {
