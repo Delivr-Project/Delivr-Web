@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import type { MailAccountWithMailboxes, Mailbox } from '~/utils/types';
-import type { SpecialUseMapping } from '~/api-client';
+import type { GetMailAccountsByMailAccountIdSpecialUseResponse, PutMailAccountsByMailAccountIdSpecialUseData } from '~/api-client';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
+
+// The resolved special-use mapping the API returns (type → { path, source }).
+type SpecialUseMapping = GetMailAccountsByMailAccountIdSpecialUseResponse['data'];
 
 const toast = useToast();
 
@@ -25,7 +28,10 @@ const asParent = (v: string) => (v === NONE ? '' : v);
 
 const isInbox = (mb: Mailbox) => MailboxDisplayUtils.isInbox(mb);
 const leaf = (mb: Mailbox) => MailboxDisplayUtils.leafName(mb);
-const indent = (mb: Mailbox) => '   '.repeat(mb.parent.length);
+// Nesting depth (rendered as left padding on the dropdown items - see each
+// picker's #item-label slot). The option label stays the bare leaf name so the
+// closed <USelect> shows the selected folder flush-left, with no leading spaces.
+type FolderOption = { label: string; value: string; depth: number };
 
 // The real leaf segment of a path (not the display name).
 function pathLeaf(mb: Mailbox): string {
@@ -35,10 +41,10 @@ function pathLeaf(mb: Mailbox): string {
 // Parent-folder options for a create/move picker. When `folder` is given, its
 // own subtree is excluded (a folder can't move into itself or a descendant).
 function parentOptions(folder?: Mailbox) {
-    const opts: { label: string; value: string }[] = [{ label: 'Top level (no parent)', value: NONE }];
+    const opts: FolderOption[] = [{ label: 'Top level (no parent)', value: NONE, depth: 0 }];
     for (const mb of mailboxes.value) {
         if (folder && (mb.path === folder.path || mb.path.startsWith(folder.path + folder.delimiter))) continue;
-        opts.push({ label: indent(mb) + leaf(mb), value: mb.path });
+        opts.push({ label: leaf(mb), value: mb.path, depth: mb.parent.length });
     }
     return opts;
 }
@@ -46,10 +52,10 @@ function parentOptions(folder?: Mailbox) {
 // Folders as a flat option list for the special-use pickers. Only the optional
 // archive folder offers "Not set" — required types (drafts/sent/spam/trash) must
 // map to a folder (or fall back to auto-detection), never be unset by the user.
-const folderItems = computed(() => mailboxes.value.map((mb) => ({ label: indent(mb) + leaf(mb), value: mb.path })));
-function folderOptionsFor(type: SpecialType) {
+const folderItems = computed<FolderOption[]>(() => mailboxes.value.map((mb) => ({ label: leaf(mb), value: mb.path, depth: mb.parent.length })));
+function folderOptionsFor(type: SpecialType): FolderOption[] {
     return isOptionalType(type)
-        ? [{ label: 'Not set', value: NONE }, ...folderItems.value]
+        ? [{ label: 'Not set', value: NONE, depth: 0 }, ...folderItems.value]
         : folderItems.value;
 }
 
@@ -254,15 +260,25 @@ function sourceLabel(key: SpecialType): string | null {
 async function saveSpecialUse() {
     savingSpecial.value = true;
     // Only send types the user actually changed. A picked folder is sent as its
-    // path; a user-chosen "Not set" is sent as "" (an explicit, persisted none)
-    // so the backend won't silently re-detect a folder for it; a type displaced
-    // by a reassignment is sent as null (revert to auto-detection). Untouched
-    // types are omitted, so their auto-detected mapping is left as-is.
-    const body: Partial<Record<SpecialType, string | null>> = {};
+    // path; the optional archive's "Not set" is sent as "" (an explicit, persisted
+    // none) so the backend won't silently re-detect a folder for it; a type
+    // displaced by a reassignment reverts to auto-detection — sent as null for
+    // archive, and as "" for required types (which the API won't accept as null).
+    // Untouched types are omitted, so their auto-detected mapping is left as-is.
+    const body: PutMailAccountsByMailAccountIdSpecialUseData['body'] = {};
     for (const { key } of SPECIAL_TYPES) {
         if (specialState[key] === storedValue(key)) continue;
-        if (specialState[key] === NONE) body[key] = noneIntent[key] === 'auto' ? null : '';
-        else body[key] = specialState[key];
+        if (specialState[key] !== NONE) {
+            body[key] = specialState[key];
+        } else if (key === 'archive' && noneIntent[key] === 'auto') {
+            // Archive displaced by a reassignment → null reverts it to auto-detection.
+            body.archive = null;
+        } else {
+            // Explicit "Not set" for archive → "" (a persisted none); a required type
+            // displaced by a reassignment → "" reverts it to auto-detection (the API
+            // only accepts null for the optional archive type, never a required one).
+            body[key] = '';
+        }
     }
     try {
         const res = await useAPI((api) => api.putMailAccountsByMailAccountIdSpecialUse({
@@ -308,7 +324,11 @@ async function saveSpecialUse() {
                         <UInput v-model="createName" placeholder="Folder name" class="w-full" @keydown.enter="createFolder" />
                     </UFormField>
                     <UFormField label="Parent" class="flex flex-col gap-1 flex-1">
-                        <USelect v-model="createParent" :items="parentOptions()" class="w-full" />
+                        <USelect v-model="createParent" :items="parentOptions()" class="w-full">
+                            <template #item-label="{ item }">
+                                <span :style="{ paddingInlineStart: ((item as FolderOption).depth * 16) + 'px' }">{{ item.label }}</span>
+                            </template>
+                        </USelect>
                     </UFormField>
                     <UButton label="Create" icon="i-lucide-plus" color="primary" :loading="creating" :disabled="!createName.trim()" @click="createFolder" />
                 </div>
@@ -370,7 +390,11 @@ async function saveSpecialUse() {
                             {{ sourceLabel(type.key) }}
                         </UBadge>
                     </div>
-                    <USelect :model-value="specialState[type.key]" :items="folderOptionsFor(type.key)" placeholder="Auto-detect" class="w-full sm:flex-1" @update:model-value="(v: string) => onSpecialSelect(type.key, v)" />
+                    <USelect :model-value="specialState[type.key]" :items="folderOptionsFor(type.key)" placeholder="Auto-detect" class="w-full sm:flex-1" @update:model-value="(v: string) => onSpecialSelect(type.key, v)">
+                        <template #item-label="{ item }">
+                            <span :style="{ paddingInlineStart: ((item as FolderOption).depth * 16) + 'px' }">{{ item.label }}</span>
+                        </template>
+                    </USelect>
                 </div>
                 <div class="flex justify-end pt-2">
                     <UButton label="Save special folders" icon="i-lucide-save" color="primary" :loading="savingSpecial" :disabled="!specialDirty" @click="saveSpecialUse" />
@@ -395,7 +419,11 @@ async function saveSpecialUse() {
         <DashboardModal v-model:open="moveOpen" title="Move folder" icon="i-lucide-folder-input" icon-color="sky">
             <p class="text-sm text-muted mb-3">Choose a new parent for "{{ moveTarget ? leaf(moveTarget) : '' }}". Its sub-folders move with it.</p>
             <UFormField label="Parent" class="flex flex-col gap-1">
-                <USelect v-model="moveParent" :items="moveParentOptions" class="w-full" />
+                <USelect v-model="moveParent" :items="moveParentOptions" class="w-full">
+                    <template #item-label="{ item }">
+                        <span :style="{ paddingInlineStart: ((item as FolderOption).depth * 16) + 'px' }">{{ item.label }}</span>
+                    </template>
+                </USelect>
             </UFormField>
             <template #footer>
                 <div class="flex justify-end gap-3">
