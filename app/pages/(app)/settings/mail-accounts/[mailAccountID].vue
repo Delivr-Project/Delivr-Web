@@ -50,8 +50,11 @@ if (mailAccountID === "new") {
     }
 
     useSubrouterInjectedData<MailAccountWithMailboxes, NewMailAccount>('mail_account', true).provide({
+        // Bind through an arrow so `this` isn't lost when the injected consumer
+        // calls refresh() — an unbound method reference throws "can't access
+        // property fetchData, this is undefined".
         data: account as Ref<MailAccountWithMailboxes>,
-        refresh: mailAccountsStore.refresh,
+        refresh: () => mailAccountsStore.refresh(),
         loading: mailAccountsStore.isLoading,
         isNew: false
     });

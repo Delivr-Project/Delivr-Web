@@ -801,7 +801,7 @@ export type PutAccountPreferencesFolderDndResponses = {
 export type PutAccountPreferencesFolderDndResponse = PutAccountPreferencesFolderDndResponses[keyof PutAccountPreferencesFolderDndResponses];
 
 export type SpecialUseEntry = {
-    path: string;
+    path: string | null;
     source: 'flag' | 'guess' | 'user';
 };
 

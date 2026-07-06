@@ -16,6 +16,13 @@ const defaultDelimiter = computed(() => mailboxes.value[0]?.delimiter || '/');
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+// reka-ui's <USelect> rejects an item whose value is an empty string, so
+// "no selection" (top-level parent / unset special folder) uses this sentinel,
+// translated back to "" (or an explicit none) at the edges. A real IMAP path
+// can never equal it.
+const NONE = '__none__';
+const asParent = (v: string) => (v === NONE ? '' : v);
+
 const isInbox = (mb: Mailbox) => MailboxDisplayUtils.isInbox(mb);
 const leaf = (mb: Mailbox) => MailboxDisplayUtils.leafName(mb);
 const indent = (mb: Mailbox) => '   '.repeat(mb.parent.length);
@@ -28,7 +35,7 @@ function pathLeaf(mb: Mailbox): string {
 // Parent-folder options for a create/move picker. When `folder` is given, its
 // own subtree is excluded (a folder can't move into itself or a descendant).
 function parentOptions(folder?: Mailbox) {
-    const opts: { label: string; value: string }[] = [{ label: 'Top level (no parent)', value: '' }];
+    const opts: { label: string; value: string }[] = [{ label: 'Top level (no parent)', value: NONE }];
     for (const mb of mailboxes.value) {
         if (folder && (mb.path === folder.path || mb.path.startsWith(folder.path + folder.delimiter))) continue;
         opts.push({ label: indent(mb) + leaf(mb), value: mb.path });
@@ -38,7 +45,7 @@ function parentOptions(folder?: Mailbox) {
 
 // Every folder as a flat option list (for the special-use pickers).
 const folderOptions = computed(() => [
-    { label: 'Not set', value: '' },
+    { label: 'Not set', value: NONE },
     ...mailboxes.value.map((mb) => ({ label: indent(mb) + leaf(mb), value: mb.path })),
 ]);
 
@@ -64,14 +71,14 @@ async function runMutation(fn: () => Promise<any>, successTitle: string, success
 
 // ── Create ────────────────────────────────────────────────────────────────
 const createName = ref('');
-const createParent = ref('');
+const createParent = ref(NONE);
 const creating = ref(false);
 
 async function createFolder() {
     const name = createName.value.trim();
     if (!name) return;
     creating.value = true;
-    const path = parentPathToChildPath(createParent.value, name);
+    const path = parentPathToChildPath(asParent(createParent.value), name);
     const ok = await runMutation(
         () => useAPI((api) => api.postMailAccountsByMailAccountIdMailboxes({
             path: { mailAccountID: accountId.value },
@@ -80,7 +87,7 @@ async function createFolder() {
         'Folder created',
         `"${name}" was created.`,
     );
-    if (ok) { createName.value = ''; createParent.value = ''; }
+    if (ok) { createName.value = ''; createParent.value = NONE; }
     creating.value = false;
 }
 
@@ -125,7 +132,7 @@ const moveLoading = ref(false);
 
 function openMove(mb: Mailbox) {
     moveTarget.value = mb;
-    moveParent.value = mb.parentPath || '';
+    moveParent.value = mb.parentPath || NONE;
     moveOpen.value = true;
 }
 
@@ -134,10 +141,10 @@ const moveParentOptions = computed(() => parentOptions(moveTarget.value ?? undef
 async function confirmMove() {
     const mb = moveTarget.value;
     if (!mb) return;
-    const newPath = parentPathToChildPath(moveParent.value, pathLeaf(mb));
+    const newPath = parentPathToChildPath(asParent(moveParent.value), pathLeaf(mb));
     if (newPath === mb.path) { moveOpen.value = false; return; }
     moveLoading.value = true;
-    const dest = moveParent.value ? `"${leaf(mailboxes.value.find((m) => m.path === moveParent.value)!)}"` : 'the top level';
+    const dest = moveParent.value !== NONE ? `"${leaf(mailboxes.value.find((m) => m.path === moveParent.value)!)}"` : 'the top level';
     const ok = await runMutation(
         () => useAPI((api) => api.putMailAccountsByMailAccountIdMailboxesByMailboxPath({
             path: { mailAccountID: accountId.value, mailboxPath: mb.path },
@@ -183,11 +190,42 @@ const SPECIAL_TYPES = [
 type SpecialType = (typeof SPECIAL_TYPES)[number]['key'];
 
 const specialUse = ref<SpecialUseMapping>({});
-const specialState = reactive<Record<SpecialType, string>>({ drafts: '', sent: '', spam: '', trash: '', archive: '' });
+const specialState = reactive<Record<SpecialType, string>>({ drafts: NONE, sent: NONE, spam: NONE, trash: NONE, archive: NONE });
 const savingSpecial = ref(false);
 
+// Why a type currently sits at NONE: 'none' = the user picked "Not set" (persist
+// as an explicit none that blocks re-detection); 'auto' = it was displaced when
+// its folder was assigned to another type (revert to auto-detection).
+const noneIntent = reactive<Partial<Record<SpecialType, 'none' | 'auto'>>>({});
+
+// The stored path for a type, or the NONE sentinel (missing entry, or an explicit
+// user "none" whose path is null).
+function storedValue(key: SpecialType): string {
+    return specialUse.value[key]?.path ?? NONE;
+}
+
 function syncSpecialState() {
-    for (const { key } of SPECIAL_TYPES) specialState[key] = specialUse.value[key]?.path ?? '';
+    for (const { key } of SPECIAL_TYPES) {
+        specialState[key] = storedValue(key);
+        delete noneIntent[key];
+    }
+}
+
+// A folder can only be one special type: when a folder is picked for one type,
+// release it from any other type that currently holds it.
+function onSpecialSelect(type: SpecialType, value: string) {
+    if (value !== NONE) {
+        for (const { key } of SPECIAL_TYPES) {
+            if (key !== type && specialState[key] === value) {
+                specialState[key] = NONE;
+                noneIntent[key] = 'auto';   // displaced → let the backend re-detect
+            }
+        }
+        delete noneIntent[type];
+    } else {
+        noneIntent[type] = 'none';          // user explicitly cleared this type
+    }
+    specialState[type] = value;
 }
 
 async function loadSpecialUse() {
@@ -196,7 +234,7 @@ async function loadSpecialUse() {
 }
 await loadSpecialUse();
 
-const specialDirty = computed(() => SPECIAL_TYPES.some(({ key }) => specialState[key] !== (specialUse.value[key]?.path ?? '')));
+const specialDirty = computed(() => SPECIAL_TYPES.some(({ key }) => specialState[key] !== storedValue(key)));
 
 function sourceLabel(key: SpecialType): string | null {
     const src = specialUse.value[key]?.source;
@@ -206,8 +244,17 @@ function sourceLabel(key: SpecialType): string | null {
 
 async function saveSpecialUse() {
     savingSpecial.value = true;
-    const body: Record<SpecialType, string | null> = { drafts: null, sent: null, spam: null, trash: null, archive: null };
-    for (const { key } of SPECIAL_TYPES) body[key] = specialState[key] ? specialState[key] : null;
+    // Only send types the user actually changed. A picked folder is sent as its
+    // path; a user-chosen "Not set" is sent as "" (an explicit, persisted none)
+    // so the backend won't silently re-detect a folder for it; a type displaced
+    // by a reassignment is sent as null (revert to auto-detection). Untouched
+    // types are omitted, so their auto-detected mapping is left as-is.
+    const body: Partial<Record<SpecialType, string | null>> = {};
+    for (const { key } of SPECIAL_TYPES) {
+        if (specialState[key] === storedValue(key)) continue;
+        if (specialState[key] === NONE) body[key] = noneIntent[key] === 'auto' ? null : '';
+        else body[key] = specialState[key];
+    }
     try {
         const res = await useAPI((api) => api.putMailAccountsByMailAccountIdSpecialUse({
             path: { mailAccountID: accountId.value },
@@ -314,7 +361,7 @@ async function saveSpecialUse() {
                             {{ sourceLabel(type.key) }}
                         </UBadge>
                     </div>
-                    <USelect v-model="specialState[type.key]" :items="folderOptions" class="w-full sm:flex-1" />
+                    <USelect :model-value="specialState[type.key]" :items="folderOptions" class="w-full sm:flex-1" @update:model-value="(v: string) => onSpecialSelect(type.key, v)" />
                 </div>
                 <div class="flex justify-end pt-2">
                     <UButton label="Save special folders" icon="i-lucide-save" color="primary" :loading="savingSpecial" :disabled="!specialDirty" @click="saveSpecialUse" />

@@ -19,11 +19,36 @@ export class MailboxDisplayUtils {
             || mb.path.toLowerCase() === 'inbox';
     }
 
-    /** The leaf display name for a mailbox (last path segment). */
+    /** The leaf display name for a mailbox (last path segment / real folder name). */
     public static leafName(mb: Mailbox): string {
         if (mb.name) return mb.name;
         const parts = mb.path.split(mb.delimiter);
         return parts[parts.length - 1] || mb.path;
+    }
+
+    /**
+     * The canonical, human-friendly label for a special-use folder (e.g. a folder
+     * the backend resolved to `\Junk` is shown as "Spam" regardless of its real
+     * name). Returns null for ordinary folders.
+     */
+    public static specialUseLabel(specialUse: string | undefined): string | null {
+        switch (specialUse?.replace(/^\\/, '').toLowerCase()) {
+            case 'inbox': return 'Inbox';
+            case 'sent': return 'Sent';
+            case 'drafts': return 'Drafts';
+            case 'junk': return 'Spam';
+            case 'trash': return 'Trash';
+            case 'archive': return 'Archive';
+            default: return null;
+        }
+    }
+
+    /**
+     * The name to show a user for a mailbox: the canonical special-use label when
+     * the folder is a special folder, otherwise its real leaf name.
+     */
+    public static displayName(mb: Mailbox): string {
+        return this.specialUseLabel(mb.specialUse) ?? this.leafName(mb);
     }
 
     /**
@@ -116,7 +141,7 @@ export class MailboxDisplayUtils {
             accum = i === 0 ? parts[i]! : accum + mb.delimiter + parts[i];
             const found = mailboxes.find((m) => m.path === accum);
             items.push({
-                label: found ? this.leafName(found) : parts[i]!,
+                label: found ? this.displayName(found) : parts[i]!,
                 to: found ? this.folderUrl(accountId, found) : undefined,
             });
         }
@@ -188,7 +213,7 @@ export class MailboxDisplayUtils {
                 }
                 if (i === segments.length - 1) {
                     node.mailbox = mb;
-                    node.name = this.isInbox(mb) ? 'Inbox' : this.leafName(mb);
+                    node.name = this.isInbox(mb) ? 'Inbox' : this.displayName(mb);
                 }
                 level = node.children;
             }
