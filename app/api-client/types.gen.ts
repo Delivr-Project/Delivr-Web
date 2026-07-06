@@ -3091,23 +3091,23 @@ export type GetMailAccountsByMailAccountIdSpecialUseResponses = {
         message: 'Special-use mapping retrieved successfully';
         data: {
             inbox?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             drafts?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             sent?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             spam?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             trash?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             archive?: {
@@ -3122,10 +3122,10 @@ export type GetMailAccountsByMailAccountIdSpecialUseResponse = GetMailAccountsBy
 
 export type PutMailAccountsByMailAccountIdSpecialUseData = {
     body: {
-        drafts?: string | null;
-        sent?: string | null;
-        spam?: string | null;
-        trash?: string | null;
+        drafts?: string;
+        sent?: string;
+        spam?: string;
+        trash?: string;
         archive?: string | null;
     };
     path: {
@@ -3158,23 +3158,23 @@ export type PutMailAccountsByMailAccountIdSpecialUseResponses = {
         message: 'Special-use mapping updated successfully';
         data: {
             inbox?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             drafts?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             sent?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             spam?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             trash?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
             archive?: {

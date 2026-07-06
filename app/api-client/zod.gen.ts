@@ -1634,7 +1634,7 @@ export const zGetMailAccountsByMailAccountIdSpecialUseResponse = z.object({
     message: z.literal('Special-use mapping retrieved successfully'),
     data: z.object({
         inbox: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1642,7 +1642,7 @@ export const zGetMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         drafts: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1650,7 +1650,7 @@ export const zGetMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         sent: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1658,7 +1658,7 @@ export const zGetMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         spam: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1666,7 +1666,7 @@ export const zGetMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         trash: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1685,10 +1685,10 @@ export const zGetMailAccountsByMailAccountIdSpecialUseResponse = z.object({
 });
 
 export const zPutMailAccountsByMailAccountIdSpecialUseBody = z.object({
-    drafts: z.string().nullish(),
-    sent: z.string().nullish(),
-    spam: z.string().nullish(),
-    trash: z.string().nullish(),
+    drafts: z.string().optional(),
+    sent: z.string().optional(),
+    spam: z.string().optional(),
+    trash: z.string().optional(),
     archive: z.string().nullish()
 });
 
@@ -1705,7 +1705,7 @@ export const zPutMailAccountsByMailAccountIdSpecialUseResponse = z.object({
     message: z.literal('Special-use mapping updated successfully'),
     data: z.object({
         inbox: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1713,7 +1713,7 @@ export const zPutMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         drafts: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1721,7 +1721,7 @@ export const zPutMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         sent: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1729,7 +1729,7 @@ export const zPutMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         spam: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1737,7 +1737,7 @@ export const zPutMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         trash: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
