@@ -43,11 +43,15 @@ function parentOptions(folder?: Mailbox) {
     return opts;
 }
 
-// Every folder as a flat option list (for the special-use pickers).
-const folderOptions = computed(() => [
-    { label: 'Not set', value: NONE },
-    ...mailboxes.value.map((mb) => ({ label: indent(mb) + leaf(mb), value: mb.path })),
-]);
+// Folders as a flat option list for the special-use pickers. Only the optional
+// archive folder offers "Not set" — required types (drafts/sent/spam/trash) must
+// map to a folder (or fall back to auto-detection), never be unset by the user.
+const folderItems = computed(() => mailboxes.value.map((mb) => ({ label: indent(mb) + leaf(mb), value: mb.path })));
+function folderOptionsFor(type: SpecialType) {
+    return isOptionalType(type)
+        ? [{ label: 'Not set', value: NONE }, ...folderItems.value]
+        : folderItems.value;
+}
 
 function parentPathToChildPath(parentPath: string, name: string): string {
     if (!parentPath) return name;
@@ -188,6 +192,11 @@ const SPECIAL_TYPES = [
     { key: 'archive', label: 'Archive', icon: 'i-lucide-archive' },
 ] as const;
 type SpecialType = (typeof SPECIAL_TYPES)[number]['key'];
+
+// Optional types may be explicitly unset by the user; every other type is
+// required. Mirrors the backend's SpecialUse.OPTIONAL_TYPES.
+const OPTIONAL_TYPES: readonly SpecialType[] = ['archive'];
+const isOptionalType = (type: SpecialType) => OPTIONAL_TYPES.includes(type);
 
 const specialUse = ref<SpecialUseMapping>({});
 const specialState = reactive<Record<SpecialType, string>>({ drafts: NONE, sent: NONE, spam: NONE, trash: NONE, archive: NONE });
@@ -361,7 +370,7 @@ async function saveSpecialUse() {
                             {{ sourceLabel(type.key) }}
                         </UBadge>
                     </div>
-                    <USelect :model-value="specialState[type.key]" :items="folderOptions" class="w-full sm:flex-1" @update:model-value="(v: string) => onSpecialSelect(type.key, v)" />
+                    <USelect :model-value="specialState[type.key]" :items="folderOptionsFor(type.key)" placeholder="Auto-detect" class="w-full sm:flex-1" @update:model-value="(v: string) => onSpecialSelect(type.key, v)" />
                 </div>
                 <div class="flex justify-end pt-2">
                     <UButton label="Save special folders" icon="i-lucide-save" color="primary" :loading="savingSpecial" :disabled="!specialDirty" @click="saveSpecialUse" />
