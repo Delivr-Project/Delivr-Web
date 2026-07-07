@@ -48,13 +48,24 @@ function pathLeaf(mb: Mailbox): string {
 // Sorted, depth-first ordering of mailboxes based on real path. This guarantees
 // children appear immediately after their ancestors even when the API returns
 // them out of order.
+function isInInboxTree(mb: Mailbox, inbox?: Mailbox): boolean {
+    if (!inbox) return false;
+    const delimiter = inbox.delimiter || defaultDelimiter.value;
+    return mb.path === inbox.path || mb.path.startsWith(inbox.path + delimiter);
+}
+
 const sortedMailboxes = computed<Mailbox[]>(() => {
     const list = mailboxes.value.slice();
     const delimiter = defaultDelimiter.value;
+    const inbox = list.find(isInbox);
     list.sort((a, b) => {
+        const aInInbox = isInInboxTree(a, inbox);
+        const bInInbox = isInInboxTree(b, inbox);
+        if (aInInbox && !bInInbox) return -1;
+        if (!aInInbox && bInInbox) return 1;
+
         const da = a.delimiter || delimiter;
         const db = b.delimiter || delimiter;
-
         return a.path.split(da).filter(Boolean).join('/')
             .localeCompare(b.path.split(db).filter(Boolean).join('/'));
     });
