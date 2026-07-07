@@ -49,11 +49,14 @@ function parentOptions(folder?: Mailbox) {
     return opts;
 }
 
-// Folders as a flat option list for the special-use pickers. Only the optional
-// archive folder offers "Not set" — required types (drafts/sent/spam/trash) must
-// map to a folder (or fall back to auto-detection), never be unset by the user.
-const folderItems = computed<FolderOption[]>(() => mailboxes.value.map((mb) => ({ label: leaf(mb), value: mb.path, depth: mb.parent.length })));
-function folderOptionsFor(type: SpecialType): FolderOption[] {
+// Folders as a flat option list for the special-use pickers. Inbox is excluded
+// because it cannot be reassigned to a special-use role.
+const folderItems = computed<FolderOption[]>(() =>
+    mailboxes.value
+        .filter((mb) => !isInbox(mb))
+        .map((mb) => ({ label: leaf(mb), value: mb.path, depth: mb.parent.length }))
+);
+function folderOptionsFor(_type: SpecialType): FolderOption[] {
     return folderItems.value;
 }
 
