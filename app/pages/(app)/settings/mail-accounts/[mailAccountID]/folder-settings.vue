@@ -28,36 +28,59 @@ const asParent = (v: string) => (v === NONE ? '' : v);
 
 const isInbox = (mb: Mailbox) => MailboxDisplayUtils.isInbox(mb);
 const leaf = (mb: Mailbox) => MailboxDisplayUtils.leafName(mb);
-// Nesting depth (rendered as left padding on the dropdown items - see each
-// picker's #item-label slot). The option label stays the bare leaf name so the
-// closed <USelect> shows the selected folder flush-left, with no leading spaces.
-type FolderOption = { label: string; value: string; depth: number };
+
+// Dropdown option type. Depth and labels are computed from the real IMAP path
+// rather than the backend's `parent` array, because some servers/servers return
+// empty parent arrays and relying on them flattens nested folders.
+type FolderOption = { label: string; value: string; depth: number; disabled?: boolean };
+
+// Number of path segments minus one (depth 0 = top level).
+function folderDepth(mb: Mailbox): number {
+    const delimiter = mb.delimiter || defaultDelimiter.value;
+    return mb.path.split(delimiter).filter(Boolean).length - 1;
+}
 
 // The real leaf segment of a path (not the display name).
 function pathLeaf(mb: Mailbox): string {
     return mb.path.split(mb.delimiter).pop() || mb.path;
 }
 
+// Sorted, depth-first ordering of mailboxes based on real path. This guarantees
+// children appear immediately after their ancestors even when the API returns
+// them out of order.
+const sortedMailboxes = computed<Mailbox[]>(() => {
+    const list = mailboxes.value.slice();
+    const delimiter = defaultDelimiter.value;
+    list.sort((a, b) => {
+        const da = a.delimiter || delimiter;
+        const db = b.delimiter || delimiter;
+
+        return a.path.split(da).filter(Boolean).join('/')
+            .localeCompare(b.path.split(db).filter(Boolean).join('/'));
+    });
+    return list;
+});
+
 // Parent-folder options for a create/move picker. When `folder` is given, its
 // own subtree is excluded (a folder can't move into itself or a descendant).
 function parentOptions(folder?: Mailbox) {
     const opts: FolderOption[] = [{ label: 'Top level (no parent)', value: NONE, depth: 0 }];
-    for (const mb of mailboxes.value) {
+    for (const mb of sortedMailboxes.value) {
         if (folder && (mb.path === folder.path || mb.path.startsWith(folder.path + folder.delimiter))) continue;
-        opts.push({ label: leaf(mb), value: mb.path, depth: mb.parent.length });
+        opts.push({ label: leaf(mb), value: mb.path, depth: folderDepth(mb) });
     }
     return opts;
 }
 
-// Folders as a flat option list for the special-use pickers. Inbox is excluded
-// because it cannot be reassigned to a special-use role.
-const folderItems = computed<FolderOption[]>(() =>
-    mailboxes.value
-        .filter((mb) => !isInbox(mb))
-        .map((mb) => ({ label: leaf(mb), value: mb.path, depth: mb.parent.length }))
-);
+// Folders as a flat option list for the special-use pickers. Inbox is included
+// as a disabled item so its subfolders stay visually anchored to their parent.
 function folderOptionsFor(_type: SpecialType): FolderOption[] {
-    return folderItems.value;
+    return sortedMailboxes.value.map((mb) => ({
+        label: isInbox(mb) ? 'Inbox' : leaf(mb),
+        value: mb.path,
+        depth: folderDepth(mb),
+        disabled: isInbox(mb),
+    }));
 }
 
 function parentPathToChildPath(parentPath: string, name: string): string {
@@ -344,8 +367,8 @@ async function saveSpecialUse() {
                 </div>
             </div>
             <div class="divide-y divide-slate-800">
-                <div v-for="mb in mailboxes" :key="mb.path" class="flex items-center gap-2 px-6 py-3">
-                    <span :style="{ paddingLeft: (mb.parent.length * 16) + 'px' }" class="flex items-center gap-2 min-w-0 flex-1">
+                <div v-for="mb in sortedMailboxes" :key="mb.path" class="flex items-center gap-2 px-6 py-3">
+                    <span :style="{ paddingLeft: (folderDepth(mb) * 16) + 'px' }" class="flex items-center gap-2 min-w-0 flex-1">
                         <UIcon :name="MailboxDisplayUtils.specialUseIcon(mb.specialUse)" class="w-4 h-4 text-slate-400 shrink-0" />
                         <span class="truncate text-sm text-white">{{ leaf(mb) }}</span>
                         <UBadge v-if="mb.specialUse && !isInbox(mb)" color="neutral" variant="subtle" size="xs" class="shrink-0">
