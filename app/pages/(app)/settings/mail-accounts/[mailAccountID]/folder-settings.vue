@@ -74,7 +74,7 @@ const sortedMailboxes = computed<Mailbox[]>(() => {
 
 // Parent-folder options for a create/move picker. When `folder` is given, its
 // own subtree is excluded (a folder can't move into itself or a descendant).
-function parentOptions(folder?: Mailbox) {
+function buildParentOptions(folder?: Mailbox): FolderOption[] {
     const opts: FolderOption[] = [{ label: 'Top level (no parent)', value: NONE, depth: 0 }];
     for (const mb of sortedMailboxes.value) {
         if (folder && (mb.path === folder.path || mb.path.startsWith(folder.path + folder.delimiter))) continue;
@@ -83,16 +83,18 @@ function parentOptions(folder?: Mailbox) {
     return opts;
 }
 
+const createParentOptions = computed(() => buildParentOptions());
+
 // Folders as a flat option list for the special-use pickers. Inbox is included
 // as a disabled item so its subfolders stay visually anchored to their parent.
-function folderOptionsFor(_type: SpecialType): FolderOption[] {
-    return sortedMailboxes.value.map((mb) => ({
+const specialFolderOptions = computed<FolderOption[]>(() =>
+    sortedMailboxes.value.map((mb) => ({
         label: isInbox(mb) ? 'Inbox' : leaf(mb),
         value: mb.path,
         depth: folderDepth(mb),
         disabled: isInbox(mb),
-    }));
-}
+    }))
+);
 
 function parentPathToChildPath(parentPath: string, name: string): string {
     if (!parentPath) return name;
@@ -181,7 +183,7 @@ function openMove(mb: Mailbox) {
     moveOpen.value = true;
 }
 
-const moveParentOptions = computed(() => parentOptions(moveTarget.value ?? undefined));
+const moveParentOptions = computed(() => buildParentOptions(moveTarget.value ?? undefined));
 
 async function confirmMove() {
     const mb = moveTarget.value;
@@ -353,7 +355,7 @@ async function saveSpecialUse() {
                         <UInput v-model="createName" placeholder="Folder name" class="w-full" @keydown.enter="createFolder" />
                     </UFormField>
                     <UFormField label="Parent" class="flex flex-col gap-1 flex-1">
-                        <USelect v-model="createParent" :items="parentOptions()" class="w-full">
+                        <USelect v-model="createParent" :items="createParentOptions" class="w-full">
                             <template #item-label="{ item }">
                                 <span :style="{ paddingInlineStart: ((item as FolderOption).depth * 16) + 'px' }">{{ item.label }}</span>
                             </template>
@@ -420,7 +422,7 @@ async function saveSpecialUse() {
                         </UBadge>
                     </div>
                     <div class="flex items-center gap-2 flex-1">
-                        <USelect :model-value="selectDisplayValue(type.key)" :items="folderOptionsFor(type.key)" placeholder="Auto-detect" class="flex-1" @update:model-value="(v: string) => onSpecialSelect(type.key, v)">
+                        <USelect :model-value="selectDisplayValue(type.key)" :items="specialFolderOptions" placeholder="Auto-detect" class="flex-1" @update:model-value="(v: string) => onSpecialSelect(type.key, v)">
                             <template #item-label="{ item }">
                                 <span :style="{ paddingInlineStart: ((item as FolderOption).depth * 16) + 'px' }">{{ item.label }}</span>
                             </template>
