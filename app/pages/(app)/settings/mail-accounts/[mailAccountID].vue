@@ -50,8 +50,11 @@ if (mailAccountID === "new") {
     }
 
     useSubrouterInjectedData<MailAccountWithMailboxes, NewMailAccount>('mail_account', true).provide({
+        // Bind through an arrow so `this` isn't lost when the injected consumer
+        // calls refresh() — an unbound method reference throws "can't access
+        // property fetchData, this is undefined".
         data: account as Ref<MailAccountWithMailboxes>,
-        refresh: mailAccountsStore.refresh,
+        refresh: () => mailAccountsStore.refresh(),
         loading: mailAccountsStore.isLoading,
         isNew: false
     });
@@ -92,6 +95,24 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
                     },
                     breadcrumbItems: [
                         { label: account.value?.display_name }
+                    ]
+                };
+            }
+        },
+        [`/settings/mail-accounts/${mailAccountID}/folder-settings`]: {
+            isNavLink: true,
+            label: 'Folders',
+            icon: 'i-lucide-folder-tree',
+            exact: true,
+            getDynamicValues() {
+                return {
+                    seoSettings: {
+                        title: `Mail Account ${account.value?.display_name} Folders`,
+                        description: `Create, move and delete folders and set special-folder mappings for ${account.value?.display_name} on Delivr`
+                    },
+                    breadcrumbItems: [
+                        { label: account.value?.display_name, to: `/settings/mail-accounts/${mailAccountID}` },
+                        { label: 'Folders' }
                     ]
                 };
             }

@@ -19,11 +19,36 @@ export class MailboxDisplayUtils {
             || mb.path.toLowerCase() === 'inbox';
     }
 
-    /** The leaf display name for a mailbox (last path segment). */
+    /** The leaf display name for a mailbox (last path segment / real folder name). */
     public static leafName(mb: Mailbox): string {
         if (mb.name) return mb.name;
         const parts = mb.path.split(mb.delimiter);
         return parts[parts.length - 1] || mb.path;
+    }
+
+    /**
+     * The canonical, human-friendly label for a special-use folder (e.g. a folder
+     * the backend resolved to `\Junk` is shown as "Spam" regardless of its real
+     * name). Returns null for ordinary folders.
+     */
+    public static specialUseLabel(specialUse: string | undefined): string | null {
+        switch (specialUse?.replace(/^\\/, '').toLowerCase()) {
+            case 'inbox': return 'Inbox';
+            case 'sent': return 'Sent';
+            case 'drafts': return 'Drafts';
+            case 'junk': return 'Spam';
+            case 'trash': return 'Trash';
+            case 'archive': return 'Archive';
+            default: return null;
+        }
+    }
+
+    /**
+     * The name to show a user for a mailbox: the canonical special-use label when
+     * the folder is a special folder, otherwise its real leaf name.
+     */
+    public static displayName(mb: Mailbox): string {
+        return this.specialUseLabel(mb.specialUse) ?? this.leafName(mb);
     }
 
     /**
@@ -116,7 +141,7 @@ export class MailboxDisplayUtils {
             accum = i === 0 ? parts[i]! : accum + mb.delimiter + parts[i];
             const found = mailboxes.find((m) => m.path === accum);
             items.push({
-                label: found ? this.leafName(found) : parts[i]!,
+                label: found ? this.displayName(found) : parts[i]!,
                 to: found ? this.folderUrl(accountId, found) : undefined,
             });
         }
@@ -188,7 +213,7 @@ export class MailboxDisplayUtils {
                 }
                 if (i === segments.length - 1) {
                     node.mailbox = mb;
-                    node.name = this.isInbox(mb) ? 'Inbox' : this.leafName(mb);
+                    node.name = this.isInbox(mb) ? 'Inbox' : this.displayName(mb);
                 }
                 level = node.children;
             }
@@ -208,16 +233,24 @@ export class MailboxDisplayUtils {
     }
 
 
+    // The backend resolves and persists special-use (server \Flag → name
+    // heuristic → user override) and returns it authoritatively, so the client
+    // just trusts `specialUse` — no name guessing here.
+    public static specialUseIcon(specialUse: string | undefined): string {
+        switch (specialUse?.replace(/^\\/, '').toLowerCase()) {
+            case 'inbox': return 'i-lucide-inbox';
+            case 'sent': return 'i-lucide-send';
+            case 'drafts': return 'i-lucide-file-edit';
+            case 'trash': return 'i-lucide-trash-2';
+            case 'junk': return 'i-lucide-shield-alert';
+            case 'archive': return 'i-lucide-archive';
+            default: return 'i-lucide-folder';
+        }
+    }
+
     private static folderIconFor(node: MailboxTreeNode): string {
         if (node.mailbox && this.isInbox(node.mailbox)) return 'i-lucide-inbox';
-        const special = node.mailbox?.specialUse?.replace(/^\\/, '').toLowerCase();
-        const lower = (special ?? node.name).toLowerCase();
-        if (lower === 'sent' || lower === 'sent mail' || lower === 'sent messages') return 'i-lucide-send';
-        if (lower === 'drafts') return 'i-lucide-file-edit';
-        if (lower === 'trash' || lower === 'deleted' || lower === 'deleted messages') return 'i-lucide-trash-2';
-        if (lower === 'spam' || lower === 'junk') return 'i-lucide-shield-alert';
-        if (lower === 'archive') return 'i-lucide-archive';
-        return 'i-lucide-folder';
+        return this.specialUseIcon(node.mailbox?.specialUse);
     }
 
     // Does the active route point at this node or any of its descendants?

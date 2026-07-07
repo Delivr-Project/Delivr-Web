@@ -49,7 +49,7 @@ const systemFolderPath = computed(() =>
 );
 const folderTitle = computed(() =>
     currentMailbox.value
-        ? MailboxDisplayUtils.leafName(currentMailbox.value)
+        ? MailboxDisplayUtils.displayName(currentMailbox.value)
         : (folderSegments.value[folderSegments.value.length - 1] ?? 'Folder')
 );
 

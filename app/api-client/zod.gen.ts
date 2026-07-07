@@ -1621,6 +1621,140 @@ export const zPostMailAccountsByMailAccountIdSearchCountResponse = z.object({
     })
 });
 
+export const zGetMailAccountsByMailAccountIdSpecialUsePath = z.object({
+    mailAccountID: z.number().gt(0)
+});
+
+/**
+ * Special-use mapping retrieved successfully
+ */
+export const zGetMailAccountsByMailAccountIdSpecialUseResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Special-use mapping retrieved successfully'),
+    data: z.object({
+        inbox: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        drafts: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        sent: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        spam: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        trash: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        archive: z.object({
+            path: z.string().nullable(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional()
+    })
+});
+
+export const zPutMailAccountsByMailAccountIdSpecialUseBody = z.object({
+    drafts: z.string().nullish(),
+    sent: z.string().nullish(),
+    spam: z.string().nullish(),
+    trash: z.string().nullish(),
+    archive: z.string().nullish()
+});
+
+export const zPutMailAccountsByMailAccountIdSpecialUsePath = z.object({
+    mailAccountID: z.number().gt(0)
+});
+
+/**
+ * Special-use mapping updated successfully
+ */
+export const zPutMailAccountsByMailAccountIdSpecialUseResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Special-use mapping updated successfully'),
+    data: z.object({
+        inbox: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        drafts: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        sent: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        spam: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        trash: z.object({
+            path: z.string(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional(),
+        archive: z.object({
+            path: z.string().nullable(),
+            source: z.enum([
+                'flag',
+                'guess',
+                'user'
+            ])
+        }).optional()
+    })
+});
+
 export const zGetBimiByDomainPath = z.object({
     domain: z.string().min(1).max(253)
 });

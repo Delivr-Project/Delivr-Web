@@ -3072,6 +3072,121 @@ export type PostMailAccountsByMailAccountIdSearchCountResponses = {
 
 export type PostMailAccountsByMailAccountIdSearchCountResponse = PostMailAccountsByMailAccountIdSearchCountResponses[keyof PostMailAccountsByMailAccountIdSearchCountResponses];
 
+export type GetMailAccountsByMailAccountIdSpecialUseData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/special-use';
+};
+
+export type GetMailAccountsByMailAccountIdSpecialUseResponses = {
+    /**
+     * Special-use mapping retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Special-use mapping retrieved successfully';
+        data: {
+            inbox?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            drafts?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            sent?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            spam?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            trash?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            archive?: {
+                path: string | null;
+                source: 'flag' | 'guess' | 'user';
+            };
+        };
+    };
+};
+
+export type GetMailAccountsByMailAccountIdSpecialUseResponse = GetMailAccountsByMailAccountIdSpecialUseResponses[keyof GetMailAccountsByMailAccountIdSpecialUseResponses];
+
+export type PutMailAccountsByMailAccountIdSpecialUseData = {
+    body: {
+        drafts?: string | null;
+        sent?: string | null;
+        spam?: string | null;
+        trash?: string | null;
+        archive?: string | null;
+    };
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/special-use';
+};
+
+export type PutMailAccountsByMailAccountIdSpecialUseErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PutMailAccountsByMailAccountIdSpecialUseError = PutMailAccountsByMailAccountIdSpecialUseErrors[keyof PutMailAccountsByMailAccountIdSpecialUseErrors];
+
+export type PutMailAccountsByMailAccountIdSpecialUseResponses = {
+    /**
+     * Special-use mapping updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Special-use mapping updated successfully';
+        data: {
+            inbox?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            drafts?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            sent?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            spam?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            trash?: {
+                path: string;
+                source: 'flag' | 'guess' | 'user';
+            };
+            archive?: {
+                path: string | null;
+                source: 'flag' | 'guess' | 'user';
+            };
+        };
+    };
+};
+
+export type PutMailAccountsByMailAccountIdSpecialUseResponse = PutMailAccountsByMailAccountIdSpecialUseResponses[keyof PutMailAccountsByMailAccountIdSpecialUseResponses];
+
 export type GetBimiByDomainData = {
     body?: never;
     path: {
