@@ -54,9 +54,7 @@ function parentOptions(folder?: Mailbox) {
 // map to a folder (or fall back to auto-detection), never be unset by the user.
 const folderItems = computed<FolderOption[]>(() => mailboxes.value.map((mb) => ({ label: leaf(mb), value: mb.path, depth: mb.parent.length })));
 function folderOptionsFor(type: SpecialType): FolderOption[] {
-    return isOptionalType(type)
-        ? [{ label: 'Not set', value: NONE, depth: 0 }, ...folderItems.value]
-        : folderItems.value;
+    return folderItems.value;
 }
 
 function parentPathToChildPath(parentPath: string, name: string): string {
@@ -199,19 +197,14 @@ const SPECIAL_TYPES = [
 ] as const;
 type SpecialType = (typeof SPECIAL_TYPES)[number]['key'];
 
-// Optional types may be explicitly unset by the user; every other type is
-// required. Mirrors the backend's SpecialUse.OPTIONAL_TYPES.
-const OPTIONAL_TYPES: readonly SpecialType[] = ['archive'];
-const isOptionalType = (type: SpecialType) => OPTIONAL_TYPES.includes(type);
 
 const specialUse = ref<SpecialUseMapping>({});
 const specialState = reactive<Record<SpecialType, string>>({ drafts: NONE, sent: NONE, spam: NONE, trash: NONE, archive: NONE });
 const savingSpecial = ref(false);
 
-// Why a type currently sits at NONE: 'none' = the user picked "Not set" (persist
-// as an explicit none that blocks re-detection); 'auto' = it was displaced when
-// its folder was assigned to another type (revert to auto-detection).
-const noneIntent = reactive<Partial<Record<SpecialType, 'none' | 'auto'>>>({});
+// Why a type currently sits at NONE: 'auto' = it was displaced when its folder was
+// assigned to another type, or the user hit the revert button (re-detect).
+const noneIntent = reactive<Partial<Record<SpecialType, 'auto'>>>({});
 
 // The stored path for a type, or the NONE sentinel (missing entry, or an explicit
 // user "none" whose path is null).
@@ -236,10 +229,8 @@ function onSpecialSelect(type: SpecialType, value: string) {
                 noneIntent[key] = 'auto';   // displaced → let the backend re-detect
             }
         }
-        delete noneIntent[type];
-    } else {
-        noneIntent[type] = 'none';          // user explicitly cleared this type
     }
+    delete noneIntent[type];
     specialState[type] = value;
 }
 
@@ -257,27 +248,28 @@ function sourceLabel(key: SpecialType): string | null {
     return src === 'user' ? 'Manual' : 'Auto';
 }
 
+function revertSpecialUse(type: SpecialType) {
+    specialState[type] = NONE;
+    noneIntent[type] = 'auto';
+}
+
+// Render the <USelect> value. The internal NONE sentinel is never shown as a label;
+// it always renders the "Auto-detect" placeholder.
+function selectDisplayValue(type: SpecialType): string | undefined {
+    return specialState[type] === NONE ? undefined : specialState[type];
+}
+
 async function saveSpecialUse() {
     savingSpecial.value = true;
-    // Only send types the user actually changed. A picked folder is sent as its
-    // path; the optional archive's "Not set" is sent as "" (an explicit, persisted
-    // none) so the backend won't silently re-detect a folder for it; a type
-    // displaced by a reassignment reverts to auto-detection — sent as null for
-    // archive, and as "" for required types (which the API won't accept as null).
-    // Untouched types are omitted, so their auto-detected mapping is left as-is.
     const body: PutMailAccountsByMailAccountIdSpecialUseData['body'] = {};
     for (const { key } of SPECIAL_TYPES) {
         if (specialState[key] === storedValue(key)) continue;
         if (specialState[key] !== NONE) {
             body[key] = specialState[key];
-        } else if (key === 'archive' && noneIntent[key] === 'auto') {
-            // Archive displaced by a reassignment → null reverts it to auto-detection.
-            body.archive = null;
         } else {
-            // Explicit "Not set" for archive → "" (a persisted none); a required type
-            // displaced by a reassignment → "" reverts it to auto-detection (the API
-            // only accepts null for the optional archive type, never a required one).
-            body[key] = '';
+            // Revert to auto-detection: null tells the backend to re-discover this
+            // special folder. The API accepts null for all types.
+            body[key] = null;
         }
     }
     try {
@@ -390,11 +382,22 @@ async function saveSpecialUse() {
                             {{ sourceLabel(type.key) }}
                         </UBadge>
                     </div>
-                    <USelect :model-value="specialState[type.key]" :items="folderOptionsFor(type.key)" placeholder="Auto-detect" class="w-full sm:flex-1" @update:model-value="(v: string) => onSpecialSelect(type.key, v)">
-                        <template #item-label="{ item }">
-                            <span :style="{ paddingInlineStart: ((item as FolderOption).depth * 16) + 'px' }">{{ item.label }}</span>
-                        </template>
-                    </USelect>
+                    <div class="flex items-center gap-2 flex-1">
+                        <USelect :model-value="selectDisplayValue(type.key)" :items="folderOptionsFor(type.key)" placeholder="Auto-detect" class="flex-1" @update:model-value="(v: string) => onSpecialSelect(type.key, v)">
+                            <template #item-label="{ item }">
+                                <span :style="{ paddingInlineStart: ((item as FolderOption).depth * 16) + 'px' }">{{ item.label }}</span>
+                            </template>
+                        </USelect>
+                        <UButton
+                            icon="i-lucide-rotate-ccw"
+                            color="neutral"
+                            variant="ghost"
+                            size="xs"
+                            aria-label="Revert to auto-detect"
+                            :disabled="specialUse[type.key]?.source !== 'user'"
+                            @click="revertSpecialUse(type.key)"
+                        />
+                    </div>
                 </div>
                 <div class="flex justify-end pt-2">
                     <UButton label="Save special folders" icon="i-lucide-save" color="primary" :loading="savingSpecial" :disabled="!specialDirty" @click="saveSpecialUse" />
