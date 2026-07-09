@@ -31,11 +31,6 @@ const mailAccountsTableColumns: TableColumn<MailAccount>[] = [
 <template>
     <UDashboardPanel>
         <template #header>
-            <!-- <UDashboardNavbar title="OS Releases" icon="i-lucide-rocket">
-                <template #trailing>
-                    <span class="text-slate-400 hidden sm:inline"> | Manage all OS releases</span>
-                </template>
-            </UDashboardNavbar> -->
             <DashboardPageHeader
                 title="Manage Mail Accounts"
                 icon="i-lucide-at-sign"
