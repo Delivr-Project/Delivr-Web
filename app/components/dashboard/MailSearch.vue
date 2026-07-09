@@ -5,6 +5,7 @@ import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 import Gravatar from '~/components/Gravatar.vue';
 import { useDebounceFn, useLocalStorage } from '@vueuse/core';
 import { CalendarDate } from '@internationalized/date';
+import { useRecentMailSearches } from '~/composables/useRecentSearches';
 
 // ── Types ──
 
@@ -60,7 +61,7 @@ const PAGE_SIZE = 20;
 const hasMoreResults = computed(() => searchResults.value.length < totalResults.value);
 
 // Recent searches (persisted)
-const recentSearches = useLocalStorage<string[]>('delivr:mail-search:recent', []);
+const recentSearches = useRecentMailSearches();
 const MAX_RECENT = 6;
 
 // ── Suggested searches (presets) ──
