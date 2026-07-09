@@ -458,6 +458,7 @@ defineExpose({
                             <SenderAvatar
                                 :email="mailData.from?.address"
                                 :domain="senderDomain ?? undefined"
+                                :bimi="true"
                                 size="lg"
                                 class="shrink-0"
                             />
