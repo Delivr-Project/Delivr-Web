@@ -462,12 +462,12 @@ export const zDeleteMailAccountsByMailAccountIdPath = z.object({
 });
 
 /**
- * Mail account deleted successfully
+ * Mail account removed successfully
  */
 export const zDeleteMailAccountsByMailAccountIdResponse = z.object({
     success: z.literal(true),
     code: z.literal(200),
-    message: z.literal('Mail account deleted successfully'),
+    message: z.literal('Mail account removed successfully'),
     data: z.null()
 });
 
@@ -1674,7 +1674,7 @@ export const zGetMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         archive: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
@@ -1745,7 +1745,7 @@ export const zPutMailAccountsByMailAccountIdSpecialUseResponse = z.object({
             ])
         }).optional(),
         archive: z.object({
-            path: z.string().nullable(),
+            path: z.string(),
             source: z.enum([
                 'flag',
                 'guess',
