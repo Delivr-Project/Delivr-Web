@@ -540,13 +540,13 @@ async function testConfiguration() {
 			<div class="p-6">
 				<div class="flex flex-col md:flex-row md:items-center gap-4">
 					<div class="flex-1">
-						<h4 class="font-medium text-white">Delete Mail Account</h4>
+						<h4 class="font-medium text-white">Remove Mail Account</h4>
 						<p class="text-sm text-slate-400 mt-1">
-							Permanently delete this Mail Account and all associated data. This action cannot be undone.
+							Removing this Mail Account from Delivr
 						</p>
 					</div>
 					<UButton 
-						label="Delete Mail Account" 
+						label="Remove Mail Account" 
 						color="error" 
 						variant="soft"
 						icon="i-lucide-trash-2"
@@ -556,11 +556,11 @@ async function testConfiguration() {
 			</div>
 		</div>
 
-		<!-- Delete Confirmation Modal -->
+		<!-- Remove Confirmation Modal -->
 		<DashboardModal
 			v-if="!mailAccount.isNew"
 			v-model:open="deleteConfirmOpen"
-			title="Delete Mail Account"
+			title="Remove Mail Account"
 			description="This action is permanent"
 			icon="i-lucide-alert-triangle"
 			icon-color="error"
@@ -568,7 +568,7 @@ async function testConfiguration() {
 			<div class="space-y-4">
 				<div class="p-4 rounded-lg bg-red-950/50 border border-red-900/50">
 					<p class="text-sm text-red-300">
-						<strong>Warning:</strong> All the OS release data including packages, releases, and related information will be permanently deleted. This action cannot be reversed.
+						<strong>Warning:</strong> This will completely remove the Mail Account <strong>{{ mailAccount_data.display_name }}</strong> from Delivr
 					</p>
 				</div>
 
@@ -592,7 +592,7 @@ async function testConfiguration() {
 						@click="deleteConfirmOpen = false; deleteConfirmText = ''"
 					/>
 					<UButton 
-						label="Delete Mail Account"
+						label="Remove Mail Account"
 						color="error"
 						:loading="deleteLoading"
 						:disabled="deleteConfirmText !== 'DELETE'"

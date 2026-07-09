@@ -963,12 +963,12 @@ export type DeleteMailAccountsByMailAccountIdError = DeleteMailAccountsByMailAcc
 
 export type DeleteMailAccountsByMailAccountIdResponses = {
     /**
-     * Mail account deleted successfully
+     * Mail account removed successfully
      */
     200: {
         success: true;
         code: 200;
-        message: 'Mail account deleted successfully';
+        message: 'Mail account removed successfully';
         data: null;
     };
 };
@@ -3111,7 +3111,7 @@ export type GetMailAccountsByMailAccountIdSpecialUseResponses = {
                 source: 'flag' | 'guess' | 'user';
             };
             archive?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
         };
@@ -3178,7 +3178,7 @@ export type PutMailAccountsByMailAccountIdSpecialUseResponses = {
                 source: 'flag' | 'guess' | 'user';
             };
             archive?: {
-                path: string | null;
+                path: string;
                 source: 'flag' | 'guess' | 'user';
             };
         };

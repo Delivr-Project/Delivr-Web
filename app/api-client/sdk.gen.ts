@@ -313,9 +313,9 @@ export const postMailAccounts = <TComposable extends Composable = '$fetch', Defa
 });
 
 /**
- * Delete mail account
+ * Remove mail account
  *
- * Delete a mail account.
+ * Remove a mail account from delivr
  */
 export const deleteMailAccountsByMailAccountId = <TComposable extends Composable = '$fetch', DefaultT extends DeleteMailAccountsByMailAccountIdResponse = DeleteMailAccountsByMailAccountIdResponse>(options: Options<TComposable, DeleteMailAccountsByMailAccountIdData, DeleteMailAccountsByMailAccountIdResponse, DefaultT>) => (options.client ?? client).delete<TComposable, DeleteMailAccountsByMailAccountIdResponse | DefaultT, DeleteMailAccountsByMailAccountIdError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -746,7 +746,7 @@ export const getMailAccountsByMailAccountIdSpecialUse = <TComposable extends Com
 /**
  * Update special-use folder mapping
  *
- * Override which folders are the account's special folders. Each type maps to a folder path, or null to clear the override and revert to auto-detection. Only the optional archive folder may additionally be set to "" (empty string) for an explicit, persisted "none" that blocks re-detection; unsetting a required type (drafts/sent/spam/trash) is rejected. A folder can only be one special type.
+ * Override which folders are the account's special folders. Each type maps to a folder path, or null / "" to clear the override and revert to auto-detection. Inbox is fixed and not editable. A folder can only be one special type.
  */
 export const putMailAccountsByMailAccountIdSpecialUse = <TComposable extends Composable = '$fetch', DefaultT extends PutMailAccountsByMailAccountIdSpecialUseResponse = PutMailAccountsByMailAccountIdSpecialUseResponse>(options: Options<TComposable, PutMailAccountsByMailAccountIdSpecialUseData, PutMailAccountsByMailAccountIdSpecialUseResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutMailAccountsByMailAccountIdSpecialUseResponse | DefaultT, PutMailAccountsByMailAccountIdSpecialUseError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
