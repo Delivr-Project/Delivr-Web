@@ -1041,7 +1041,7 @@ function closeActiveMail() {
                     icon-color="error"
                 >
                     <p class="text-sm text-muted">
-                        Move {{ selectedUids.size }} selected email{{ selectedUids.size === 1 ? '' : 's' }} to Trash?
+                        Move {{ effectiveActionUids.length }} email{{ effectiveActionUids.length === 1 ? '' : 's' }} to Trash?
                     </p>
 
                     <template #footer>
