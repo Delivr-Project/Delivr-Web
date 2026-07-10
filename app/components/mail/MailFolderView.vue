@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailListItem, Mailbox } from '~/utils/types';
+import type { GetMailAccountsByMailAccountIdSpecialUseResponse } from '~/api-client';
 import { Utils } from '~/utils';
 import { useMailDrag } from '~/composables/useMailDrag';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
@@ -509,10 +510,22 @@ defineShortcuts({
 
 // ── Archive ──
 
-// The account's Archive folder, if it has one (special-use \Archive).
-const archiveMailbox = computed(() =>
-    mailboxes.value.find(mb => mb.specialUse?.replace(/^\\/, '').toLowerCase() === 'archive')
+// The backend's resolved special-use mapping is the authoritative source for the
+// Archive folder — it reflects the user's assignment (and auto-detection),
+// whereas a mailbox's own `specialUse` flag may not be set for a user-picked
+// Archive folder.
+const specialUseMapping = ref<GetMailAccountsByMailAccountIdSpecialUseResponse['data'] | null>(null);
+const specialUseRes = await useAPI(api =>
+    api.getMailAccountsByMailAccountIdSpecialUse({ path: { mailAccountID: accountId } })
 );
+if (specialUseRes.success) specialUseMapping.value = specialUseRes.data;
+
+// The account's Archive folder, resolved from the backend mapping.
+const archiveMailbox = computed(() => {
+    const archivePath = specialUseMapping.value?.archive?.path;
+    if (!archivePath) return undefined;
+    return mailboxes.value.find(mb => mb.path === archivePath);
+});
 // Can't archive when there's no Archive folder or we're already in it.
 const canArchive = computed(() =>
     !!archiveMailbox.value && archiveMailbox.value.path !== systemFolderPath.value
@@ -1041,7 +1054,7 @@ function closeActiveMail() {
                     icon-color="error"
                 >
                     <p class="text-sm text-muted">
-                        Move {{ selectedUids.size }} selected email{{ selectedUids.size === 1 ? '' : 's' }} to Trash?
+                        Move {{ effectiveActionUids.length }} email{{ effectiveActionUids.length === 1 ? '' : 's' }} to Trash?
                     </p>
 
                     <template #footer>
