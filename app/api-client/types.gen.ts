@@ -800,6 +800,65 @@ export type PutAccountPreferencesFolderDndResponses = {
 
 export type PutAccountPreferencesFolderDndResponse = PutAccountPreferencesFolderDndResponses[keyof PutAccountPreferencesFolderDndResponses];
 
+export type GetAccountPreferencesOnboardingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/account/preferences/onboarding';
+};
+
+export type GetAccountPreferencesOnboardingResponses = {
+    /**
+     * Onboarding state retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Onboarding state retrieved successfully';
+        data: {
+            completed?: boolean;
+        };
+    };
+};
+
+export type GetAccountPreferencesOnboardingResponse = GetAccountPreferencesOnboardingResponses[keyof GetAccountPreferencesOnboardingResponses];
+
+export type PutAccountPreferencesOnboardingData = {
+    body: {
+        completed?: boolean;
+    };
+    path?: never;
+    query?: never;
+    url: '/account/preferences/onboarding';
+};
+
+export type PutAccountPreferencesOnboardingErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PutAccountPreferencesOnboardingError = PutAccountPreferencesOnboardingErrors[keyof PutAccountPreferencesOnboardingErrors];
+
+export type PutAccountPreferencesOnboardingResponses = {
+    /**
+     * Onboarding state updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Onboarding state updated successfully';
+        data: null;
+    };
+};
+
+export type PutAccountPreferencesOnboardingResponse = PutAccountPreferencesOnboardingResponses[keyof PutAccountPreferencesOnboardingResponses];
+
 export type GetMailAccountsData = {
     body?: never;
     path?: never;

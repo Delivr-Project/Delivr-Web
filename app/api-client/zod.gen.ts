@@ -313,6 +313,32 @@ export const zPutAccountPreferencesFolderDndResponse = z.object({
     data: z.null()
 });
 
+/**
+ * Onboarding state retrieved successfully
+ */
+export const zGetAccountPreferencesOnboardingResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Onboarding state retrieved successfully'),
+    data: z.object({
+        completed: z.boolean().optional().default(false)
+    })
+});
+
+export const zPutAccountPreferencesOnboardingBody = z.object({
+    completed: z.boolean().optional().default(false)
+});
+
+/**
+ * Onboarding state updated successfully
+ */
+export const zPutAccountPreferencesOnboardingResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Onboarding state updated successfully'),
+    data: z.null()
+});
+
 export const zGetMailAccountsQuery = z.object({
     withMailboxes: z.boolean().optional().default(false)
 });
