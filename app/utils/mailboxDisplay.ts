@@ -253,33 +253,38 @@ export class MailboxDisplayUtils {
         return this.specialUseIcon(node.mailbox?.specialUse);
     }
 
-    // Does the active route point at this node or any of its descendants?
-    // Used to auto-expand the ancestors of the folder currently being viewed.
-    private static subtreeContainsActive(path: string, node: MailboxDisplayUtils.MailboxTreeNode, accountId: number): boolean {
-        if (node.mailbox) {
-            const folderUrl = this.folderUrl(accountId, node.mailbox);
-            if (path === folderUrl || path.startsWith(`${folderUrl}/`)) return true;
-        }
-        return node.children.some((child) => this.subtreeContainsActive(path, child, accountId));
+    // Is the folder currently being viewed this node, or any of its descendants?
+    // Matched on the resolved mailbox path rather than the URL, so it holds up no
+    // matter how the active URL spells the folder. Used to auto-expand the
+    // ancestors of the folder currently being viewed.
+    private static subtreeContainsActive(activePath: string | undefined, node: MailboxDisplayUtils.MailboxTreeNode): boolean {
+        if (!activePath) return false;
+        if (node.mailbox?.path === activePath) return true;
+        return node.children.some((child) => this.subtreeContainsActive(activePath, child));
     }
 
     // Map a folder-tree node to a (possibly nested) navigation menu item.
-    public static toNavItem(path: string, node: MailboxDisplayUtils.MailboxTreeNode, accountId: number): NavigationMenuItem {
+    // `activePath` is the real IMAP path of the mailbox the current route
+    // resolves to (see `findMailboxByUrlSegments`), so the active highlight is
+    // driven by mailbox identity — not by string-matching the URL, which breaks
+    // when the same folder is reached via different spellings (the lowercase
+    // `inbox` alias vs the real `INBOX` path, or differing case/percent-encoding).
+    public static toNavItem(activePath: string | undefined, node: MailboxDisplayUtils.MailboxTreeNode, accountId: number): NavigationMenuItem {
         const unseen = node.unseenTotal;
         const item: NavigationMenuItem = {
             label: node.name,
             icon: this.folderIconFor(node),
             badge: unseen > 0 ? unseen : undefined,
             exact: false,
-            active: node.mailbox ? path.startsWith(this.folderUrl(accountId, node.mailbox)) : false,
+            active: node.mailbox ? node.mailbox.path === activePath : false,
         };
         if (node.mailbox) {
             item.to = this.folderUrl(accountId, node.mailbox);
         }
         if (node.children.length > 0) {
-            item.children = node.children.map((child) => this.toNavItem(path, child, accountId));
+            item.children = node.children.map((child) => this.toNavItem(activePath, child, accountId));
             // Open the Inbox by default so its nested sub-folders are visible.
-            item.defaultOpen = this.subtreeContainsActive(path, node, accountId)
+            item.defaultOpen = this.subtreeContainsActive(activePath, node)
                 || (node.mailbox ? this.isInbox(node.mailbox) : false);
         }
         return item;

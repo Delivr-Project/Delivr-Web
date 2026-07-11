@@ -1781,6 +1781,42 @@ export const zPutMailAccountsByMailAccountIdSpecialUseResponse = z.object({
     })
 });
 
+export const zGetMailAccountsByMailAccountIdOnboardingPath = z.object({
+    mailAccountID: z.number().gt(0)
+});
+
+/**
+ * Onboarding state retrieved successfully
+ */
+export const zGetMailAccountsByMailAccountIdOnboardingResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Onboarding state retrieved successfully'),
+    data: z.object({
+        finished: z.boolean()
+    })
+});
+
+export const zPutMailAccountsByMailAccountIdOnboardingBody = z.object({
+    finished: z.boolean()
+});
+
+export const zPutMailAccountsByMailAccountIdOnboardingPath = z.object({
+    mailAccountID: z.number().gt(0)
+});
+
+/**
+ * Onboarding state updated successfully
+ */
+export const zPutMailAccountsByMailAccountIdOnboardingResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Onboarding state updated successfully'),
+    data: z.object({
+        finished: z.boolean()
+    })
+});
+
 export const zGetBimiByDomainPath = z.object({
     domain: z.string().min(1).max(253)
 });

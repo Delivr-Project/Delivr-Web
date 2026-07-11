@@ -3246,6 +3246,80 @@ export type PutMailAccountsByMailAccountIdSpecialUseResponses = {
 
 export type PutMailAccountsByMailAccountIdSpecialUseResponse = PutMailAccountsByMailAccountIdSpecialUseResponses[keyof PutMailAccountsByMailAccountIdSpecialUseResponses];
 
+export type GetMailAccountsByMailAccountIdOnboardingData = {
+    body?: never;
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/onboarding';
+};
+
+export type GetMailAccountsByMailAccountIdOnboardingResponses = {
+    /**
+     * Onboarding state retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Onboarding state retrieved successfully';
+        data: {
+            /**
+             * Whether the per-account folder onboarding has been finished
+             */
+            finished: boolean;
+        };
+    };
+};
+
+export type GetMailAccountsByMailAccountIdOnboardingResponse = GetMailAccountsByMailAccountIdOnboardingResponses[keyof GetMailAccountsByMailAccountIdOnboardingResponses];
+
+export type PutMailAccountsByMailAccountIdOnboardingData = {
+    body: {
+        /**
+         * Whether the per-account folder onboarding has been finished
+         */
+        finished: boolean;
+    };
+    path: {
+        mailAccountID: number;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/onboarding';
+};
+
+export type PutMailAccountsByMailAccountIdOnboardingErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PutMailAccountsByMailAccountIdOnboardingError = PutMailAccountsByMailAccountIdOnboardingErrors[keyof PutMailAccountsByMailAccountIdOnboardingErrors];
+
+export type PutMailAccountsByMailAccountIdOnboardingResponses = {
+    /**
+     * Onboarding state updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Onboarding state updated successfully';
+        data: {
+            /**
+             * Whether the per-account folder onboarding has been finished
+             */
+            finished: boolean;
+        };
+    };
+};
+
+export type PutMailAccountsByMailAccountIdOnboardingResponse = PutMailAccountsByMailAccountIdOnboardingResponses[keyof PutMailAccountsByMailAccountIdOnboardingResponses];
+
 export type GetBimiByDomainData = {
     body?: never;
     path: {

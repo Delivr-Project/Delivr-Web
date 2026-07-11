@@ -25,6 +25,17 @@ const displayName = computed(() => account.value?.display_name || 'your mail acc
 const mailboxes = computed<Mailbox[]>(() => account.value?.mailboxes ?? []);
 const defaultDelimiter = computed(() => mailboxes.value[0]?.delimiter || '/');
 
+// This one-time setup only runs once per account: if it's already been finished
+// (or skipped), don't show the wizard again — go straight to the inbox.
+if (!notFound.value) {
+    const onboardingState = await useAPI((api) =>
+        api.getMailAccountsByMailAccountIdOnboarding({ path: { mailAccountID: accountId } })
+    );
+    if (onboardingState.success && onboardingState.data.finished) {
+        await navigateTo(`/mail/${accountId}/folder/inbox`, { replace: true });
+    }
+}
+
 useSeoMeta({
     title: 'Set up your Mail Account | Delivr',
     description: 'Finish setting up your new mail account by mapping its special folders.',
@@ -158,6 +169,7 @@ async function finish() {
     finishing.value = true;
     try {
         await saveSpecialUse();
+        await markOnboardingFinished();
         // Mailbox icons/behaviour depend on the resolved special-folder mapping.
         await mailAccountsStore.refresh();
         toast.add({
@@ -180,7 +192,21 @@ async function finish() {
 
 async function skip() {
     // Auto-detected folders already apply, so skipping leaves them as-is.
+    await markOnboardingFinished();
     await navigateTo(`/mail/${accountId}/folder/inbox`);
+}
+
+// Persist that this account's one-time onboarding is done, so it can't be
+// reopened afterwards. Best-effort: a failure here shouldn't block leaving.
+async function markOnboardingFinished() {
+    try {
+        await useAPI((api) => api.putMailAccountsByMailAccountIdOnboarding({
+            path: { mailAccountID: accountId },
+            body: { finished: true },
+        }));
+    } catch (error) {
+        console.error('Failed to mark onboarding as finished:', error);
+    }
 }
 </script>
 

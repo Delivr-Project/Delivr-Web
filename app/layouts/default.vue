@@ -264,6 +264,18 @@ function onFolderDragLeave(e: DragEvent) {
     if (!to || !(e.currentTarget as HTMLElement).contains(to)) setHighlight(null);
 }
 
+// The mailbox the current route resolves to, if any. Resolving through the same
+// matcher the folder view uses means the sidebar highlight tracks the real
+// folder regardless of how the URL spells it — the lowercase `inbox` alias, the
+// real `INBOX` path (what breadcrumbs and opened mails navigate to), or any
+// case/encoding variant — and it holds while viewing a mail inside that folder.
+const activeMailboxPath = computed(() => {
+    const segments = MailboxDisplayUtils.parseFolderParam(
+        route.params.folderPath as string | string[] | undefined
+    );
+    return MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, segments)?.path;
+});
+
 const sidebarItems = computed(() => {
 
     const basicItems: NavigationMenuItem[] = [
@@ -292,7 +304,7 @@ const sidebarItems = computed(() => {
         // Inbox lives inside the tree as the parent of its sub-folders.
         if (accountId !== undefined) {
             for (const node of MailboxDisplayUtils.buildMailboxTree(mailboxes.value, { nestUnderInbox: true })) {
-                mailItems.push(MailboxDisplayUtils.toNavItem(route.path, node, accountId));
+                mailItems.push(MailboxDisplayUtils.toNavItem(activeMailboxPath.value, node, accountId));
             }
         }
     } else {
@@ -304,11 +316,15 @@ const sidebarItems = computed(() => {
                 to: currentMailAccount.value ? `/mail/${currentMailAccount.value.id}/folder/inbox` : undefined,
                 badge: inbox.status.unseen > 0 ? inbox.status.unseen : undefined,
                 exact: false,
+                // Highlight off the resolved mailbox, not the lowercase `inbox`
+                // alias in `to` — opened mails and breadcrumbs navigate to the
+                // real `INBOX` path, which the alias wouldn't match.
+                active: activeMailboxPath.value === inbox.path,
             });
         }
         if (accountId !== undefined) {
             for (const node of MailboxDisplayUtils.buildMailboxTree(mailboxes.value)) {
-                mailItems.push(MailboxDisplayUtils.toNavItem(route.path, node, accountId));
+                mailItems.push(MailboxDisplayUtils.toNavItem(activeMailboxPath.value, node, accountId));
             }
         }
     }
