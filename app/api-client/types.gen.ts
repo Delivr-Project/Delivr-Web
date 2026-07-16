@@ -311,6 +311,11 @@ export type PutAccountData = {
         username?: string;
         display_name?: string;
         email?: string;
+    } & {
+        /**
+         * Current password — required to confirm account changes
+         */
+        current_password: string;
     };
     path?: never;
     query?: never;
@@ -333,6 +338,14 @@ export type PutAccountErrors = {
         success: false;
         code: 401;
         message: 'Your Auth Context is not a session';
+    };
+    /**
+     * Username or email already in use
+     */
+    409: {
+        success: false;
+        code: 409;
+        message: 'Username or email already in use';
     };
 };
 
