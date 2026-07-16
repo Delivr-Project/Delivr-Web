@@ -106,8 +106,9 @@ async function onFormSubmit() {
 
                 await mailAccountsStore.refresh();
 
-				// Redirect to the new package page
-				await navigateTo(`/settings/mail-accounts/${result.data.id}`);
+				// Send the user through onboarding (special-folder mapping +
+				// preferences) before landing on the account.
+				await navigateTo(`/settings/mail-accounts/${result.data.id}/onboarding`);
 			} else {
 				throw new Error(result.message || 'Failed to create package');
 			}
