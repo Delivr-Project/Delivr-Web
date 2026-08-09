@@ -11,6 +11,13 @@
                 </div>
             </div>
         </UMain>
+
+        <!-- Footer -->
+        <UFooter class="bg-neutral-900">
+            <div class="text-sm text-slate-500 text-center">
+                &copy; {{ new Date().getFullYear() }} Delivr Project. All rights reserved.
+            </div>
+        </UFooter>
     </div>
 </template>
 
