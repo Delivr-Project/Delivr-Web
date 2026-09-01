@@ -2,6 +2,7 @@
 import type { EditorToolbarItem } from '@nuxt/ui';
 import type { MailAccountWithMailboxes } from '~/utils/types';
 import { Utils } from '~/utils';
+import { client } from '~/api-client/client.gen';
 
 const toast = useToast();
 
@@ -127,6 +128,13 @@ const totalAttachmentSize = computed(() => {
 
 type Address = { name?: string; address: string };
 
+type CreateMailResponse = {
+    success: boolean;
+    code: number;
+    message: string;
+    data: { uid: number };
+};
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
@@ -138,7 +146,7 @@ function parseRecipients(raw: string): { valid: Address[]; invalid: string[] } {
     const valid: Address[] = [];
     const invalid: string[] = [];
 
-    for (const part of raw.split(/[,;]/)) {
+    for (const part of splitRecipients(raw)) {
         const entry = part.trim();
         if (!entry) continue;
 
@@ -156,6 +164,47 @@ function parseRecipients(raw: string): { valid: Address[]; invalid: string[] } {
     }
 
     return { valid, invalid };
+}
+
+/** Split recipients without treating delimiters inside quoted display names as separators. */
+function splitRecipients(raw: string): string[] {
+    const entries: string[] = [];
+    let current = '';
+    let quote: '"' | "'" | null = null;
+    let escaped = false;
+    let angleDepth = 0;
+
+    for (const char of raw) {
+        if (escaped) {
+            current += char;
+            escaped = false;
+            continue;
+        }
+
+        if (quote && char === '\\') {
+            current += char;
+            escaped = true;
+            continue;
+        }
+
+        if ((char === '"' || char === "'") && angleDepth === 0) {
+            quote = quote === char ? null : quote ?? char;
+        } else if (!quote && char === '<') {
+            angleDepth++;
+        } else if (!quote && char === '>' && angleDepth > 0) {
+            angleDepth--;
+        }
+
+        if (!quote && angleDepth === 0 && (char === ',' || char === ';')) {
+            entries.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+
+    entries.push(current);
+    return entries;
 }
 
 /** Best-effort plain-text fallback derived from the HTML editor content. */
@@ -226,12 +275,24 @@ async function createDraftMail(asDraft: boolean, requireRecipient: boolean): Pro
 
     await specialUsePromise;
 
-    const res = await useAPI(api =>
-        api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
-            path: { mailAccountID: accountId, mailboxPath: draftsPath.value },
-            body: mailBody
+    const res = attachments.value.length > 0
+        ? await useAPI(() => {
+            const form = new FormData();
+            form.set('mail', JSON.stringify(mailBody));
+            for (const attachment of attachments.value) form.append('attachments', attachment);
+
+            return client.post<'$fetch', CreateMailResponse>({
+                url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails',
+                path: { mailAccountID: accountId, mailboxPath: draftsPath.value },
+                body: form
+            });
         })
-    );
+        : await useAPI(api =>
+            api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
+                path: { mailAccountID: accountId, mailboxPath: draftsPath.value },
+                body: mailBody
+            })
+        );
 
     if (!res.success) {
         toast.add({
@@ -259,15 +320,6 @@ async function handleSend() {
             title: 'Missing recipient',
             description: 'Please enter at least one recipient.',
             color: 'error'
-        });
-        return;
-    }
-
-    if (attachments.value.length > 0) {
-        toast.add({
-            title: 'Attachments not supported yet',
-            description: 'Sending attachments is not available yet. Remove them to send this message.',
-            color: 'warning'
         });
         return;
     }
@@ -616,14 +668,6 @@ onUnmounted(() => {
                                 Send Message
                             </UButton>
                         </div>
-                    </div>
-
-                    <!-- Attachments notice -->
-                    <div v-if="attachments.length > 0" class="flex items-center gap-3 px-4 py-3 rounded-lg border border-warning/30 bg-warning/5">
-                        <UIcon name="i-lucide-info" class="size-4 text-warning shrink-0" />
-                        <p class="text-xs text-muted">
-                            Sending attachments is not supported yet. Remove the attached files to send this message.
-                        </p>
                     </div>
 
                 </div>
