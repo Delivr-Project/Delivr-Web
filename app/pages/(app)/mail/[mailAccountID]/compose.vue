@@ -284,7 +284,11 @@ async function createDraftMail(asDraft: boolean, requireRecipient: boolean): Pro
             return client.post<'$fetch', CreateMailResponse>({
                 url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails',
                 path: { mailAccountID: accountId, mailboxPath: draftsPath.value },
-                body: form
+                body: form,
+                // The generated client defaults to JSON. Leave serialization and the
+                // Content-Type to the browser so it adds the multipart boundary.
+                bodySerializer: body => body,
+                headers: { 'Content-Type': null }
             });
         })
         : await useAPI(api =>
@@ -314,15 +318,6 @@ function goBack() {
 
 async function handleSend() {
     if (sending.value || savingDraft.value) return;
-
-    if (attachments.value.length > 0) {
-        toast.add({
-            title: 'Attachments are not supported yet',
-            description: 'Remove attachments before sending this message. You can still save it as a draft.',
-            color: 'warning'
-        });
-        return;
-    }
 
     if (!to.value.trim() && !cc.value.trim() && !bcc.value.trim()) {
         toast.add({
