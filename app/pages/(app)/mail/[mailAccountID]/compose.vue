@@ -315,6 +315,15 @@ function goBack() {
 async function handleSend() {
     if (sending.value || savingDraft.value) return;
 
+    if (attachments.value.length > 0) {
+        toast.add({
+            title: 'Attachments are not supported yet',
+            description: 'Remove attachments before sending this message. You can still save it as a draft.',
+            color: 'warning'
+        });
+        return;
+    }
+
     if (!to.value.trim() && !cc.value.trim() && !bcc.value.trim()) {
         toast.add({
             title: 'Missing recipient',
