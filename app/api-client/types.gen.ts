@@ -567,6 +567,48 @@ export type GetAccountApikeysByApiKeyIdResponses = {
 
 export type GetAccountApikeysByApiKeyIdResponse = GetAccountApikeysByApiKeyIdResponses[keyof GetAccountApikeysByApiKeyIdResponses];
 
+export type GetAccountPreferencesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/account/preferences';
+};
+
+export type GetAccountPreferencesResponses = {
+    /**
+     * Preferences retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Preferences retrieved successfully';
+        data: {
+            'remote-content-policy': {
+                addresses?: {
+                    [key: string]: 'allow' | 'block';
+                };
+                domains?: {
+                    [key: string]: 'allow' | 'block';
+                };
+            };
+            'auto-mark-seen': {
+                enabled?: boolean;
+            };
+            'folder-nesting': {
+                nestUnderInbox?: boolean;
+            };
+            'folder-dnd': {
+                enabled?: boolean;
+            };
+            onboarding: {
+                completed?: boolean;
+            };
+        };
+    };
+};
+
+export type GetAccountPreferencesResponse = GetAccountPreferencesResponses[keyof GetAccountPreferencesResponses];
+
 export type GetAccountPreferencesRemoteContentPolicyData = {
     body?: never;
     path?: never;
@@ -976,6 +1018,10 @@ export type PostMailAccountsData = {
         imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
         imap_username: string;
         imap_password: string;
+        identity?: {
+            display_name?: string;
+            email_address: string;
+        };
     };
     path?: never;
     query?: never;
@@ -2618,6 +2664,14 @@ export type DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors = 
         success: false;
         code: 404;
         message: 'Mail identity with the specified ID does not exist';
+    };
+    /**
+     * Conflict: A mail account must keep at least one identity
+     */
+    409: {
+        success: false;
+        code: 409;
+        message: 'Conflict: A mail account must keep at least one identity';
     };
 };
 

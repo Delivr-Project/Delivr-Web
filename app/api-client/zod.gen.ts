@@ -210,6 +210,33 @@ export const zGetAccountApikeysByApiKeyIdResponse = z.object({
 });
 
 /**
+ * Preferences retrieved successfully
+ */
+export const zGetAccountPreferencesResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Preferences retrieved successfully'),
+    data: z.object({
+        'remote-content-policy': z.object({
+            addresses: z.record(z.string(), z.enum(['allow', 'block'])).optional().default({}),
+            domains: z.record(z.string(), z.enum(['allow', 'block'])).optional().default({})
+        }),
+        'auto-mark-seen': z.object({
+            enabled: z.boolean().optional().default(true)
+        }),
+        'folder-nesting': z.object({
+            nestUnderInbox: z.boolean().optional().default(true)
+        }),
+        'folder-dnd': z.object({
+            enabled: z.boolean().optional().default(false)
+        }),
+        onboarding: z.object({
+            completed: z.boolean().optional().default(false)
+        })
+    })
+});
+
+/**
  * Remote content policy retrieved successfully
  */
 export const zGetAccountPreferencesRemoteContentPolicyResponse = z.object({
@@ -470,7 +497,11 @@ export const zPostMailAccountsBody = z.object({
         'NONE'
     ]),
     imap_username: z.string().min(1).max(255),
-    imap_password: z.string().min(1).max(1023)
+    imap_password: z.string().min(1).max(1023),
+    identity: z.object({
+        display_name: z.string().min(1).max(255).optional(),
+        email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/)
+    }).optional()
 });
 
 /**

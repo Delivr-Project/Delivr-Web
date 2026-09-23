@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { MailIdentity } from '~/utils/types';
 import { zPostMailAccountsByMailAccountIdIdentitiesBody } from '~/api-client/zod.gen';
-import { MailAddressUtils } from '~/utils/mail/mailAddress';
+import { MailIdentityUtils } from '~/utils/mail/mailIdentity';
 
 const props = withDefaults(defineProps<{
     accountId: number;
@@ -42,12 +42,18 @@ watch(() => props.accountId, () => { load(); }, { immediate: true });
 
 defineExpose({ reload: load });
 
+// A mail account must keep at least one address to send from — the backend
+// refuses the last delete too, this only keeps the UI honest about it.
+const canDelete = computed(() => MailIdentityUtils.canDelete(identities.value));
+
+// The suggestion is dropped once that address has an identity of its own.
 const suggestedIdentity = computed(() => {
-    const email = props.suggestion?.email_address?.trim();
-    if (!email || !MailAddressUtils.isValid(email)) return null;
-    // Nothing to suggest once the address is already set up.
-    if (identities.value.some((identity) => MailAddressUtils.isSame(identity.email_address, email))) return null;
-    return { display_name: props.suggestion?.display_name?.trim() || email, email_address: email };
+    const suggestion = props.suggestion;
+    if (!suggestion?.email_address) return null;
+    return MailIdentityUtils.suggestionFor(
+        { display_name: suggestion.display_name, smtp_username: suggestion.email_address },
+        identities.value
+    );
 });
 
 // ── Create / edit ───────────────────────────────────────────────────────────
@@ -74,13 +80,6 @@ function openEdit(identity: MailIdentity): void {
     formOpen.value = true;
 }
 
-// The API allows the same address twice, which would show up as two
-// indistinguishable senders in the composer — so reject it here.
-function duplicateOf(email: string): MailIdentity | undefined {
-    return identities.value.find((identity) =>
-        identity.id !== editing.value?.id && MailAddressUtils.isSame(identity.email_address, email));
-}
-
 async function onFormSubmit(): Promise<void> {
     const target = editing.value;
     const body = {
@@ -89,7 +88,7 @@ async function onFormSubmit(): Promise<void> {
         is_default: formState.is_default
     };
 
-    if (duplicateOf(body.email_address)) {
+    if (MailIdentityUtils.findDuplicate(identities.value, body.email_address, target?.id)) {
         toast.add({
             title: 'Address already in use',
             description: `${body.email_address} is already set up as an identity for this account.`,
@@ -178,7 +177,7 @@ function openDelete(identity: MailIdentity): void {
 
 async function confirmDelete(): Promise<void> {
     const target = deleteTarget.value;
-    if (!target) return;
+    if (!target || !canDelete.value) return;
 
     deleting.value = true;
 
@@ -280,9 +279,16 @@ async function confirmDelete(): Promise<void> {
                         variant="ghost"
                         size="xs"
                         aria-label="Delete identity"
+                        :disabled="!canDelete"
+                        :title="canDelete ? undefined : 'A mail account needs at least one identity'"
                         @click="openDelete(identity)"
                     />
                 </div>
+            </div>
+
+            <div v-if="!canDelete && identities.length === 1" class="px-6 py-3 text-xs text-slate-400">
+                A mail account needs at least one identity. Add another one to replace this address,
+                or edit it in place.
             </div>
 
             <div v-if="!loading && identities.length === 0" class="px-6 py-8 text-center">

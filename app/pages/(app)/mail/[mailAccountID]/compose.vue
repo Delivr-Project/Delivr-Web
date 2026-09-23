@@ -4,6 +4,7 @@ import MailComposer from '~/components/mail/compose/MailComposer.vue';
 import type { DraftContent, MailComposeSetup } from '~/composables/useMailDraft';
 import { fetchAttachmentFile } from '~/composables/useMailAttachments';
 import { MailAddressUtils } from '~/utils/mail/mailAddress';
+import { MailIdentityUtils } from '~/utils/mail/mailIdentity';
 import { MailComposeUtils } from '~/utils/mail/mailCompose';
 import type { MailAccountWithMailboxes, MailData } from '~/utils/types';
 
@@ -58,20 +59,7 @@ async function resolveDraftsFolder(): Promise<{ path: string; fallback: boolean 
 /** Addresses to send from: the default identity, the account itself, then other identities. */
 async function loadSenders(): Promise<Address[]> {
     const response = await useAPI(api => api.getMailAccountsByMailAccountIdIdentities({ path: { mailAccountID: accountId } }));
-    const identities = response.success ? response.data : [];
-    const toAddress = (identity: typeof identities[number]): Address => ({
-        name: identity.display_name || undefined,
-        address: identity.email_address
-    });
-
-    const accountAddress: Address = { name: account.display_name || undefined, address: account.smtp_username };
-    const senders = MailAddressUtils.dedupe([
-        ...identities.filter(identity => identity.is_default).map(toAddress),
-        // The SMTP login is only a sender address if it is one.
-        ...(MailAddressUtils.isValid(account.smtp_username) ? [accountAddress] : []),
-        ...identities.filter(identity => !identity.is_default).map(toAddress)
-    ]);
-    return senders.length > 0 ? senders : [accountAddress];
+    return MailIdentityUtils.senderAddresses(account, response.success ? response.data : []);
 }
 
 async function loadMail(folder: string, uid: number): Promise<MailData | null> {

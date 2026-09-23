@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { MailAccountWithMailboxes } from '~/utils/types';
 import { MailAddressUtils } from '~/utils/mail/mailAddress';
+import { MailIdentityUtils } from '~/utils/mail/mailIdentity';
 
 const injected = useSubrouterInjectedData<MailAccountWithMailboxes>('mail_account').inject();
 const account = injected.data as Ref<MailAccountWithMailboxes>;
@@ -11,10 +12,7 @@ const accountId = computed(() => account.value.id);
 const accountAddress = computed(() =>
     MailAddressUtils.isValid(account.value.smtp_username) ? account.value.smtp_username : undefined);
 
-const suggestion = computed(() => ({
-    display_name: account.value.display_name,
-    email_address: accountAddress.value
-}));
+const suggestion = computed(() => MailIdentityUtils.suggestionFor(account.value) ?? undefined);
 </script>
 
 <template>

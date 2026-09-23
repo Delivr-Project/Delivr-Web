@@ -28,7 +28,14 @@ const account = mailAccountID === "new" ? ref({
     imap_password: '',
     imap_encryption: 'SSL',
 
-    is_default: false
+    is_default: false,
+
+    // Every account is created with its first sender identity — the API refuses
+    // one without an address to send from.
+    identity: {
+        display_name: '',
+        email_address: ''
+    }
 
 }) : await mailAccountsStore.getByID(parseInt(mailAccountID));
 
@@ -156,6 +163,11 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
     };
 }
 
+// The one-time setup wizard is a full-screen flow that brings its own panel and
+// header. Nesting it in the account's tabbed panel showed two stacked headers,
+// and offered tabs that lead out of the setup halfway through.
+const isOnboarding = computed(() => route.path.endsWith('/onboarding'));
+
 const subrouterPathDynamics = useSubrouterPathDynamics({
     baseTitle: `Mail Accounts | Delivr`,
     basebreadcrumbItems: [
@@ -173,7 +185,11 @@ const routePathDynamicValues = await useAwaitedComputed(async () => {
 </script>
 
 <template>
-    <UDashboardPanel>
+    <UError v-if="error" :error="error" />
+
+    <NuxtPage v-else-if="isOnboarding" />
+
+    <UDashboardPanel v-else>
         <template #header>
             <DashboardPageHeader icon="i-lucide-at-sign" :breadcrumb-items="routePathDynamicValues.breadcrumbItems" />
 
@@ -186,8 +202,7 @@ const routePathDynamicValues = await useAwaitedComputed(async () => {
 
         <template #body>
             <div class="flex flex-col gap-4 sm:gap-6 lg:gap-12 w-full">
-                <NuxtPage v-if="!error" />
-                <UError v-else-if="error" :error="error" />
+                <NuxtPage />
             </div>
         </template>
 

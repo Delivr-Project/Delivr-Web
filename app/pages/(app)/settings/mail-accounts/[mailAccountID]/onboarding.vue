@@ -5,7 +5,7 @@ import type {
     PutMailAccountsByMailAccountIdSpecialUseData,
 } from '~/api-client';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
-import { MailAddressUtils } from '~/utils/mail/mailAddress';
+import { MailIdentityUtils } from '~/utils/mail/mailIdentity';
 import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 
 // The resolved special-use mapping the API returns (type → { path, source }).
@@ -29,12 +29,8 @@ const defaultDelimiter = computed(() => mailboxes.value[0]?.delimiter || '/');
 // ── Identities ──────────────────────────────────────────────────────────────
 // Identities are saved as they are added, so this step needs nothing on finish.
 // The SMTP login is only a usable sender address if it is an address at all.
-const identitySuggestion = computed(() => ({
-    display_name: account.value?.display_name,
-    email_address: MailAddressUtils.isValid(account.value?.smtp_username ?? '')
-        ? account.value?.smtp_username
-        : undefined
-}));
+const identitySuggestion = computed(() =>
+    (account.value ? MailIdentityUtils.suggestionFor(account.value) : null) ?? undefined);
 
 // This one-time setup only runs once per account: if it's already been finished
 // (or skipped), don't show the wizard again — go straight to the inbox.
