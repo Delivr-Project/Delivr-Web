@@ -10,6 +10,14 @@ describe('MailAddressUtils', () => {
             .toEqual(['a@x.com', '"Doe, Jane" <jane@x.com>', '<odd,box@x.com>', 'b@x.com']);
     });
 
+    test('treats apostrophes in names as literal, not as quotes', () => {
+        expect(MailAddressUtils.splitList("O'Brien <ob@x.com>, jane@x.com"))
+            .toEqual(["O'Brien <ob@x.com>", 'jane@x.com']);
+        // format() leaves such a name unquoted, so its output has to split back apart.
+        const formatted = MailAddressUtils.format({ name: "O'Brien", address: 'ob@x.com' });
+        expect(MailAddressUtils.splitList(`${formatted}, jane@x.com`)).toHaveLength(2);
+    });
+
     test('parses bare addresses, named addresses, quoted names and mailto links', () => {
         expect(MailAddressUtils.parse(' a@x.com ')).toEqual({ address: 'a@x.com' });
         expect(MailAddressUtils.parse('Jane Doe <jane@x.com>')).toEqual({ name: 'Jane Doe', address: 'jane@x.com' });
@@ -165,6 +173,10 @@ describe('MailComposeUtils', () => {
         expect(MailComposeUtils.fromEmailHtml(mailHtml)).toBe(mailHtml
             .replace('<p style="margin:0"><br></p>', '<p style="margin:0"></p>')
             .replace('<p style="margin:0;text-align: center"><br></p>', '<p style="margin:0;text-align: center"></p>'));
+    });
+
+    test('leaves out-of-range numeric entities alone instead of throwing', () => {
+        expect(MailComposeUtils.htmlToText('<p>&#1114112; &#x110000; &#128512;</p>')).toBe('&#1114112; &#x110000; \u{1F600}');
     });
 
     test('detects blank editor content', () => {

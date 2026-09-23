@@ -329,9 +329,9 @@ useEventListener(window, 'beforeunload', (event: BeforeUnloadEvent) => {
 // Keep the URL on the stored draft, so reloading resumes it (and doesn't
 // start the reply or forward over).
 watch(() => draft.draftUid.value, (uid) => {
-    if (uid !== null && !draft.closed.value && route.query.draft !== String(uid)) {
-        void router.replace({ query: { draft: String(uid) } });
-    }
+    if (uid === null || draft.closed.value) return;
+    if (route.query.draft === String(uid) && route.query.folder === props.setup.draftsPath) return;
+    void router.replace({ query: { draft: String(uid), folder: props.setup.draftsPath } });
 });
 
 defineShortcuts({

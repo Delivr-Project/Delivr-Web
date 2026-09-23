@@ -10,10 +10,7 @@ const open = ref(false);
 const url = ref('');
 
 const active = computed(() => props.editor.isActive('link'));
-const disabled = computed(() => {
-    if (!props.editor.isEditable) return true;
-    return props.editor.state.selection.empty && !props.editor.isActive('link');
-});
+const disabled = computed(() => !props.editor.isEditable);
 
 watch(() => props.editor, (editor, _, onCleanup) => {
     if (!editor) return;

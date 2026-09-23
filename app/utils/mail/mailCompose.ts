@@ -187,7 +187,7 @@ export namespace MailComposeUtils {
                 const code = entity[1]?.toLowerCase() === 'x'
                     ? parseInt(entity.slice(2), 16)
                     : parseInt(entity.slice(1), 10);
-                return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+                return Number.isInteger(code) && code >= 0 && code <= 0x10FFFF ? String.fromCodePoint(code) : match;
             }
             return ENTITIES[entity.toLowerCase()] ?? match;
         });

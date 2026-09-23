@@ -25,7 +25,7 @@ export namespace MailAddressUtils {
     export function splitList(raw: string): string[] {
         const entries: string[] = [];
         let current = '';
-        let quote: '"' | "'" | null = null;
+        let quote: '"' | null = null;
         let escaped = false;
         let angleDepth = 0;
 
@@ -42,8 +42,8 @@ export namespace MailAddressUtils {
                 continue;
             }
 
-            if ((char === '"' || char === "'") && angleDepth === 0) {
-                quote = quote === char ? null : quote ?? char;
+            if (char === '"' && angleDepth === 0) {
+                quote = quote ? null : char;
             } else if (!quote && char === '<') {
                 angleDepth++;
             } else if (!quote && char === '>' && angleDepth > 0) {
