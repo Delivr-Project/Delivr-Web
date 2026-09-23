@@ -428,15 +428,21 @@ defineExpose({
                 <div class="flex-1" />
 
                 <div class="flex items-center gap-0.5 shrink-0">
-                    <UTooltip text="Reply">
-                        <UButton icon="i-lucide-reply" color="neutral" variant="ghost" size="sm" @click="handleReply" />
+                    <!-- A draft is continued, not replied to. -->
+                    <UTooltip v-if="isDraft" text="Continue editing">
+                        <UButton icon="i-lucide-file-pen-line" color="primary" variant="ghost" size="sm" @click="handleEditDraft" />
                     </UTooltip>
-                    <UTooltip text="Reply All">
-                        <UButton icon="i-lucide-reply-all" color="neutral" variant="ghost" size="sm" @click="handleReplyAll" />
-                    </UTooltip>
-                    <UTooltip text="Forward">
-                        <UButton icon="i-lucide-forward" color="neutral" variant="ghost" size="sm" @click="handleForward" />
-                    </UTooltip>
+                    <template v-else>
+                        <UTooltip text="Reply">
+                            <UButton icon="i-lucide-reply" color="neutral" variant="ghost" size="sm" @click="handleReply" />
+                        </UTooltip>
+                        <UTooltip text="Reply All">
+                            <UButton icon="i-lucide-reply-all" color="neutral" variant="ghost" size="sm" @click="handleReplyAll" />
+                        </UTooltip>
+                        <UTooltip text="Forward">
+                            <UButton icon="i-lucide-forward" color="neutral" variant="ghost" size="sm" @click="handleForward" />
+                        </UTooltip>
+                    </template>
 
                     <div class="w-px h-5 bg-default mx-1" />
 
@@ -659,15 +665,17 @@ defineExpose({
                             <UButton v-if="isDraft" icon="i-lucide-file-pen-line" color="primary" variant="soft" size="sm" @click="handleEditDraft">
                                 Continue editing
                             </UButton>
-                            <UButton icon="i-lucide-reply" color="neutral" variant="outline" size="sm" @click="handleReply">
-                                Reply
-                            </UButton>
-                            <UButton icon="i-lucide-reply-all" color="neutral" variant="outline" size="sm" @click="handleReplyAll">
-                                Reply All
-                            </UButton>
-                            <UButton icon="i-lucide-forward" color="neutral" variant="outline" size="sm" @click="handleForward">
-                                Forward
-                            </UButton>
+                            <template v-else>
+                                <UButton icon="i-lucide-reply" color="neutral" variant="outline" size="sm" @click="handleReply">
+                                    Reply
+                                </UButton>
+                                <UButton icon="i-lucide-reply-all" color="neutral" variant="outline" size="sm" @click="handleReplyAll">
+                                    Reply All
+                                </UButton>
+                                <UButton icon="i-lucide-forward" color="neutral" variant="outline" size="sm" @click="handleForward">
+                                    Forward
+                                </UButton>
+                            </template>
                         </div>
                         <div class="text-xs text-dimmed">
                             UID: {{ mailUid }}

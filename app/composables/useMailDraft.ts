@@ -6,6 +6,7 @@ import type {
 import { client } from '~/api-client/client.gen';
 import type { MailAddressUtils } from '~/utils/mail/mailAddress';
 import { MailComposeUtils } from '~/utils/mail/mailCompose';
+import { MailDraftRetryUtils } from '~/utils/mail/mailDraftRetry';
 import type { MailData } from '~/utils/types';
 
 type Address = MailAddressUtils.Address;
@@ -184,6 +185,7 @@ export function useMailDraft(options: UseMailDraftOptions) {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let maxWaitTimer: ReturnType<typeof setTimeout> | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    const retries = MailDraftRetryUtils.budget();
 
     function clearTimers() {
         if (debounceTimer) clearTimeout(debounceTimer);
@@ -194,6 +196,8 @@ export function useMailDraft(options: UseMailDraftOptions) {
 
     function scheduleSave() {
         if (sending.value || !hasUnsavedChanges.value) return;
+        // Changed content is a new attempt, not a retry of the one that failed.
+        retries.reset();
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => void save(), autosaveDelay);
         maxWaitTimer ??= setTimeout(() => void save(), autosaveMaxWait);
@@ -267,6 +271,7 @@ export function useMailDraft(options: UseMailDraftOptions) {
             lastSavedAt.value = Date.now();
             saveError.value = null;
             status.value = 'saved';
+            retries.reset();
 
             // Pick up anything that changed while this save was running.
             scheduleSave();
@@ -274,8 +279,10 @@ export function useMailDraft(options: UseMailDraftOptions) {
         } catch (e) {
             status.value = 'error';
             saveError.value = (e as Error).message || 'The draft could not be saved.';
-            // Retry transient failures; rejected content only saves again once it changes.
-            if (!(e instanceof DraftSaveError) || e.retryable) {
+            // Retry a transient failure, within budget: rejected content — and an
+            // outage that keeps failing — only saves again once the draft changes.
+            const retryable = !(e instanceof DraftSaveError) || e.retryable;
+            if (retries.take(retryable)) {
                 retryTimer = setTimeout(() => void save(), RETRY_DELAY);
             }
             return false;

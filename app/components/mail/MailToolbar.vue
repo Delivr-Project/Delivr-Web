@@ -23,6 +23,8 @@ withDefaults(defineProps<{
     isRefreshing: boolean;
     /** Show reply/forward/print — a single mail is open in split view. */
     showMailActions: boolean;
+    /** A draft is continued in the composer, so it offers no reply/forward. */
+    isDraft?: boolean;
     /** Below the lg breakpoint there's no split view, so hide the toggle. */
     isMobile: boolean;
     viewMode: MailViewMode;
@@ -105,15 +107,17 @@ defineEmits<{
             <!-- Actions for the open mail (split view): reply/forward + print -->
             <template v-if="showMailActions">
                 <div class="w-px h-5 bg-default mx-1" />
-                <UTooltip text="Reply">
-                    <UButton icon="i-lucide-reply" color="neutral" variant="ghost" size="sm" @click="$emit('reply')" />
-                </UTooltip>
-                <UTooltip text="Reply All">
-                    <UButton icon="i-lucide-reply-all" color="neutral" variant="ghost" size="sm" @click="$emit('replyAll')" />
-                </UTooltip>
-                <UTooltip text="Forward">
-                    <UButton icon="i-lucide-forward" color="neutral" variant="ghost" size="sm" @click="$emit('forward')" />
-                </UTooltip>
+                <template v-if="!isDraft">
+                    <UTooltip text="Reply">
+                        <UButton icon="i-lucide-reply" color="neutral" variant="ghost" size="sm" @click="$emit('reply')" />
+                    </UTooltip>
+                    <UTooltip text="Reply All">
+                        <UButton icon="i-lucide-reply-all" color="neutral" variant="ghost" size="sm" @click="$emit('replyAll')" />
+                    </UTooltip>
+                    <UTooltip text="Forward">
+                        <UButton icon="i-lucide-forward" color="neutral" variant="ghost" size="sm" @click="$emit('forward')" />
+                    </UTooltip>
+                </template>
                 <UTooltip text="Print">
                     <UButton icon="i-lucide-printer" color="neutral" variant="ghost" size="sm" @click="$emit('print')" />
                 </UTooltip>
