@@ -51,6 +51,8 @@ export interface MailComposeSetup {
     draftsFallback?: boolean;
     /** Addresses the mail can be sent from; the first one is the default. */
     senders: Address[];
+    /** Signature per sender address (lowercased), as editor HTML. */
+    signatures?: Record<string, string>;
     content: DraftContent;
     storedAttachments?: StoredAttachment[];
     pendingFiles?: File[];

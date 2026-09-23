@@ -91,9 +91,44 @@ const selectedSender = computed({
     get: () => content.from?.address,
     set: (address?: string) => {
         const sender = senders.value.find(candidate => candidate.address === address);
-        if (sender) content.from = { ...sender };
+        if (!sender) return;
+        const previous = content.from;
+        content.from = { ...sender };
+        swapSignature(previous, content.from);
     }
 });
+
+/** The signature configured for an address, as editor HTML. */
+function signatureOf(address?: string): string {
+    if (!address) return '';
+    return props.setup.signatures?.[address.trim().toLowerCase()] ?? '';
+}
+
+/**
+ * Carry the signature over to the new sender. Only a signature that is still
+ * exactly the previous identity's is touched — once it has been edited (or
+ * deleted, leaving no block at all) it counts as part of the message and stays
+ * as written.
+ */
+function swapSignature(
+    previous: MailAddressUtils.Address | null | undefined,
+    next: MailAddressUtils.Address | null | undefined
+) {
+    const current = MailComposeUtils.readSignature(content.html);
+    const previousSignature = signatureOf(previous?.address);
+
+    if (current === null) {
+        // Nothing to replace: only add one where the old sender had none either.
+        if (previousSignature) return;
+    } else if (!MailComposeUtils.isSameHtml(current, previousSignature || '<p></p>')) {
+        return;
+    }
+
+    const nextSignature = signatureOf(next?.address);
+    if (current === null && !nextSignature) return;
+
+    content.html = MailComposeUtils.withSignature(content.html, nextSignature);
+}
 
 // ── Attachments ──
 

@@ -2589,6 +2589,7 @@ export type GetMailAccountsByMailAccountIdIdentitiesResponses = {
             created_at: number;
             display_name: string;
             email_address: string;
+            signature: string | null;
             is_default: boolean;
         }>;
     };
@@ -2600,6 +2601,7 @@ export type PostMailAccountsByMailAccountIdIdentitiesData = {
     body: {
         display_name: string;
         email_address: string;
+        signature?: string | null;
         is_default: boolean;
     };
     path: {
@@ -2727,6 +2729,7 @@ export type GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses = 
             created_at: number;
             display_name: string;
             email_address: string;
+            signature: string | null;
             is_default: boolean;
         };
     };
@@ -2738,6 +2741,7 @@ export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData = {
     body: {
         display_name?: string;
         email_address?: string;
+        signature?: string | null;
         is_default?: boolean;
     };
     path: {

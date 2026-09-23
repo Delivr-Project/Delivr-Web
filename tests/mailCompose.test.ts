@@ -185,3 +185,105 @@ describe('MailComposeUtils', () => {
         expect(MailComposeUtils.isBlankHtml('<p>x</p>')).toBe(false);
     });
 });
+
+describe('MailComposeUtils signatures', () => {
+
+    const SIG = '<p>Jane Doe</p>';
+    const block = (html: string) => `<div data-delivr-signature="">${html}</div>`;
+
+    test('wraps, finds and reads back a signature', () => {
+        const body = MailComposeUtils.withSignature('<p>Hi</p>', SIG);
+        expect(body).toBe(`<p>Hi</p>${block(SIG)}`);
+        expect(MailComposeUtils.hasSignatureBlock(body)).toBe(true);
+        expect(MailComposeUtils.readSignature(body)).toBe(SIG);
+    });
+
+    test('reports no signature for a body without a block', () => {
+        expect(MailComposeUtils.readSignature('<p>Hi</p>')).toBeNull();
+        expect(MailComposeUtils.hasSignatureBlock('<p>Hi</p>')).toBe(false);
+    });
+
+    test('replaces an existing block instead of adding a second one', () => {
+        const body = MailComposeUtils.withSignature(MailComposeUtils.withSignature('<p>Hi</p>', SIG), '<p>Jane · Work</p>');
+        expect(body).toBe(`<p>Hi</p>${block('<p>Jane · Work</p>')}`);
+    });
+
+    test('sits above a reply quote, including its "wrote:" line', () => {
+        const reply = '<p></p><p>On 23 Sep 2026, Bob &lt;bob@x.com&gt; wrote:</p><blockquote><p>original</p></blockquote>';
+        const body = MailComposeUtils.withSignature(reply, SIG);
+        expect(body).toBe(
+            `<p></p>${block(SIG)}<p>On 23 Sep 2026, Bob &lt;bob@x.com&gt; wrote:</p><blockquote><p>original</p></blockquote>`
+        );
+    });
+
+    test('sits above a forwarded message header', () => {
+        const forward = '<p></p><p>---------- Forwarded message ----------<br>From: Bob</p><p></p><p>original</p>';
+        const body = MailComposeUtils.withSignature(forward, SIG);
+        expect(body.indexOf('data-delivr-signature')).toBeLessThan(body.indexOf('Forwarded message'));
+        expect(body.startsWith('<p></p><div')).toBe(true);
+    });
+
+    test('goes below a quote-less body, where the message ends', () => {
+        expect(MailComposeUtils.withSignature('<p>Hi</p><p>Bye</p>', SIG))
+            .toBe(`<p>Hi</p><p>Bye</p>${block(SIG)}`);
+    });
+
+    test('compares fragments ignoring the whitespace the editor moves around', () => {
+        expect(MailComposeUtils.isSameHtml('<p>Jane</p>\n  <p>Doe</p>', '<p>Jane</p><p>Doe</p>')).toBe(true);
+        expect(MailComposeUtils.isSameHtml('<p>Jane</p>', '<p>Joe</p>')).toBe(false);
+    });
+
+    test('drops an empty signature block from the sent mail, but keeps a real one', () => {
+        expect(MailComposeUtils.toEmailHtml(`<p>Hi</p>${block('<p></p>')}`))
+            .toBe('<p style="margin:0">Hi</p>');
+
+        const sent = MailComposeUtils.toEmailHtml(`<p>Hi</p>${block(SIG)}`);
+        expect(sent).toContain('data-delivr-signature');
+        expect(sent).toContain('Jane Doe');
+    });
+
+    test('keeps a signature that only contains formatting', () => {
+        const sent = MailComposeUtils.toEmailHtml(`<p>Hi</p>${block('<p><strong>Jane</strong></p>')}`);
+        expect(sent).toContain('Jane');
+    });
+
+    test('a signature survives the draft round trip', () => {
+        const body = MailComposeUtils.withSignature('<p></p>', SIG);
+        const stored = MailComposeUtils.toEmailHtml(body);
+        const reopened = MailComposeUtils.fromEmailHtml(stored);
+        expect(MailComposeUtils.isSameHtml(MailComposeUtils.readSignature(reopened) ?? '', SIG)).toBe(true);
+    });
+
+    test('the plain-text alternative carries the signature text', () => {
+        const text = MailComposeUtils.htmlToText(MailComposeUtils.toEmailHtml(`<p>Hi</p>${block(SIG)}`));
+        expect(text).toContain('Hi');
+        expect(text).toContain('Jane Doe');
+    });
+
+});
+
+describe('MailComposeUtils signature comparison after a draft round trip', () => {
+
+    test('a stored signature still matches the one the editor gives back', () => {
+        const signature = '<p>Jane Doe</p><p><a href="https://example.com">example.com</a></p>';
+        const body = MailComposeUtils.withSignature('<p>Hi</p>', signature);
+
+        // Saved as a draft, then reopened: mail HTML in, editor HTML out.
+        const reopened = MailComposeUtils.fromEmailHtml(MailComposeUtils.toEmailHtml(body));
+
+        expect(MailComposeUtils.isSameHtml(MailComposeUtils.readSignature(reopened) ?? '', signature)).toBe(true);
+    });
+
+    test('an edited signature is not mistaken for the stored one', () => {
+        const signature = '<p>Jane Doe</p>';
+        const edited = MailComposeUtils.withSignature('<p>Hi</p>', '<p>Jane Doe, on holiday</p>');
+
+        expect(MailComposeUtils.isSameHtml(MailComposeUtils.readSignature(edited) ?? '', signature)).toBe(false);
+    });
+
+    test('keeps a style the user set, dropping only the mail-client margins', () => {
+        expect(MailComposeUtils.isSameHtml('<p style="margin:0;text-align: center">x</p>', '<p style="text-align: center">x</p>')).toBe(true);
+        expect(MailComposeUtils.isSameHtml('<p style="text-align: center">x</p>', '<p>x</p>')).toBe(false);
+    });
+
+});

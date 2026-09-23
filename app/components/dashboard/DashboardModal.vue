@@ -7,6 +7,8 @@ interface Props extends ModalProps {
     icon?: string
     iconColor?: 'sky' | 'amber' | 'emerald' | 'error' | 'neutral'
     loading?: boolean
+    /** Tailwind max-width class for the dialog; wider suits forms with an editor. */
+    width?: string
 }
 
 const props = defineProps<Props>()
@@ -29,7 +31,7 @@ const iconColorClasses: Record<NonNullable<Props['iconColor']>, string> = {
         :title="title"
         :description="description"
         :ui="{
-            content: 'sm:max-w-lg',
+            content: width ?? 'sm:max-w-lg',
             footer: 'justify-end'
         }"
     >

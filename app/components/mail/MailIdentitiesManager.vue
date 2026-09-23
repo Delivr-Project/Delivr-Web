@@ -2,6 +2,8 @@
 import type { MailIdentity } from '~/utils/types';
 import { zPostMailAccountsByMailAccountIdIdentitiesBody } from '~/api-client/zod.gen';
 import { MailIdentityUtils } from '~/utils/mail/mailIdentity';
+import { MailComposeUtils } from '~/utils/mail/mailCompose';
+import DOMPurify from 'dompurify';
 
 const props = withDefaults(defineProps<{
     accountId: number;
@@ -61,12 +63,20 @@ const suggestedIdentity = computed(() => {
 const formOpen = ref(false);
 const editing = ref<MailIdentity | null>(null);
 const saving = ref(false);
-const formState = reactive({ display_name: '', email_address: '', is_default: false });
+const formState = reactive({ display_name: '', email_address: '', is_default: false, signature: '' });
+
+// Stored as editor HTML, not mail HTML: the composer converts the whole body
+// when the mail is sent, and a pre-converted copy would no longer match what the
+// editor hands back — which is how the composer recognises an untouched
+// signature when the sender is switched.
+const signatureToStore = computed(() =>
+    MailComposeUtils.isBlankHtml(formState.signature) ? null : formState.signature.trim());
 
 function openCreate(prefill?: { display_name: string; email_address: string }): void {
     editing.value = null;
     formState.display_name = prefill?.display_name ?? '';
     formState.email_address = prefill?.email_address ?? '';
+    formState.signature = '';
     // The first identity is the one compose picks, so default it on.
     formState.is_default = identities.value.length === 0;
     formOpen.value = true;
@@ -77,7 +87,32 @@ function openEdit(identity: MailIdentity): void {
     formState.display_name = identity.display_name;
     formState.email_address = identity.email_address;
     formState.is_default = identity.is_default;
+    formState.signature = toEditorSignature(identity.signature);
     formOpen.value = true;
+}
+
+/**
+ * A stored signature as editor content. It is the user's own HTML, but it is
+ * still stored server-side, so it goes through the same sanitizing the composer
+ * applies to any mail body it loads.
+ */
+function toEditorSignature(signature: string | null | undefined): string {
+    if (!signature) return '';
+    return DOMPurify.sanitize(signature, {
+        USE_PROFILES: { html: true },
+        FORBID_TAGS: ['style', 'img', 'picture', 'video', 'audio', 'iframe', 'svg', 'form', 'input', 'button'],
+        FORBID_ATTR: ['class', 'id']
+    });
+}
+
+// Signatures are text: a file dropped into the editor has nowhere to go.
+function onSignatureFiles(): void {
+    toast.add({
+        title: 'Not supported in signatures',
+        description: 'Images and files can only be added to a message, not to a signature.',
+        icon: 'i-lucide-paperclip',
+        color: 'warning'
+    });
 }
 
 async function onFormSubmit(): Promise<void> {
@@ -85,7 +120,8 @@ async function onFormSubmit(): Promise<void> {
     const body = {
         display_name: formState.display_name.trim(),
         email_address: formState.email_address.trim(),
-        is_default: formState.is_default
+        is_default: formState.is_default,
+        signature: signatureToStore.value
     };
 
     if (MailIdentityUtils.findDuplicate(identities.value, body.email_address, target?.id)) {
@@ -251,6 +287,12 @@ async function confirmDelete(): Promise<void> {
                         <UBadge v-if="identity.is_default" color="primary" variant="subtle" size="xs" class="shrink-0">
                             Default
                         </UBadge>
+                        <UIcon
+                            v-if="identity.signature"
+                            name="i-lucide-signature"
+                            class="size-3.5 shrink-0 text-slate-400"
+                            title="Has a signature"
+                        />
                     </div>
                     <p class="truncate text-xs text-slate-400">{{ identity.email_address }}</p>
                 </div>
@@ -316,6 +358,7 @@ async function confirmDelete(): Promise<void> {
             :description="editing ? 'Change how this sender address appears.' : 'Add another address you can send from.'"
             icon="i-lucide-user-round-pen"
             icon-color="sky"
+            width="sm:max-w-2xl"
         >
             <UForm
                 id="mail-identity-form"
@@ -340,6 +383,20 @@ async function confirmDelete(): Promise<void> {
                     class="flex items-start justify-between gap-4"
                 >
                     <UCheckbox v-model="formState.is_default" />
+                </UFormField>
+
+                <UFormField
+                    name="signature"
+                    label="Signature"
+                    description="Added below your text on messages sent from this address. Leave empty for none."
+                    class="flex flex-col gap-1"
+                >
+                    <MailComposeEditor
+                        v-model="formState.signature"
+                        placeholder="Jane Doe · Delivr"
+                        class="min-h-40"
+                        @files="onSignatureFiles()"
+                    />
                 </UFormField>
             </UForm>
 

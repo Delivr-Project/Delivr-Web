@@ -56,10 +56,22 @@ async function resolveDraftsFolder(): Promise<{ path: string; fallback: boolean 
     return path ? { path, fallback: false } : { path: 'INBOX', fallback: true };
 }
 
-/** Addresses to send from: the default identity, the account itself, then other identities. */
-async function loadSenders(): Promise<Address[]> {
+/**
+ * Addresses to send from — the default identity, the account itself, then the
+ * other identities — together with their signatures as editor content, keyed by
+ * lowercased address.
+ */
+async function loadSenders(): Promise<{ senders: Address[]; signatures: Record<string, string> }> {
     const response = await useAPI(api => api.getMailAccountsByMailAccountIdIdentities({ path: { mailAccountID: accountId } }));
-    return MailIdentityUtils.senderAddresses(account, response.success ? response.data : []);
+    const identities = response.success ? response.data : [];
+
+    const signatures: Record<string, string> = {};
+    for (const identity of identities) {
+        if (!identity.signature) continue;
+        signatures[identity.email_address.trim().toLowerCase()] = sanitizeStoredHtml(identity.signature);
+    }
+
+    return { senders: MailIdentityUtils.senderAddresses(account, identities), signatures };
 }
 
 async function loadMail(folder: string, uid: number): Promise<MailData | null> {
@@ -76,8 +88,14 @@ async function loadMail(folder: string, uid: number): Promise<MailData | null> {
  */
 function toEditorHtml(mail: MailData, keepStyles: boolean): string {
     if (!mail.body?.html) return MailComposeUtils.textToHtml(mail.body?.text ?? '');
-    return DOMPurify.sanitize(mail.body.html, {
+    return sanitizeStoredHtml(mail.body.html, keepStyles);
+}
+
+function sanitizeStoredHtml(html: string, keepStyles = true): string {
+    return DOMPurify.sanitize(html, {
         USE_PROFILES: { html: true },
+        // The signature marker has to survive, or the composer can't find it again.
+        ADD_ATTR: [MailComposeUtils.SIGNATURE_ATTRIBUTE],
         FORBID_TAGS: ['style', 'img', 'picture', 'video', 'audio', 'iframe', 'svg', 'form', 'input', 'button'],
         FORBID_ATTR: keepStyles ? ['class', 'id'] : ['style', 'class', 'id']
     });
@@ -123,7 +141,18 @@ async function forwardedFiles(mail: MailData, folder: string): Promise<File[]> {
 }
 
 async function load() {
-    const [drafts, senders] = await Promise.all([resolveDraftsFolder(), loadSenders()]);
+    const [drafts, { senders, signatures }] = await Promise.all([resolveDraftsFolder(), loadSenders()]);
+
+    /** The signature of an address, as editor content. */
+    const signatureOf = (from: Address | null | undefined) =>
+        from ? signatures[from.address.trim().toLowerCase()] ?? '' : '';
+
+    /** Put the sender's signature below the user's text, above any quote. */
+    const signed = (html: string, from: Address | null | undefined) => {
+        const signature = signatureOf(from);
+        return signature ? MailComposeUtils.withSignature(html, signature) : html;
+    };
+
     const blank: DraftContent = {
         from: senders[0] ?? null,
         to: [],
@@ -133,7 +162,7 @@ async function load() {
         html: '',
         priority: 'normal'
     };
-    const base = { draftsPath: drafts.path, draftsFallback: drafts.fallback, senders };
+    const base = { draftsPath: drafts.path, draftsFallback: drafts.fallback, senders, signatures };
 
     const folder = queryValue('folder');
     const draftUid = uidParam('draft');
@@ -182,7 +211,7 @@ async function load() {
                 setup.value = {
                     ...base,
                     mode: 'forward',
-                    content: { ...blank, ...prefill, from },
+                    content: { ...blank, ...prefill, from, html: signed(prefill.html, from) },
                     pendingFiles: await forwardedFiles(mail, sourceFolder)
                 };
             } else {
@@ -196,7 +225,7 @@ async function load() {
                 setup.value = {
                     ...base,
                     mode: replyAll ? 'replyAll' : 'reply',
-                    content: { ...blank, ...prefill, from }
+                    content: { ...blank, ...prefill, from, html: signed(prefill.html, from) }
                 };
             }
             return;
@@ -214,7 +243,9 @@ async function load() {
         content: {
             ...blank,
             to: MailAddressUtils.parseList(queryValue('to') ?? ''),
-            subject: queryValue('subject') ?? ''
+            subject: queryValue('subject') ?? '',
+            // An empty paragraph keeps the cursor above the signature.
+            html: signed('<p></p>', blank.from)
         }
     };
 }

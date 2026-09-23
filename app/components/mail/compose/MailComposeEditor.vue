@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { EditorToolbarItem } from '@nuxt/ui';
+import { Node, mergeAttributes } from '@tiptap/core';
 import { TextAlign } from '@tiptap/extension-text-align';
 import MailComposeLinkPopover from '~/components/mail/compose/MailComposeLinkPopover.vue';
+import { MailComposeUtils } from '~/utils/mail/mailCompose';
 
 /**
  * Rich text editor for a mail body (HTML). Block spacing is kept tight so the
@@ -48,7 +50,28 @@ const editorProps = {
     handleDrop: (_view: unknown, event: DragEvent) => takeFiles(event.dataTransfer)
 };
 
-const extensions = [TextAlign.configure({ types: ['heading', 'paragraph'] })];
+/**
+ * The identity signature as a real node. TipTap drops elements it has no node
+ * for — a plain marked `<div>` would come back out of the editor unwrapped and
+ * unmarked, leaving the composer unable to find the signature again when the
+ * sender changes. It is edited like any other text; only the wrapper is fixed.
+ */
+const MailSignature = Node.create({
+    name: 'mailSignature',
+    group: 'block',
+    content: 'block+',
+    defining: true,
+
+    parseHTML() {
+        return [{ tag: `div[${MailComposeUtils.SIGNATURE_ATTRIBUTE}]` }];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['div', mergeAttributes(HTMLAttributes, { [MailComposeUtils.SIGNATURE_ATTRIBUTE]: '' }), 0];
+    }
+});
+
+const extensions = [TextAlign.configure({ types: ['heading', 'paragraph'] }), MailSignature];
 
 const toolbarItems = [
     [

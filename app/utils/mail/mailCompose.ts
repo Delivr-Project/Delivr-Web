@@ -121,6 +121,96 @@ export namespace MailComposeUtils {
         };
     }
 
+    // ── Signatures ──────────────────────────────────────────────────────────
+    // An identity's signature lives in the body as a marked block, so the
+    // composer can find it again when the sender is switched. TipTap unwraps
+    // elements it has no node for, so the marker only survives because
+    // `MailComposeEditor` registers a node that parses and renders it.
+
+    export const SIGNATURE_ATTRIBUTE = 'data-delivr-signature';
+
+    const SIGNATURE_BLOCK = new RegExp(`<div[^>]*\\s${SIGNATURE_ATTRIBUTE}(?:="[^"]*")?[^>]*>([\\s\\S]*?)</div>`, 'i');
+
+    /** Wrap signature HTML in the block the composer recognises. */
+    export function signatureBlock(signatureHtml: string): string {
+        return `<div ${SIGNATURE_ATTRIBUTE}="">${signatureHtml || '<p></p>'}</div>`;
+    }
+
+    /**
+     * The signature block's inner HTML, or `null` when the body has none. The
+     * block never nests another `<div>` — the editor has no node for a plain
+     * div, so one can't be typed or pasted into it — which is what makes a
+     * non-greedy match for its closing tag correct.
+     */
+    export function readSignature(html: string): string | null {
+        return html.match(SIGNATURE_BLOCK)?.[1] ?? null;
+    }
+
+    export function hasSignatureBlock(html: string): boolean {
+        return SIGNATURE_BLOCK.test(html);
+    }
+
+    /**
+     * Compare two fragments as the same content: whitespace between tags moves
+     * around freely, and a body saved as a draft comes back with the block
+     * margins {@link toEmailHtml} adds for mail clients, which the editor then
+     * drops again.
+     */
+    export function isSameHtml(a: string, b: string): boolean {
+        const normalize = (html: string) => html
+            .replace(/\sstyle="([^"]*)"/g, (attribute, declarations: string) => {
+                const rest = declarations.split(';').map(part => part.trim())
+                    .filter(part => part !== '' && part.replace(/\s+/g, '') !== 'margin:0');
+                return rest.length > 0 ? ` style="${rest.join(';')}"` : '';
+            })
+            .replace(/>\s+</g, '><')
+            .replace(/\s+/g, ' ')
+            .trim();
+        return normalize(a) === normalize(b);
+    }
+
+    /**
+     * Put `signature` into `html`: replacing the existing block, or inserting one
+     * above the quoted original of a reply / forward (and at the end otherwise),
+     * so it always sits directly below what the user writes.
+     */
+    export function withSignature(html: string, signature: string): string {
+        if (hasSignatureBlock(html)) {
+            return html.replace(SIGNATURE_BLOCK, () => signatureBlock(signature));
+        }
+        const at = quotedRegionStart(html);
+        return html.slice(0, at) + signatureBlock(signature) + html.slice(at);
+    }
+
+    /**
+     * Where the quoted original begins, i.e. where a signature has to stop. The
+     * quote is a `<blockquote>` for replies and the `Forwarded message` header
+     * paragraph for forwards, both written by {@link buildReply} /
+     * {@link buildForward}; a reply's "… wrote:" line (see {@link quoteHeader})
+     * belongs to the quote, so the signature goes above that too.
+     */
+    function quotedRegionStart(html: string): number {
+        const forwarded = html.search(/<p[^>]*>(?:(?!<\/p>)[\s\S])*-+\s*Forwarded message/i);
+        if (forwarded >= 0) return forwarded;
+
+        const quote = html.indexOf('<blockquote');
+        if (quote < 0) return html.length;
+
+        // Keep the "On <date>, <sender> wrote:" paragraph with its quote.
+        const header = html.lastIndexOf('<p', quote);
+        return header >= 0 && /wrote:\s*<\/p>\s*$/i.test(html.slice(header, quote)) ? header : quote;
+    }
+
+    /**
+     * Drop a signature block that holds no text. The composer always keeps a
+     * block in the editor so switching identities has somewhere to write to,
+     * but an empty one has no business in the sent mail.
+     */
+    function stripEmptySignature(html: string): string {
+        return html.replace(SIGNATURE_BLOCK, (block, content: string) =>
+            content.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim() === '' ? '' : block);
+    }
+
     /** "On <date>, <sender> wrote:" line above a quoted reply. */
     export function quoteHeader(source: SourceMail, formatTimestamp: (timestamp: number) => string): string {
         const sender = source.from ? MailAddressUtils.format(source.from) : 'Unknown sender';
@@ -157,7 +247,7 @@ export namespace MailComposeUtils {
      * clients collapse them, and quotes get a quote bar.
      */
     export function toEmailHtml(html: string): string {
-        const withBreaks = html.replace(/<p(\s[^>]*)?><\/p>/g, '<p$1><br></p>');
+        const withBreaks = stripEmptySignature(html).replace(/<p(\s[^>]*)?><\/p>/g, '<p$1><br></p>');
         const blocks = addStyle(withBreaks, ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol'], 'margin:0');
         return addStyle(blocks, ['blockquote'], QUOTE_STYLE);
     }
