@@ -42,7 +42,7 @@ async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 	} catch (error) {
 		toast.add({
 			title: 'Error',
-			description: 'An unexpected error occurred while saving your preferences.',
+			description: (error as Error).message || 'An unexpected error occurred while saving your preferences.',
 			icon: 'i-lucide-alert-circle',
 			color: 'error',
 		})

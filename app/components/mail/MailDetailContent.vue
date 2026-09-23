@@ -209,6 +209,20 @@ function loadRemoteImagesOnce() {
 
 type RemoteMenuItem = { label: string; icon: string; onSelect: () => void };
 
+// Saving a rule throws when it can't be persisted (e.g. the preferences didn't
+// load), so report it instead of leaving an unhandled rejection.
+async function saveRemoteRule(save: () => Promise<void>) {
+    try {
+        await save();
+    } catch (error) {
+        toast.add({
+            title: 'Failed to save remote content rule',
+            description: (error as Error).message || 'An unknown error occurred.',
+            color: 'error'
+        });
+    }
+}
+
 const remoteContentMenu = computed(() => {
     const addr = senderAddress.value;
     const domain = senderDomain.value;
@@ -217,24 +231,24 @@ const remoteContentMenu = computed(() => {
     if (domain) allowGroup.push({
         label: `Always load from @${domain}`,
         icon: 'i-lucide-image',
-        onSelect: () => preferencesStore.setRemoteContentDomainPolicy(domain, 'allow'),
+        onSelect: () => saveRemoteRule(() => preferencesStore.setRemoteContentDomainPolicy(domain, 'allow')),
     });
     if (addr) allowGroup.push({
         label: `Always load from ${addr}`,
         icon: 'i-lucide-image',
-        onSelect: () => preferencesStore.setRemoteContentAddressPolicy(addr, 'allow'),
+        onSelect: () => saveRemoteRule(() => preferencesStore.setRemoteContentAddressPolicy(addr, 'allow')),
     });
 
     const blockGroup: RemoteMenuItem[] = [];
     if (domain) blockGroup.push({
         label: `Never load from @${domain}`,
         icon: 'i-lucide-image-off',
-        onSelect: () => preferencesStore.setRemoteContentDomainPolicy(domain, 'block'),
+        onSelect: () => saveRemoteRule(() => preferencesStore.setRemoteContentDomainPolicy(domain, 'block')),
     });
     if (addr) blockGroup.push({
         label: `Never load from ${addr}`,
         icon: 'i-lucide-image-off',
-        onSelect: () => preferencesStore.setRemoteContentAddressPolicy(addr, 'block'),
+        onSelect: () => saveRemoteRule(() => preferencesStore.setRemoteContentAddressPolicy(addr, 'block')),
     });
 
     return [allowGroup, blockGroup].filter(g => g.length > 0);

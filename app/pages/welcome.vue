@@ -39,14 +39,13 @@ const finishing = ref(false);
 
 // Mark onboarding done so the first-login redirect stops firing, then leave the
 // welcome flow. `/` routes to the inbox, or to add a first mail account.
-// The store only writes the preferences that actually changed.
+// The preferences are saved first (the store only writes the ones that changed),
+// so a failed save keeps the welcome flow open to retry.
 async function complete(savePrefs: boolean) {
     finishing.value = true;
     try {
-        await preferencesStore.update({
-            ...(savePrefs ? prefs : {}),
-            onboardingCompleted: true,
-        });
+        if (savePrefs) await preferencesStore.update({ ...prefs });
+        await preferencesStore.update({ onboardingCompleted: true });
         await navigateTo('/');
     } catch (error: any) {
         toast.add({

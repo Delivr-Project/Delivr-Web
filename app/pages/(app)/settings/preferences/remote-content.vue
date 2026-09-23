@@ -118,7 +118,7 @@ async function onSave() {
 	} catch (error) {
 		toast.add({
 			title: 'Error',
-			description: 'An unexpected error occurred while saving your rules.',
+			description: (error as Error).message || 'An unexpected error occurred while saving your rules.',
 			icon: 'i-lucide-alert-circle',
 			color: 'error',
 		});

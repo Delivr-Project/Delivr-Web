@@ -42,6 +42,39 @@ const DEFAULTS: PreferencesData = {
     onboardingCompleted: false,
 };
 
+type PersistResponse = { success: boolean; message?: string };
+
+/**
+ * How each preference is saved: through its own `/account/preferences/<key>`
+ * route. `label` names it in error messages.
+ */
+const WRITERS: { [K in keyof PreferencesData]: { label: string; write: (value: PreferencesData[K]) => Promise<PersistResponse> } } = {
+    remoteContentPolicy: {
+        label: "remote content rules",
+        write: async (policy) => await useAPI((api) => api.putAccountPreferencesRemoteContentPolicy({ body: policy })),
+    },
+    autoMarkSeen: {
+        label: "mark as read",
+        write: async (enabled) => await useAPI((api) => api.putAccountPreferencesAutoMarkSeen({ body: { enabled } })),
+    },
+    nestUnderInbox: {
+        label: "folder nesting",
+        write: async (nestUnderInbox) => await useAPI((api) => api.putAccountPreferencesFolderNesting({ body: { nestUnderInbox } })),
+    },
+    folderDragDrop: {
+        label: "folder drag-and-drop",
+        write: async (enabled) => await useAPI((api) => api.putAccountPreferencesFolderDnd({ body: { enabled } })),
+    },
+    onboardingCompleted: {
+        label: "onboarding",
+        write: async (completed) => await useAPI((api) => api.putAccountPreferencesOnboarding({ body: { completed } })),
+    },
+};
+
+function persist<K extends keyof PreferencesData>(key: K, value: PreferencesData[K]) {
+    return WRITERS[key].write(value);
+}
+
 /**
  * Extracts the lowercase domain part of an email address, or `null` if none.
  */
@@ -134,43 +167,59 @@ class PreferencesStore extends ModifiableAbstractStore<PreferencesData, Partial<
     /**
      * Applies the given preferences locally and persists the ones that differ
      * from the current value. The remote content policy is replaced as a whole.
+     *
+     * Throws if the preferences can't be loaded (diffing or merging against the
+     * defaults would overwrite what the server has), and if a write fails —
+     * after rolling back the values that weren't saved.
      */
     override async update(updates: Partial<PreferencesData>) {
+        await this.apply(() => updates);
+    }
+
+    /**
+     * Shared by every write. `getUpdates` runs against the loaded preferences
+     * with no `await` before they're replaced, so concurrent calls build on
+     * each other's changes instead of overwriting them.
+     */
+    private async apply(getUpdates: (current: PreferencesData) => Partial<PreferencesData>) {
         await this.refreshIfNeeded();
-        const current = this.useRaw();
-        const previous = current.value ?? DEFAULTS;
+        const state = this.useRaw();
+        const previous = state.value;
+        if (!previous) {
+            throw new Error("Your preferences couldn't be loaded, so nothing was saved. Please try again.");
+        }
+
+        // An explicit `undefined` would otherwise replace the current value.
+        const updates = Object.fromEntries(
+            Object.entries(getUpdates(previous)).filter(([, value]) => value !== undefined)
+        ) as Partial<PreferencesData>;
 
         const merged: PreferencesData = { ...previous, ...updates };
-        current.value = merged;
+        state.value = merged;
 
-        const writes: Promise<void>[] = [];
-        if (updates.remoteContentPolicy !== undefined) {
-            writes.push((async () => this.report("remote content policy",
-                await useAPI((api) => api.putAccountPreferencesRemoteContentPolicy({ body: merged.remoteContentPolicy }))
-            ))());
-        }
-        if (merged.autoMarkSeen !== previous.autoMarkSeen) {
-            writes.push((async () => this.report("auto-mark-seen preference",
-                await useAPI((api) => api.putAccountPreferencesAutoMarkSeen({ body: { enabled: merged.autoMarkSeen } }))
-            ))());
-        }
-        if (merged.nestUnderInbox !== previous.nestUnderInbox) {
-            writes.push((async () => this.report("folder-nesting preference",
-                await useAPI((api) => api.putAccountPreferencesFolderNesting({ body: { nestUnderInbox: merged.nestUnderInbox } }))
-            ))());
-        }
-        if (merged.folderDragDrop !== previous.folderDragDrop) {
-            writes.push((async () => this.report("folder drag-and-drop preference",
-                await useAPI((api) => api.putAccountPreferencesFolderDnd({ body: { enabled: merged.folderDragDrop } }))
-            ))());
-        }
-        if (merged.onboardingCompleted !== previous.onboardingCompleted) {
-            writes.push((async () => this.report("onboarding state",
-                await useAPI((api) => api.putAccountPreferencesOnboarding({ body: { completed: merged.onboardingCompleted } }))
-            ))());
-        }
+        const changed = (Object.keys(updates) as (keyof PreferencesData)[])
+            .filter(key => merged[key] !== previous[key]);
 
-        await Promise.all(writes);
+        const failed = (await Promise.all(changed.map(async (key) => {
+            const response = await persist(key, merged[key]);
+            if (response.success) return null;
+            console.error(`Failed to persist ${WRITERS[key].label}:`, response.message);
+            return key;
+        }))).filter(key => key !== null);
+
+        if (failed.length === 0) return;
+
+        // Undo what wasn't saved, unless a later update has replaced it since.
+        const current = state.value;
+        if (current) {
+            state.value = {
+                ...current,
+                ...Object.fromEntries(
+                    failed.filter(key => current[key] === merged[key]).map(key => [key, previous[key]])
+                ),
+            };
+        }
+        throw new Error(`Couldn't save ${failed.map(key => WRITERS[key].label).join(", ")}. Please try again.`);
     }
 
     // ── Remote content policy ──
@@ -219,21 +268,12 @@ class PreferencesStore extends ModifiableAbstractStore<PreferencesData, Partial<
 
     /** Merges the given partial rule maps into the current policy and persists it. */
     private async mergeRemoteContentPolicy(updates: Partial<RemoteContentPolicyData>) {
-        await this.refreshIfNeeded();
-        const policy = this.useRaw().value?.remoteContentPolicy ?? DEFAULTS.remoteContentPolicy;
-
-        await this.update({
+        await this.apply(({ remoteContentPolicy: policy }) => ({
             remoteContentPolicy: {
                 addresses: { ...policy.addresses, ...updates.addresses },
                 domains: { ...policy.domains, ...updates.domains },
             },
-        });
-    }
-
-    private report(label: string, response: { success: boolean; message?: string }) {
-        if (!response.success) {
-            console.error(`Failed to persist ${label}:`, response.message);
-        }
+        }));
     }
 
 }

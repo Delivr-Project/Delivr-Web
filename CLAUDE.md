@@ -57,9 +57,8 @@ app/
 │       └── MailToolbar.vue     # Shared toolbar (bulk/read/delete/refresh + reading-pane actions)
 ├── composables/
 │   ├── stores/               # State stores
-│   │   ├── useAutoMarkSeenStore.ts
 │   │   ├── useMailAccountsStore.ts
-│   │   ├── useRemoteContentPolicyStore.ts
+│   │   ├── usePreferencesStore.ts  # All per-user preferences (remote content, mark-as-read, folders, onboarding)
 │   │   ├── useSelectedMailAccountStore.ts
 │   │   └── useUserStore.ts
 │   ├── useAPI.ts
@@ -148,6 +147,7 @@ server/                        # Nitro server routes (run on the SSR server)
 - **Layouts**: `auth.vue` for unauthenticated routes, `default.vue` for the main dashboard.
 - **Middleware**: Global middleware in `app/middleware/`. Auth middleware handles session validation. Rewrites middleware handles URL transformations.
 - **State Management**: Simple composable stores (not Pinia) in `app/composables/stores/`. The `abstractStore.ts` utility provides a base class pattern.
+- **Preferences** (`usePreferencesStore`): every per-user preference is loaded in one `GET /account/preferences` (pre-warmed by `auth.global.ts`), and each is saved through its own `PUT /account/preferences/<key>` — only the ones that changed. Writes **throw** instead of falling back to the defaults when the preferences couldn't be loaded (merging a remote-content rule into an empty policy would wipe the user's rules), and throw after rolling back a value whose write failed, so callers must catch and toast. `login.vue` clears it (and the mail-account stores) because a previous user's session may still be in memory. Unit-tested in `tests/preferencesStore.test.ts`.
 - **Styling**: Nuxt UI components with custom CSS in `app/assets/css/main.css`.
 - **PWA**: Configured via `@vite-pwa/nuxt` in `nuxt.config.ts`.
 - **Icons**: Use Lucide icons via the `i-lucide-*` format (e.g., `i-lucide-mail`).
