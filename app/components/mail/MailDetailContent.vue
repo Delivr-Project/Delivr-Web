@@ -280,19 +280,21 @@ function handleOpenAttachment(idx: number, filename?: string, contentType?: stri
     openAttachment(attachmentRef(idx), filename, contentType);
 }
 
-// ── Action handlers (placeholders) ──
+// ── Reply / forward / continue a draft (all open the composer) ──
 
-function notAvailable(title: string) {
-    toast.add({
-        title: `${title} not available`,
-        description: 'This feature will be available soon.',
-        color: 'warning'
+const isDraft = computed(() => !!mailData.value?.flags?.draft);
+
+function openComposer(query: Record<string, string>) {
+    void navigateTo({
+        path: `/mail/${props.accountId}/compose`,
+        query: { ...query, folder: systemFolderPath.value }
     });
 }
 
-const handleReply = () => notAvailable('Reply');
-const handleReplyAll = () => notAvailable('Reply All');
-const handleForward = () => notAvailable('Forward');
+const handleReply = () => openComposer({ reply: String(props.mailUid) });
+const handleReplyAll = () => openComposer({ replyAll: String(props.mailUid) });
+const handleForward = () => openComposer({ forward: String(props.mailUid) });
+const handleEditDraft = () => openComposer({ draft: String(props.mailUid) });
 
 // ── Print (email only) ──
 // Render just this email into a detached iframe and print that, rather than
@@ -516,6 +518,17 @@ defineExpose({
 
                             <div class="flex items-center gap-1 shrink-0">
                                 <UButton
+                                    v-if="isDraft"
+                                    icon="i-lucide-file-pen-line"
+                                    color="primary"
+                                    variant="soft"
+                                    size="sm"
+                                    @click="handleEditDraft"
+                                >
+                                    Continue editing
+                                </UButton>
+                                <UButton
+                                    v-else
                                     icon="i-lucide-reply"
                                     color="primary"
                                     variant="soft"
@@ -642,7 +655,10 @@ defineExpose({
 
                     <!-- Footer actions -->
                     <div class="flex items-center justify-between pt-2 border-t border-default">
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <UButton v-if="isDraft" icon="i-lucide-file-pen-line" color="primary" variant="soft" size="sm" @click="handleEditDraft">
+                                Continue editing
+                            </UButton>
                             <UButton icon="i-lucide-reply" color="neutral" variant="outline" size="sm" @click="handleReply">
                                 Reply
                             </UButton>

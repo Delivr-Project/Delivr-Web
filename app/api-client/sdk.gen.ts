@@ -515,7 +515,7 @@ export const getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid 
 /**
  * Update Mail
  *
- * Update mail content (for drafts). The mail is replaced with a new one containing the updated content.
+ * Update a mail's content, attachments or flags (for drafts). Content and attachment changes replace the mail with a new one (new UID) and remove the old version; flag-only changes are applied in place. Supports JSON bodies and multipart bodies that add attachments, with the same size limits as creating a mail; `removeAttachments` drops existing attachments by id.
  */
 export const putMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid = <TComposable extends Composable = '$fetch', DefaultT extends PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse = PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse>(options: Options<TComposable, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidData, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse, DefaultT>) => (options.client ?? client).put<TComposable, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponse | DefaultT, PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -530,7 +530,7 @@ export const putMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid 
 /**
  * Send Mail
  *
- * Send an existing mail (e.g., a draft) via SMTP.
+ * Send an existing mail (e.g., a draft) via SMTP. With `moveToSent` (the default) the mail is then filed in the account's Sent folder as a read, non-draft message; `savedToSent` reports whether that worked.
  */
 export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSend = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],

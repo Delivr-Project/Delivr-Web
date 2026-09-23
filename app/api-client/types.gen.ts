@@ -1729,6 +1729,17 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses 
         message: 'Mail created successfully';
         data: {
             uid: number;
+            /**
+             * Attachments of the stored mail; their `id`s address the attachment routes
+             */
+            attachments: Array<{
+                id: number;
+                filename?: string;
+                contentType: string;
+                size: number;
+                contentId?: string;
+                contentDisposition?: string;
+            }>;
         };
     };
 };
@@ -1914,6 +1925,10 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidDa
             deleted?: boolean;
             draft?: boolean;
         };
+        /**
+         * IDs of existing attachments to remove from the mail
+         */
+        removeAttachments?: Array<number>;
     };
     path: {
         mailAccountID: number;
@@ -1929,12 +1944,12 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidDa
 
 export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors = {
     /**
-     * Existing attachments exceed the configured update limit
+     * Bad Request: Syntax or validation error in request
      */
     400: {
         success: false;
         code: 400;
-        message: 'Existing attachments exceed the configured update limit';
+        message: 'Bad Request: Syntax or validation error in request';
     };
     /**
      * Mail with specified UID not found
@@ -1962,6 +1977,17 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidRe
              * New UID if the mail was replaced (for content updates)
              */
             newUid?: number;
+            /**
+             * Attachments of the replacement mail, when the mail was replaced
+             */
+            attachments?: Array<{
+                id: number;
+                filename?: string;
+                contentType: string;
+                size: number;
+                contentId?: string;
+                contentDisposition?: string;
+            }>;
         };
     };
 };
@@ -2025,6 +2051,10 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidS
              * The Message-ID of the sent mail
              */
             messageId?: string;
+            /**
+             * Whether the sent mail was filed in the account's Sent folder
+             */
+            savedToSent: boolean;
         };
     };
 };

@@ -931,7 +931,15 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse
     code: z.literal(200),
     message: z.literal('Mail created successfully'),
     data: z.object({
-        uid: z.number()
+        uid: z.number(),
+        attachments: z.array(z.object({
+            id: z.number(),
+            filename: z.string().optional(),
+            contentType: z.string(),
+            size: z.number(),
+            contentId: z.string().optional(),
+            contentDisposition: z.string().optional()
+        }))
     })
 });
 
@@ -1073,7 +1081,8 @@ export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
         flagged: z.boolean().optional(),
         deleted: z.boolean().optional(),
         draft: z.boolean().optional()
-    }).optional()
+    }).optional(),
+    removeAttachments: z.array(z.int().gte(0).lte(9007199254740991)).optional()
 });
 
 export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidPath = z.object({
@@ -1091,7 +1100,15 @@ export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
     message: z.literal('Mail updated successfully'),
     data: z.object({
         success: z.boolean(),
-        newUid: z.number().optional()
+        newUid: z.number().optional(),
+        attachments: z.array(z.object({
+            id: z.number(),
+            filename: z.string().optional(),
+            contentType: z.string(),
+            size: z.number(),
+            contentId: z.string().optional(),
+            contentDisposition: z.string().optional()
+        })).optional()
     })
 });
 
@@ -1114,7 +1131,8 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUi
     code: z.literal(200),
     message: z.literal('Mail sent successfully'),
     data: z.object({
-        messageId: z.string().optional()
+        messageId: z.string().optional(),
+        savedToSent: z.boolean()
     })
 });
 

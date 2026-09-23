@@ -11,6 +11,7 @@
 - **PWA**: `@vite-pwa/nuxt`
 - **Icons**: Lucide (via `@iconify-json/lucide`)
 - **Sanitization**: `dompurify`
+- **Rich text editor**: Nuxt UI `UEditor` (TipTap 3.x) + `@tiptap/extension-text-align`
 
 ## Project Structure
 
@@ -41,6 +42,12 @@ app/
 │   │   ├── DelivrIcon.vue
 │   │   └── DelivrLogo.vue
 │   └── mail/
+│       ├── compose/            # Mail composer (rich editor + draft autosave)
+│       │   ├── MailComposer.vue            # Full compose screen: header/fields, save status, send, discard, drop overlay
+│       │   ├── MailComposeEditor.vue       # UEditor wrapper: toolbars, paste/drop of files, `ready` event
+│       │   ├── MailComposeAttachments.vue  # Attachment tiles (upload progress, preview, remove, add)
+│       │   ├── MailComposeLinkPopover.vue  # Link insert/edit popover (URL normalization)
+│       │   └── MailRecipientInput.vue      # To/Cc/Bcc tag input with address validation
 │       ├── MailDetailContent.vue
 │       ├── MailFolderView.vue  # Folder list + split/list view modes, pagination, bulk actions, drag & drop
 │       ├── MailListItem.vue
@@ -55,7 +62,8 @@ app/
 │   │   └── useUserStore.ts
 │   ├── useAPI.ts
 │   ├── useAppCookies.ts
-│   ├── useMailAttachments.ts # Authed binary fetch/download of mail attachments
+│   ├── useMailAttachments.ts # Authed binary fetch/download of mail attachments (`fetchAttachmentFile` → `File`)
+│   ├── useMailDraft.ts       # Draft state, dirty tracking, debounced autosave, attachments, send/discard
 │   ├── useMailDrag.ts        # Drag & drop state for moving mails between folders
 │   ├── useAwaitedComputed.ts
 │   ├── useBimiURL.ts         # Resolves a sender's BIMI brand-logo URL via the API
@@ -84,6 +92,9 @@ app/
 ├── utils/
 │   ├── index.ts
 │   ├── abstractStore.ts      # Base store class
+│   ├── mail/                 # NOT auto-imported (nested) — import explicitly
+│   │   ├── mailAddress.ts    # `MailAddressUtils`: parse/format/validate/dedupe addresses
+│   │   └── mailCompose.ts    # `MailComposeUtils`: reply/forward builders, HTML ⇄ text conversions
 │   ├── mailboxDisplay.ts
 │   ├── routeMatcher.ts
 │   └── types.ts
@@ -123,6 +134,9 @@ server/                        # Nitro server routes (run on the SSR server)
   - **Preview** opens a real, same-origin URL that mirrors the email's view route and ends in the filename: `/mail/{accountId}/folder/{folderPath}/{mailUID}/attachment/{filename}` (the `folderPath` segment is `encodeURIComponent(imapPath)`). It's served by the nitro route `server/routes/mail/[mailAccountID]/folder/[folderPath]/[mailUID]/attachment/[filename].get.ts`, which authenticates via the `dla_session_token` cookie, resolves the filename to the attachment id via the API's attachments list, proxies the bytes with a bearer token, and streams them back — so a browser tab (which can't send an `Authorization` header) shows a proper filename instead of a `blob:` UUID and still requires auth. (The API addresses attachments by index, so the filename→id lookup costs one extra list call.)
   - Inline preview is restricted to an allowlist of inert types (PDF + raster images, **not** SVG/HTML) to avoid script execution in the app origin; other types are forced to download. The allowlist is enforced **both** client-side (UX) and in the nitro route (security).
 - **Composables**: All composables in `app/composables/` are auto-imported by Nuxt. Stores use the `use*Store` naming convention.
+- **Auto-import scope**: Nuxt only scans the *top level* of `app/utils/` and `app/composables/`. Anything nested (e.g. `app/utils/mail/*`) must be imported explicitly — which is why the compose utils live there, as their namespace members would otherwise be picked up as (broken) auto-imports.
+- **Composing mail**: `/mail/{accountId}/compose` handles every mode via query params — `?draft=<uid>&folder=<path>` (resume), `?reply|replyAll|forward=<uid>&folder=<path>`, or `?to=&subject=` (new). The page resolves the Drafts folder via special-use (falling back to INBOX), builds the prefilled content with `MailComposeUtils`, sanitizes quoted HTML with DOMPurify, and hands everything to `MailComposer.vue`.
+- **Draft autosave** (`useMailDraft`): snapshot-based dirty tracking with a debounced save (2.5 s, 20 s max wait), serialized so only one save is in flight. The first save creates the draft (`POST`, flags `draft`+`seen`), later ones `PUT` it; since the API replaces the message, the draft UID and attachment ids are remapped after every save and the `?draft=` query is kept in sync. A 404 recreates a lost draft; 5xx retries once after 15 s. Sending force-saves first, then calls `/send` with `moveToSent`. TipTap normalizes content on `create`, so the editor emits `ready` and the composable takes its pristine baseline only then — otherwise an untouched reply would look dirty.
 - **Components**: Auto-imported from `app/components/`. Organized by domain (dashboard/, mail/, form/, img/).
 - **Layouts**: `auth.vue` for unauthenticated routes, `default.vue` for the main dashboard.
 - **Middleware**: Global middleware in `app/middleware/`. Auth middleware handles session validation. Rewrites middleware handles URL transformations.

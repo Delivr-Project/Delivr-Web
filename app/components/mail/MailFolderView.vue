@@ -591,7 +591,16 @@ function folderRoute(): string {
 
 // ── Navigation ──
 
+// Drafts open in the composer to be continued, rather than in the reading pane.
+const isDraftsFolder = computed(() =>
+    !!specialUseMapping.value?.drafts?.path && specialUseMapping.value.drafts.path === systemFolderPath.value
+);
+
 function openMail(uid: number) {
+    if (isDraftsFolder.value) {
+        router.push({ path: `/mail/${accountId}/compose`, query: { draft: String(uid), folder: systemFolderPath.value } });
+        return;
+    }
     if (fullScreenMail.value) {
         router.push(mailRoute(uid));
     } else {
