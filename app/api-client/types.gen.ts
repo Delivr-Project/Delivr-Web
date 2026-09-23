@@ -1648,7 +1648,45 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses =
 export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses];
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData = {
-    body: unknown;
+    body: {
+        from?: {
+            name?: string;
+            address: string;
+        };
+        to: Array<{
+            name?: string;
+            address: string;
+        }>;
+        cc: Array<{
+            name?: string;
+            address: string;
+        }>;
+        bcc: Array<{
+            name?: string;
+            address: string;
+        }>;
+        subject?: string;
+        references?: string | Array<string>;
+        flags?: {
+            seen?: boolean;
+            answered?: boolean;
+            flagged?: boolean;
+            deleted?: boolean;
+            draft?: boolean;
+            recent?: boolean;
+        };
+        replyTo?: Array<{
+            name?: string;
+            address: string;
+        }>;
+        messageId?: string;
+        inReplyTo?: string;
+        priority?: 'normal' | 'low' | 'high';
+        body: {
+            text?: string;
+            html?: string;
+        };
+    };
     path: {
         mailAccountID: number;
         /**
