@@ -1648,45 +1648,7 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses =
 export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses[keyof GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses];
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData = {
-    body: {
-        from?: {
-            name?: string;
-            address: string;
-        };
-        to: Array<{
-            name?: string;
-            address: string;
-        }>;
-        cc: Array<{
-            name?: string;
-            address: string;
-        }>;
-        bcc: Array<{
-            name?: string;
-            address: string;
-        }>;
-        subject?: string;
-        references?: string | Array<string>;
-        flags?: {
-            seen?: boolean;
-            answered?: boolean;
-            flagged?: boolean;
-            deleted?: boolean;
-            draft?: boolean;
-            recent?: boolean;
-        };
-        replyTo?: Array<{
-            name?: string;
-            address: string;
-        }>;
-        messageId?: string;
-        inReplyTo?: string;
-        priority?: 'normal' | 'low' | 'high';
-        body: {
-            text?: string;
-            html?: string;
-        };
-    };
+    body: unknown;
     path: {
         mailAccountID: number;
         /**
@@ -1896,14 +1858,6 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidDa
         }>;
         subject?: string;
         references?: string | Array<string>;
-        flags?: {
-            seen?: boolean;
-            answered?: boolean;
-            flagged?: boolean;
-            deleted?: boolean;
-            draft?: boolean;
-            recent?: boolean;
-        };
         replyTo?: Array<{
             name?: string;
             address: string;
@@ -1914,6 +1868,13 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidDa
         body?: {
             text?: string;
             html?: string;
+        };
+        flags?: {
+            seen?: boolean;
+            answered?: boolean;
+            flagged?: boolean;
+            deleted?: boolean;
+            draft?: boolean;
         };
     };
     path: {
@@ -1929,6 +1890,14 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidDa
 };
 
 export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors = {
+    /**
+     * Existing attachments exceed the configured update limit
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Existing attachments exceed the configured update limit';
+    };
     /**
      * Mail with specified UID not found
      */
@@ -1985,6 +1954,14 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidS
 };
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendErrors = {
+    /**
+     * Mail must include a sender and at least one recipient
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Mail must include a sender and at least one recipient';
+    };
     /**
      * Mail with specified UID not found
      */

@@ -871,52 +871,7 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse 
     }))
 });
 
-export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBody = z.object({
-    from: z.object({
-        name: z.string().optional(),
-        address: z.string()
-    }).optional(),
-    to: z.array(z.object({
-        name: z.string().optional(),
-        address: z.string()
-    })),
-    cc: z.array(z.object({
-        name: z.string().optional(),
-        address: z.string()
-    })),
-    bcc: z.array(z.object({
-        name: z.string().optional(),
-        address: z.string()
-    })),
-    subject: z.string().optional(),
-    references: z.union([
-        z.string(),
-        z.array(z.string())
-    ]).optional(),
-    flags: z.object({
-        seen: z.boolean().optional(),
-        answered: z.boolean().optional(),
-        flagged: z.boolean().optional(),
-        deleted: z.boolean().optional(),
-        draft: z.boolean().optional(),
-        recent: z.boolean().optional()
-    }).optional(),
-    replyTo: z.array(z.object({
-        name: z.string().optional(),
-        address: z.string()
-    })).optional(),
-    messageId: z.string().optional(),
-    inReplyTo: z.string().optional(),
-    priority: z.enum([
-        'normal',
-        'low',
-        'high'
-    ]).optional(),
-    body: z.object({
-        text: z.string().optional(),
-        html: z.string().optional()
-    })
-});
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsBody = z.unknown();
 
 export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsPath = z.object({
     mailAccountID: z.number().gt(0),
@@ -1052,14 +1007,6 @@ export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
         z.string(),
         z.array(z.string())
     ]).optional(),
-    flags: z.object({
-        seen: z.boolean().optional(),
-        answered: z.boolean().optional(),
-        flagged: z.boolean().optional(),
-        deleted: z.boolean().optional(),
-        draft: z.boolean().optional(),
-        recent: z.boolean().optional()
-    }).optional(),
     replyTo: z.array(z.object({
         name: z.string().optional(),
         address: z.string()
@@ -1074,6 +1021,13 @@ export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
     body: z.object({
         text: z.string().optional(),
         html: z.string().optional()
+    }).optional(),
+    flags: z.object({
+        seen: z.boolean().optional(),
+        answered: z.boolean().optional(),
+        flagged: z.boolean().optional(),
+        deleted: z.boolean().optional(),
+        draft: z.boolean().optional()
     }).optional()
 });
 

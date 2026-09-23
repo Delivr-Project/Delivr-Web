@@ -75,15 +75,17 @@ async function onSubmit(event: FormSubmitEvent<ProfileSchema>) {
 				description: result.message || 'An error occurred while updating your profile.',
 				icon: 'i-lucide-alert-circle',
 				color: 'error'
-			})
+			});
 		}
 	} catch (error) {
+
 		toast.add({
 			title: 'Error',
 			description: 'An unexpected error occurred.',
 			icon: 'i-lucide-alert-circle',
 			color: 'error'
-		})
+		});
+
 	} finally {
 		loading.value = false
 	}

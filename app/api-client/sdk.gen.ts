@@ -478,7 +478,7 @@ export const getMailAccountsByMailAccountIdMailboxesByMailboxPathMails = <TCompo
 /**
  * Create Mail
  *
- * Create a new mail in the current mailbox (e.g., a draft). Supports JSON bodies and multipart bodies with attachments.
+ * Create a new mail in the current mailbox (e.g., a draft). Supports JSON bodies and multipart bodies with attachments. Multipart requests have a total size limit of DLA_MAX_ATTACHMENT_SIZE_MB + 16 MB, including mail JSON, attachments and framing; attachments separately must fit DLA_MAX_ATTACHMENT_SIZE_MB.
  */
 export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMails = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],
