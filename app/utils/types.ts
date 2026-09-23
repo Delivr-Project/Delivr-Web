@@ -4,8 +4,10 @@ import type {
     GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses,
     GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses,
     GetMailAccountsByMailAccountIdMailboxesResponses,
+    GetMailAccountsByMailAccountIdIdentitiesResponses,
     GetMailAccountsResponses,
     PostAccountApikeysData,
+    PostMailAccountsByMailAccountIdIdentitiesData,
     PostMailAccountsData
 } from '~/api-client';
 
@@ -47,6 +49,9 @@ export type Mailbox = GetMailAccountsByMailAccountIdMailboxesResponses["200"]["d
 
 export type MailData = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses["200"]["data"];
 export type MailListItem = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses["200"]["data"][number];
+
+export type MailIdentity = GetMailAccountsByMailAccountIdIdentitiesResponses["200"]["data"][number];
+export type NewMailIdentity = NonNullable<PostMailAccountsByMailAccountIdIdentitiesData["body"]>;
 
 export type APIKey = GetAccountApikeysResponses["200"]["data"][number];
 export type NewAPIKey = NonNullable<PostAccountApikeysData["body"]>;

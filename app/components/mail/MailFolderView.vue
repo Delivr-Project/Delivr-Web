@@ -553,6 +553,11 @@ const unreadCount = computed(() => mailList.value.filter(m => isUnread(m)).lengt
 // ── Active mail ──
 const activeMailUid = computed(() => props.mailUid ?? null);
 
+// The open mail's own flags aren't loaded here — the list row is the only thing
+// this view knows about it, which is enough to keep reply/forward off a draft.
+const activeMailIsDraft = computed(() =>
+    !!mailList.value.find(mail => mail.uid === activeMailUid.value)?.flags?.draft);
+
 // The compact 3-line "cards" list is used on mobile and in desktop split view;
 // desktop list view keeps its dense single-line rows.
 const cardLayout = computed(() => isMobile.value || viewMode.value === 'split');
@@ -591,7 +596,16 @@ function folderRoute(): string {
 
 // ── Navigation ──
 
+// Drafts open in the composer to be continued, rather than in the reading pane.
+const isDraftsFolder = computed(() =>
+    !!specialUseMapping.value?.drafts?.path && specialUseMapping.value.drafts.path === systemFolderPath.value
+);
+
 function openMail(uid: number) {
+    if (isDraftsFolder.value) {
+        router.push({ path: `/mail/${accountId}/compose`, query: { draft: String(uid), folder: systemFolderPath.value } });
+        return;
+    }
     if (fullScreenMail.value) {
         router.push(mailRoute(uid));
     } else {
@@ -714,6 +728,7 @@ function closeActiveMail() {
                     :is-deleting="isDeleting"
                     :is-refreshing="mails.loading.value"
                     :show-mail-actions="activeMailUid !== null && !multiSelected"
+                    :is-draft="activeMailIsDraft"
                     :is-mobile="isMobile"
                     :view-mode="viewMode"
                     :back-link="props.fullScreen ? folderRoute() : undefined"

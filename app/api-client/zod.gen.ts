@@ -210,6 +210,33 @@ export const zGetAccountApikeysByApiKeyIdResponse = z.object({
 });
 
 /**
+ * Preferences retrieved successfully
+ */
+export const zGetAccountPreferencesResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Preferences retrieved successfully'),
+    data: z.object({
+        'remote-content-policy': z.object({
+            addresses: z.record(z.string(), z.enum(['allow', 'block'])).optional().default({}),
+            domains: z.record(z.string(), z.enum(['allow', 'block'])).optional().default({})
+        }),
+        'auto-mark-seen': z.object({
+            enabled: z.boolean().optional().default(true)
+        }),
+        'folder-nesting': z.object({
+            nestUnderInbox: z.boolean().optional().default(true)
+        }),
+        'folder-dnd': z.object({
+            enabled: z.boolean().optional().default(false)
+        }),
+        onboarding: z.object({
+            completed: z.boolean().optional().default(false)
+        })
+    })
+});
+
+/**
  * Remote content policy retrieved successfully
  */
 export const zGetAccountPreferencesRemoteContentPolicyResponse = z.object({
@@ -470,7 +497,11 @@ export const zPostMailAccountsBody = z.object({
         'NONE'
     ]),
     imap_username: z.string().min(1).max(255),
-    imap_password: z.string().min(1).max(1023)
+    imap_password: z.string().min(1).max(1023),
+    identity: z.object({
+        display_name: z.string().min(1).max(255).optional(),
+        email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/)
+    }).optional()
 });
 
 /**
@@ -931,7 +962,15 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse
     code: z.literal(200),
     message: z.literal('Mail created successfully'),
     data: z.object({
-        uid: z.number()
+        uid: z.number(),
+        attachments: z.array(z.object({
+            id: z.number(),
+            filename: z.string().optional(),
+            contentType: z.string(),
+            size: z.number(),
+            contentId: z.string().optional(),
+            contentDisposition: z.string().optional()
+        }))
     })
 });
 
@@ -1052,14 +1091,6 @@ export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
         z.string(),
         z.array(z.string())
     ]).optional(),
-    flags: z.object({
-        seen: z.boolean().optional(),
-        answered: z.boolean().optional(),
-        flagged: z.boolean().optional(),
-        deleted: z.boolean().optional(),
-        draft: z.boolean().optional(),
-        recent: z.boolean().optional()
-    }).optional(),
     replyTo: z.array(z.object({
         name: z.string().optional(),
         address: z.string()
@@ -1074,7 +1105,15 @@ export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
     body: z.object({
         text: z.string().optional(),
         html: z.string().optional()
-    }).optional()
+    }).optional(),
+    flags: z.object({
+        seen: z.boolean().optional(),
+        answered: z.boolean().optional(),
+        flagged: z.boolean().optional(),
+        deleted: z.boolean().optional(),
+        draft: z.boolean().optional()
+    }).optional(),
+    removeAttachments: z.array(z.int().gte(0).lte(9007199254740991)).optional()
 });
 
 export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidPath = z.object({
@@ -1092,7 +1131,15 @@ export const zPutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid
     message: z.literal('Mail updated successfully'),
     data: z.object({
         success: z.boolean(),
-        newUid: z.number().optional()
+        newUid: z.number().optional(),
+        attachments: z.array(z.object({
+            id: z.number(),
+            filename: z.string().optional(),
+            contentType: z.string(),
+            size: z.number(),
+            contentId: z.string().optional(),
+            contentDisposition: z.string().optional()
+        })).optional()
     })
 });
 
@@ -1115,7 +1162,8 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUi
     code: z.literal(200),
     message: z.literal('Mail sent successfully'),
     data: z.object({
-        messageId: z.string().optional()
+        messageId: z.string().optional(),
+        savedToSent: z.boolean()
     })
 });
 
@@ -1325,6 +1373,7 @@ export const zGetMailAccountsByMailAccountIdIdentitiesResponse = z.object({
         created_at: z.int().gt(0).lte(9007199254740991),
         display_name: z.string().min(1).max(255),
         email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+        signature: z.string().max(16384).nullable(),
         is_default: z.boolean()
     }))
 });
@@ -1332,6 +1381,7 @@ export const zGetMailAccountsByMailAccountIdIdentitiesResponse = z.object({
 export const zPostMailAccountsByMailAccountIdIdentitiesBody = z.object({
     display_name: z.string().min(1).max(255),
     email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+    signature: z.string().max(16384).nullish(),
     is_default: z.boolean()
 });
 
@@ -1383,6 +1433,7 @@ export const zGetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse =
         created_at: z.int().gt(0).lte(9007199254740991),
         display_name: z.string().min(1).max(255),
         email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+        signature: z.string().max(16384).nullable(),
         is_default: z.boolean()
     })
 });
@@ -1390,6 +1441,7 @@ export const zGetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse =
 export const zPutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdBody = z.object({
     display_name: z.string().min(1).max(255).optional(),
     email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/).optional(),
+    signature: z.string().max(16384).nullish(),
     is_default: z.boolean().optional()
 });
 

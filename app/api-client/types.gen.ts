@@ -567,6 +567,48 @@ export type GetAccountApikeysByApiKeyIdResponses = {
 
 export type GetAccountApikeysByApiKeyIdResponse = GetAccountApikeysByApiKeyIdResponses[keyof GetAccountApikeysByApiKeyIdResponses];
 
+export type GetAccountPreferencesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/account/preferences';
+};
+
+export type GetAccountPreferencesResponses = {
+    /**
+     * Preferences retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Preferences retrieved successfully';
+        data: {
+            'remote-content-policy': {
+                addresses?: {
+                    [key: string]: 'allow' | 'block';
+                };
+                domains?: {
+                    [key: string]: 'allow' | 'block';
+                };
+            };
+            'auto-mark-seen': {
+                enabled?: boolean;
+            };
+            'folder-nesting': {
+                nestUnderInbox?: boolean;
+            };
+            'folder-dnd': {
+                enabled?: boolean;
+            };
+            onboarding: {
+                completed?: boolean;
+            };
+        };
+    };
+};
+
+export type GetAccountPreferencesResponse = GetAccountPreferencesResponses[keyof GetAccountPreferencesResponses];
+
 export type GetAccountPreferencesRemoteContentPolicyData = {
     body?: never;
     path?: never;
@@ -976,6 +1018,10 @@ export type PostMailAccountsData = {
         imap_encryption: 'SSL' | 'STARTTLS' | 'NONE';
         imap_username: string;
         imap_password: string;
+        identity?: {
+            display_name?: string;
+            email_address: string;
+        };
     };
     path?: never;
     query?: never;
@@ -1729,6 +1775,17 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses 
         message: 'Mail created successfully';
         data: {
             uid: number;
+            /**
+             * Attachments of the stored mail; their `id`s address the attachment routes
+             */
+            attachments: Array<{
+                id: number;
+                filename?: string;
+                contentType: string;
+                size: number;
+                contentId?: string;
+                contentDisposition?: string;
+            }>;
         };
     };
 };
@@ -1896,14 +1953,6 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidDa
         }>;
         subject?: string;
         references?: string | Array<string>;
-        flags?: {
-            seen?: boolean;
-            answered?: boolean;
-            flagged?: boolean;
-            deleted?: boolean;
-            draft?: boolean;
-            recent?: boolean;
-        };
         replyTo?: Array<{
             name?: string;
             address: string;
@@ -1915,6 +1964,17 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidDa
             text?: string;
             html?: string;
         };
+        flags?: {
+            seen?: boolean;
+            answered?: boolean;
+            flagged?: boolean;
+            deleted?: boolean;
+            draft?: boolean;
+        };
+        /**
+         * IDs of existing attachments to remove from the mail
+         */
+        removeAttachments?: Array<number>;
     };
     path: {
         mailAccountID: number;
@@ -1929,6 +1989,14 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidDa
 };
 
 export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
     /**
      * Mail with specified UID not found
      */
@@ -1955,6 +2023,17 @@ export type PutMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidRe
              * New UID if the mail was replaced (for content updates)
              */
             newUid?: number;
+            /**
+             * Attachments of the replacement mail, when the mail was replaced
+             */
+            attachments?: Array<{
+                id: number;
+                filename?: string;
+                contentType: string;
+                size: number;
+                contentId?: string;
+                contentDisposition?: string;
+            }>;
         };
     };
 };
@@ -1986,6 +2065,14 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidS
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSendErrors = {
     /**
+     * Mail must include a sender and at least one recipient
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Mail must include a sender and at least one recipient';
+    };
+    /**
      * Mail with specified UID not found
      */
     404: {
@@ -2010,6 +2097,10 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidS
              * The Message-ID of the sent mail
              */
             messageId?: string;
+            /**
+             * Whether the sent mail was filed in the account's Sent folder
+             */
+            savedToSent: boolean;
         };
     };
 };
@@ -2498,6 +2589,7 @@ export type GetMailAccountsByMailAccountIdIdentitiesResponses = {
             created_at: number;
             display_name: string;
             email_address: string;
+            signature: string | null;
             is_default: boolean;
         }>;
     };
@@ -2509,6 +2601,7 @@ export type PostMailAccountsByMailAccountIdIdentitiesData = {
     body: {
         display_name: string;
         email_address: string;
+        signature?: string | null;
         is_default: boolean;
     };
     path: {
@@ -2574,6 +2667,14 @@ export type DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors = 
         code: 404;
         message: 'Mail identity with the specified ID does not exist';
     };
+    /**
+     * Conflict: A mail account must keep at least one identity
+     */
+    409: {
+        success: false;
+        code: 409;
+        message: 'Conflict: A mail account must keep at least one identity';
+    };
 };
 
 export type DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdError = DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors[keyof DeleteMailAccountsByMailAccountIdIdentitiesByMailIdentityIdErrors];
@@ -2628,6 +2729,7 @@ export type GetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponses = 
             created_at: number;
             display_name: string;
             email_address: string;
+            signature: string | null;
             is_default: boolean;
         };
     };
@@ -2639,6 +2741,7 @@ export type PutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdData = {
     body: {
         display_name?: string;
         email_address?: string;
+        signature?: string | null;
         is_default?: boolean;
     };
     path: {

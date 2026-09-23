@@ -90,6 +90,17 @@ async function fetchAttachmentBlob(ref: AttachmentRef, download: boolean): Promi
     return await response.blob();
 }
 
+/**
+ * Fetch an attachment as a `File`, e.g. to attach it to a forwarded mail. Like
+ * downloads, the bytes are only held in memory.
+ */
+export async function fetchAttachmentFile(ref: AttachmentRef, filename?: string, contentType?: string): Promise<File> {
+    const blob = await fetchAttachmentBlob(ref, true);
+    return new File([blob], filename || 'attachment', {
+        type: contentType || blob.type || 'application/octet-stream'
+    });
+}
+
 /** Trigger a browser download for an already-fetched blob via a transient object URL. */
 function triggerDownload(blob: Blob, filename?: string): void {
     const url = URL.createObjectURL(blob);

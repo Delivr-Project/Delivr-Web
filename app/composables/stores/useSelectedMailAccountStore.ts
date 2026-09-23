@@ -29,7 +29,13 @@ class SelectedMailAccountStore {
             if (this.selectedMailAccountID.value === null) {
 
                 // return default account
-                return this.mailAccountsRef!.value[0] || null;
+                // return this.mailAccountsRef!.value[0] || null;
+                for (const account of this.mailAccountsRef!.value) {
+                    if (account.is_default) {
+                        this.selectedMailAccountID.value = account.id;
+                        return account;
+                    }
+                }
             }
 
             return this.mailAccountsRef!.value.find(acc => acc.id === this.selectedMailAccountID.value) || null;

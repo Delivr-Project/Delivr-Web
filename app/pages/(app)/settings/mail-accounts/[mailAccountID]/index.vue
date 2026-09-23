@@ -29,7 +29,23 @@ const headerTexts = computed(() => {
 });
 
 
-const mailAccount_form_schema = mailAccount.isNew ? zPostMailAccountsBody : zPutMailAccountsByMailAccountIdBody;
+// A new account always gets its first sender identity, so the address the API
+// treats as optional is mandatory here.
+const mailAccount_form_schema = mailAccount.isNew
+	? zPostMailAccountsBody.required({ identity: true })
+	: zPutMailAccountsByMailAccountIdBody;
+
+const newAccountIdentity = computed(() => (mailAccount_data.value as NewMailAccount).identity!);
+
+// The sender address is virtually always the SMTP login, so it follows that
+// field until the user gives it an address of its own.
+watch(() => (mailAccount_data.value as NewMailAccount).smtp_username, (username, previous) => {
+	if (!mailAccount.isNew) return;
+	const identity = newAccountIdentity.value;
+	if (!identity.email_address || identity.email_address === previous) {
+		identity.email_address = username ?? '';
+	}
+});
 const mailAccount_form_state = computed({
     get: () => {
 		if (mailAccount.isNew) {
@@ -47,7 +63,9 @@ const mailAccount_form_state = computed({
 				smtp_port: mailAccount_data.value.smtp_port,
 				smtp_username: mailAccount_data.value.smtp_username,
 				smtp_password: (mailAccount_data.value as NewMailAccount).smtp_password,
-				smtp_encryption: mailAccount_data.value.smtp_encryption
+				smtp_encryption: mailAccount_data.value.smtp_encryption,
+
+				identity: newAccountIdentity.value
 			}
 		}
 		return {
@@ -72,6 +90,8 @@ const mailAccount_form_state = computed({
 			(mailAccount_data.value as NewMailAccount).smtp_username = newState.smtp_username as string;
 			(mailAccount_data.value as NewMailAccount).smtp_password = newState.smtp_password as string;
 			(mailAccount_data.value as NewMailAccount).smtp_encryption = newState.smtp_encryption as 'SSL' | 'STARTTLS' | 'NONE';
+
+			(mailAccount_data.value as NewMailAccount).identity = newState.identity;
 		} else {
 			mailAccount_data.value.display_name = newState.display_name;
 			mailAccount_data.value.is_default = newState.is_default;
@@ -91,6 +111,10 @@ async function onFormSubmit() {
     try {
 
 		if (mailAccount.isNew) {
+
+			// The identity is named after the account, and can be renamed later on
+			// the account's Identities tab.
+			newAccountIdentity.value.display_name = mailAccount_data.value.display_name;
 
 			const result = await useAPI((api) => api.postMailAccounts({
 				body: mailAccount_data.value as NewMailAccount
@@ -277,6 +301,21 @@ async function testConfiguration() {
 							}'
 						>
 							<UInput v-model="mailAccount_data.display_name" placeholder="Enter display name" class="w-full sm:w-96" />
+						</UFormField>
+
+						<UFormField
+							v-if="mailAccount.isNew"
+							name="identity.email_address"
+							label="Sender Address"
+							description="The address mail is sent from. Further addresses can be added afterwards."
+							required
+							class="flex max-sm:flex-col justify-between items-start gap-4 py-4 first:pt-0 last:pb-0"
+							:ui='{
+								root: "w-full sm:w-auto",
+								container: "w-full sm:w-auto",
+							}'
+						>
+							<UInput v-model="newAccountIdentity.email_address" type="email" placeholder="you@example.com" class="w-full sm:w-96" />
 						</UFormField>
 
 						<UFormField 
