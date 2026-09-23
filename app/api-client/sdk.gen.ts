@@ -478,7 +478,7 @@ export const getMailAccountsByMailAccountIdMailboxesByMailboxPathMails = <TCompo
 /**
  * Create Mail
  *
- * Create a new mail in the current mailbox (e.g., a draft).
+ * Create a new mail in the current mailbox (e.g., a draft). Supports JSON bodies and multipart bodies with attachments.
  */
 export const postMailAccountsByMailAccountIdMailboxesByMailboxPathMails = <TComposable extends Composable = '$fetch', DefaultT extends PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse>(options: Options<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse, DefaultT>) => (options.client ?? client).post<TComposable, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponse | DefaultT, PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailsError, DefaultT>({
     security: [{ scheme: 'bearer', type: 'http' }],

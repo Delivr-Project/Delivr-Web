@@ -2,6 +2,7 @@
 import type { EditorToolbarItem } from '@nuxt/ui';
 import type { MailAccountWithMailboxes } from '~/utils/types';
 import { Utils } from '~/utils';
+import { client } from '~/api-client/client.gen';
 
 const toast = useToast();
 
@@ -12,6 +13,24 @@ useSeoMeta({
     title: 'Compose | Delivr',
     description: 'Compose a new email'
 });
+
+// ── Special-use folders ──
+// The backend send flow is two-step: the mail is first created in a mailbox
+// (Drafts) so it gets a UID, then sent via `.../mails/{uid}/send`, which moves
+// the original to Sent. We therefore need the Drafts folder path; if the account
+// has no resolved Drafts folder we fall back to INBOX so composing still works.
+const draftsPath = ref('INBOX');
+
+async function loadSpecialUse() {
+    const res = await useAPI(api =>
+        api.getMailAccountsByMailAccountIdSpecialUse({ path: { mailAccountID: accountId } })
+    );
+    if (res.success && res.data.drafts?.path) {
+        draftsPath.value = res.data.drafts.path;
+    }
+}
+// Fire immediately; sending awaits this if it hasn't resolved yet.
+const specialUsePromise = loadSpecialUse();
 
 // ── Form state ──
 
@@ -105,6 +124,192 @@ const totalAttachmentSize = computed(() => {
     return attachments.value.reduce((sum, file) => sum + file.size, 0);
 });
 
+// ── Recipient & body helpers ──
+
+type Address = { name?: string; address: string };
+
+type CreateMailResponse = {
+    success: boolean;
+    code: number;
+    message: string;
+    data: { uid: number };
+};
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Parse a comma/semicolon-separated recipient string into structured addresses.
+ * Supports both bare addresses (`a@b.com`) and the `Name <a@b.com>` form.
+ * Invalid entries are collected separately so the caller can surface them.
+ */
+function parseRecipients(raw: string): { valid: Address[]; invalid: string[] } {
+    const valid: Address[] = [];
+    const invalid: string[] = [];
+
+    for (const part of splitRecipients(raw)) {
+        const entry = part.trim();
+        if (!entry) continue;
+
+        const angle = entry.match(/^(.*)<(.+)>$/);
+        if (angle) {
+            const name = angle[1]!.trim().replace(/^["']|["']$/g, '').trim();
+            const address = angle[2]!.trim();
+            if (EMAIL_RE.test(address)) valid.push(name ? { name, address } : { address });
+            else invalid.push(entry);
+        } else if (EMAIL_RE.test(entry)) {
+            valid.push({ address: entry });
+        } else {
+            invalid.push(entry);
+        }
+    }
+
+    return { valid, invalid };
+}
+
+/** Split recipients without treating delimiters inside quoted display names as separators. */
+function splitRecipients(raw: string): string[] {
+    const entries: string[] = [];
+    let current = '';
+    let quote: '"' | "'" | null = null;
+    let escaped = false;
+    let angleDepth = 0;
+
+    for (const char of raw) {
+        if (escaped) {
+            current += char;
+            escaped = false;
+            continue;
+        }
+
+        if (quote && char === '\\') {
+            current += char;
+            escaped = true;
+            continue;
+        }
+
+        if ((char === '"' || char === "'") && angleDepth === 0) {
+            quote = quote === char ? null : quote ?? char;
+        } else if (!quote && char === '<') {
+            angleDepth++;
+        } else if (!quote && char === '>' && angleDepth > 0) {
+            angleDepth--;
+        }
+
+        if (!quote && angleDepth === 0 && (char === ',' || char === ';')) {
+            entries.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+
+    entries.push(current);
+    return entries;
+}
+
+/** Best-effort plain-text fallback derived from the HTML editor content. */
+function htmlToText(html: string): string {
+    if (import.meta.client) {
+        const el = document.createElement('div');
+        el.innerHTML = html;
+        return (el.textContent || el.innerText || '').trim();
+    }
+    return html.replace(/<[^>]*>/g, '').trim();
+}
+
+/** The `From` address for this account, required by the SMTP backend. */
+function accountFrom(): Address {
+    const address = mailAccount.data.value.smtp_username;
+    const name = mailAccount.data.value.display_name;
+    return name ? { name, address } : { address };
+}
+
+/**
+ * Build the create-mail request body from the current form state. Returns
+ * `null` (and shows a toast) when recipients are missing or malformed.
+ */
+function buildMailBody(asDraft: boolean, requireRecipient: boolean) {
+    const toParsed = parseRecipients(to.value);
+    const ccParsed = parseRecipients(cc.value);
+    const bccParsed = parseRecipients(bcc.value);
+
+    const allInvalid = [...toParsed.invalid, ...ccParsed.invalid, ...bccParsed.invalid];
+    if (allInvalid.length > 0) {
+        toast.add({
+            title: 'Invalid recipient',
+            description: `These addresses look invalid: ${allInvalid.join(', ')}`,
+            color: 'error'
+        });
+        return null;
+    }
+
+    const recipientCount = toParsed.valid.length + ccParsed.valid.length + bccParsed.valid.length;
+    if (requireRecipient && recipientCount === 0) {
+        toast.add({
+            title: 'Missing recipient',
+            description: 'Please enter at least one valid recipient.',
+            color: 'error'
+        });
+        return null;
+    }
+
+    const html = body.value?.trim() ?? '';
+    const text = htmlToText(html);
+
+    return {
+        from: accountFrom(),
+        to: toParsed.valid,
+        cc: ccParsed.valid,
+        bcc: bccParsed.valid,
+        subject: subject.value.trim() || undefined,
+        priority: 'normal' as const,
+        flags: { draft: asDraft },
+        body: { html: html || undefined, text: text || undefined }
+    };
+}
+
+/** Create a mail in the Drafts folder and return its UID (or null on failure). */
+async function createDraftMail(asDraft: boolean, requireRecipient: boolean): Promise<number | null> {
+    const mailBody = buildMailBody(asDraft, requireRecipient);
+    if (!mailBody) return null;
+
+    await specialUsePromise;
+
+    const res = attachments.value.length > 0
+        ? await useAPI(() => {
+            const form = new FormData();
+            form.set('mail', JSON.stringify(mailBody));
+            for (const attachment of attachments.value) form.append('attachments', attachment);
+
+            return client.post<'$fetch', CreateMailResponse>({
+                url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails',
+                path: { mailAccountID: accountId, mailboxPath: draftsPath.value },
+                body: form,
+                // The generated client defaults to JSON. Leave serialization and the
+                // Content-Type to the browser so it adds the multipart boundary.
+                bodySerializer: body => body,
+                headers: { 'Content-Type': null }
+            });
+        })
+        : await useAPI(api =>
+            api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
+                path: { mailAccountID: accountId, mailboxPath: draftsPath.value },
+                body: mailBody
+            })
+        );
+
+    if (!res.success) {
+        toast.add({
+            title: 'Could not save message',
+            description: res.message || 'An unknown error occurred.',
+            color: 'error'
+        });
+        return null;
+    }
+
+    return res.data.uid;
+}
+
 // ── Actions ──
 
 function goBack() {
@@ -112,7 +317,9 @@ function goBack() {
 }
 
 async function handleSend() {
-    if (!to.value.trim()) {
+    if (sending.value || savingDraft.value) return;
+
+    if (!to.value.trim() && !cc.value.trim() && !bcc.value.trim()) {
         toast.add({
             title: 'Missing recipient',
             description: 'Please enter at least one recipient.',
@@ -127,28 +334,66 @@ async function handleSend() {
     }
 
     sending.value = true;
-    
-    // Backend not implemented yet
-    setTimeout(() => {
-        sending.value = false;
+    try {
+        // Step 1: create the draft so it has a UID the send endpoint can act on.
+        const uid = await createDraftMail(true, true);
+        if (uid === null) return;
+
+        // Step 2: send it and move the original into the Sent folder.
+        const sendRes = await useAPI(api =>
+            api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidSend({
+                path: { mailAccountID: accountId, mailboxPath: draftsPath.value, mailUID: uid },
+                body: { moveToSent: true }
+            })
+        );
+
+        if (!sendRes.success) {
+            toast.add({
+                title: 'Failed to send message',
+                description: sendRes.message || 'The message was saved to Drafts but could not be sent.',
+                color: 'error'
+            });
+            return;
+        }
+
         toast.add({
-            title: 'Sending not available yet',
-            description: 'The mail sending feature is coming soon. Your draft cannot be saved at this time.',
-            color: 'warning'
+            title: 'Message sent',
+            description: 'Your email has been sent successfully.',
+            color: 'success'
         });
-    }, 500);
+        navigateTo(`/mail/${accountId}/folder/inbox`);
+    } finally {
+        sending.value = false;
+    }
 }
 
-function handleSaveDraft() {
-    savingDraft.value = true;
-    setTimeout(() => {
-        savingDraft.value = false;
+async function handleSaveDraft() {
+    if (sending.value || savingDraft.value) return;
+
+    if (!to.value.trim() && !cc.value.trim() && !bcc.value.trim()
+        && !subject.value.trim() && !body.value?.trim()) {
         toast.add({
-            title: 'Drafts not available yet',
-            description: 'Draft saving will be available soon.',
+            title: 'Nothing to save',
+            description: 'Write something before saving a draft.',
             color: 'warning'
         });
-    }, 500);
+        return;
+    }
+
+    savingDraft.value = true;
+    try {
+        const uid = await createDraftMail(true, false);
+        if (uid === null) return;
+
+        toast.add({
+            title: 'Draft saved',
+            description: 'Your message has been saved to Drafts.',
+            color: 'success'
+        });
+        navigateTo(`/mail/${accountId}/folder/${encodeURIComponent(draftsPath.value)}`);
+    } finally {
+        savingDraft.value = false;
+    }
 }
 
 function handleDiscard() {
@@ -427,14 +672,6 @@ onUnmounted(() => {
                                 Send Message
                             </UButton>
                         </div>
-                    </div>
-
-                    <!-- Info banner -->
-                    <div class="flex items-center gap-3 px-4 py-3 rounded-lg border border-warning/30 bg-warning/5">
-                        <UIcon name="i-lucide-info" class="size-4 text-warning shrink-0" />
-                        <p class="text-xs text-muted">
-                            Mail sending is not yet available. This compose view will be fully functional once the backend endpoint is implemented.
-                        </p>
                     </div>
 
                 </div>
