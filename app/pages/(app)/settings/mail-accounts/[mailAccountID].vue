@@ -99,6 +99,24 @@ function getRoutesConfig(): UseSubrouterPathDynamics.RoutesConfig {
                 };
             }
         },
+        [`/settings/mail-accounts/${mailAccountID}/identities`]: {
+            isNavLink: true,
+            label: 'Identities',
+            icon: 'i-lucide-user-round-pen',
+            exact: true,
+            getDynamicValues() {
+                return {
+                    seoSettings: {
+                        title: `Mail Account ${account.value?.display_name} Identities`,
+                        description: `Manage the sender addresses available for ${account.value?.display_name} on Delivr`
+                    },
+                    breadcrumbItems: [
+                        { label: account.value?.display_name, to: `/settings/mail-accounts/${mailAccountID}` },
+                        { label: 'Identities' }
+                    ]
+                };
+            }
+        },
         [`/settings/mail-accounts/${mailAccountID}/folder-settings`]: {
             isNavLink: true,
             label: 'Folders',

@@ -5,6 +5,7 @@ import type {
     PutMailAccountsByMailAccountIdSpecialUseData,
 } from '~/api-client';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
+import { MailAddressUtils } from '~/utils/mail/mailAddress';
 import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 
 // The resolved special-use mapping the API returns (type → { path, source }).
@@ -25,6 +26,16 @@ const displayName = computed(() => account.value?.display_name || 'your mail acc
 const mailboxes = computed<Mailbox[]>(() => account.value?.mailboxes ?? []);
 const defaultDelimiter = computed(() => mailboxes.value[0]?.delimiter || '/');
 
+// ── Identities ──────────────────────────────────────────────────────────────
+// Identities are saved as they are added, so this step needs nothing on finish.
+// The SMTP login is only a usable sender address if it is an address at all.
+const identitySuggestion = computed(() => ({
+    display_name: account.value?.display_name,
+    email_address: MailAddressUtils.isValid(account.value?.smtp_username ?? '')
+        ? account.value?.smtp_username
+        : undefined
+}));
+
 // This one-time setup only runs once per account: if it's already been finished
 // (or skipped), don't show the wizard again — go straight to the inbox.
 if (!notFound.value) {
@@ -38,7 +49,7 @@ if (!notFound.value) {
 
 useSeoMeta({
     title: 'Set up your Mail Account | Delivr',
-    description: 'Finish setting up your new mail account by mapping its special folders.',
+    description: 'Finish setting up your new mail account by adding your sender identities and mapping its special folders.',
 });
 
 // ── Special folders ─────────────────────────────────────────────────────────
@@ -245,12 +256,21 @@ async function markOnboardingFinished() {
                                     {{ displayName }} is connected
                                 </h2>
                                 <p class="mt-1 text-sm text-slate-400">
-                                    Confirm which folders map to your special folders and you're ready to go.
-                                    You can change these later from the account's Folders settings.
+                                    Set up the addresses you send from, confirm which folders map to your
+                                    special folders, and you're ready to go. You can change all of this
+                                    later from the account's settings.
                                 </p>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Sender identities -->
+                    <MailIdentitiesManager
+                        :account-id="accountId"
+                        :suggestion="identitySuggestion"
+                        title="Sender identities"
+                        description="Pick the addresses you want to send from with this account"
+                    />
 
                     <!-- Special folders -->
                     <div class="rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm overflow-hidden">

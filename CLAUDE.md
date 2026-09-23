@@ -49,6 +49,7 @@ app/
 │       │   ├── MailComposeLinkPopover.vue  # Link insert/edit popover (URL normalization)
 │       │   └── MailRecipientInput.vue      # To/Cc/Bcc tag input with address validation
 │       ├── MailDetailContent.vue
+│       ├── MailIdentitiesManager.vue  # Sender-identity CRUD panel (list, add, edit, default, delete)
 │       ├── MailFolderView.vue  # Folder list + split/list view modes, pagination, bulk actions, drag & drop
 │       ├── MailListItem.vue
 │       ├── MailList.vue
@@ -87,6 +88,8 @@ app/
 │   │   ├── index.vue
 │   │   ├── mail/[mailAccountID]/          # compose, index, folder/[folderPath]/{index,[mailUID]}
 │   │   └── settings/         # index, security, apikeys/*, mail-accounts/*
+│   │                         #   mail-accounts/[mailAccountID]/: index, identities, folder-settings,
+│   │                         #   backend-configuration, onboarding
 │   ├── admin/                # index, users
 │   └── auth/                 # login, signup, forgot-password, reset-password
 ├── utils/
@@ -135,6 +138,7 @@ server/                        # Nitro server routes (run on the SSR server)
   - Inline preview is restricted to an allowlist of inert types (PDF + raster images, **not** SVG/HTML) to avoid script execution in the app origin; other types are forced to download. The allowlist is enforced **both** client-side (UX) and in the nitro route (security).
 - **Composables**: All composables in `app/composables/` are auto-imported by Nuxt. Stores use the `use*Store` naming convention.
 - **Auto-import scope**: Nuxt only scans the *top level* of `app/utils/` and `app/composables/`. Anything nested (e.g. `app/utils/mail/*`) must be imported explicitly — which is why the compose utils live there, as their namespace members would otherwise be picked up as (broken) auto-imports.
+- **Sender identities**: an account's extra "From" addresses live under `/settings/mail-accounts/{id}/identities` and are also set up in the new-account wizard (`onboarding.vue`). Both render `MailIdentitiesManager.vue`, which owns the whole CRUD against `/mail-accounts/{id}/identities` and saves each change immediately. The API allows duplicate addresses, so the component rejects them client-side; it also marks the first identity as default and pre-offers the account's SMTP address when it is a valid email. The composer reads the same list to build its "From" options (see `loadSenders()` in `compose.vue`) — the account's own address is always a sender, with or without a matching identity.
 - **Composing mail**: `/mail/{accountId}/compose` handles every mode via query params — `?draft=<uid>&folder=<path>` (resume), `?reply|replyAll|forward=<uid>&folder=<path>`, or `?to=&subject=` (new). The page resolves the Drafts folder via special-use (falling back to INBOX), builds the prefilled content with `MailComposeUtils`, sanitizes quoted HTML with DOMPurify, and hands everything to `MailComposer.vue`.
 - **Draft autosave** (`useMailDraft`): snapshot-based dirty tracking with a debounced save (2.5 s, 20 s max wait), serialized so only one save is in flight. The first save creates the draft (`POST`, flags `draft`+`seen`), later ones `PUT` it; since the API replaces the message, the draft UID and attachment ids are remapped after every save and the `?draft=` query is kept in sync. A 404 recreates a lost draft; 5xx retries once after 15 s. Sending force-saves first, then calls `/send` with `moveToSent`. TipTap normalizes content on `create`, so the editor emits `ready` and the composable takes its pristine baseline only then — otherwise an untouched reply would look dirty.
 - **Components**: Auto-imported from `app/components/`. Organized by domain (dashboard/, mail/, form/, img/).
