@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import type { MailData } from '~/utils/types';
 import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
-import { useRemoteContentPolicyStore, extractDomain } from '~/composables/stores/useRemoteContentPolicyStore';
-import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
+import { usePreferencesStore, extractDomain } from '~/composables/stores/usePreferencesStore';
 import { Utils } from '~/utils';
 import Gravatar from '~/components/Gravatar.vue';
 import { useMailAttachments } from '~/composables/useMailAttachments';
@@ -34,11 +33,15 @@ const systemFolderPath = computed(() =>
 const isLoading = ref(true);
 const mailData = ref<MailData | null>(null);
 
+// Global (per-user) preferences. Normally pre-warmed by the global auth
+// middleware before this component ever mounts; refreshed here too as a
+// defensive fallback (a no-op when already loaded). The auto-mark-as-read flag
+// must be ready before the dwell elapses (it defaults to on, so an unloaded
+// store would otherwise fire immediately).
+const preferencesStore = usePreferencesStore();
+preferencesStore.refreshIfNeeded();
+
 // ── Auto-mark-as-read ──
-// Global (per-user) preference; pre-warm so the flag is ready before the dwell
-// elapses (default is on, so an unloaded store would otherwise fire immediately).
-const autoMarkSeenStore = useAutoMarkSeenStore();
-autoMarkSeenStore.refreshIfNeeded();
 
 // const AUTO_MARK_DELAY_MS = 1500;
 // let autoMarkTimer: ReturnType<typeof setTimeout> | null = null;
@@ -77,7 +80,7 @@ async function markSeen(uid: number) {
 // // Mark the mail seen after a short dwell, unless the user leaves or toggles first.
 // function scheduleAutoMarkSeen() {
 //     cancelAutoMark();
-//     if (!autoMarkSeenStore.enabled.value) return;
+//     if (!preferencesStore.autoMarkSeen.value) return;
 
 //     const mail = mailData.value;
 //     if (!mail || mail.flags?.seen) return;
@@ -165,15 +168,10 @@ useSeoMeta({
 
 // ── Remote image / content policy ──
 
-// Normally pre-warmed by the global auth middleware before this component ever
-// mounts; refreshed here too as a defensive no-op fallback (cheap when cached).
-const remoteContentPolicyStore = useRemoteContentPolicyStore();
-remoteContentPolicyStore.refreshIfNeeded();
-
 const senderAddress = computed(() => mailData.value?.from?.address?.trim().toLowerCase() || null);
 const senderDomain = computed(() => extractDomain(senderAddress.value));
 
-const resolvedRemotePolicy = computed(() => remoteContentPolicyStore.resolve(senderAddress.value));
+const resolvedRemotePolicy = computed(() => preferencesStore.resolveRemoteContent(senderAddress.value));
 
 // One-time "load images for this message only"; reset whenever a different mail loads.
 const loadRemoteOnce = ref(false);
@@ -219,24 +217,24 @@ const remoteContentMenu = computed(() => {
     if (domain) allowGroup.push({
         label: `Always load from @${domain}`,
         icon: 'i-lucide-image',
-        onSelect: () => remoteContentPolicyStore.setDomainPolicy(domain, 'allow'),
+        onSelect: () => preferencesStore.setRemoteContentDomainPolicy(domain, 'allow'),
     });
     if (addr) allowGroup.push({
         label: `Always load from ${addr}`,
         icon: 'i-lucide-image',
-        onSelect: () => remoteContentPolicyStore.setAddressPolicy(addr, 'allow'),
+        onSelect: () => preferencesStore.setRemoteContentAddressPolicy(addr, 'allow'),
     });
 
     const blockGroup: RemoteMenuItem[] = [];
     if (domain) blockGroup.push({
         label: `Never load from @${domain}`,
         icon: 'i-lucide-image-off',
-        onSelect: () => remoteContentPolicyStore.setDomainPolicy(domain, 'block'),
+        onSelect: () => preferencesStore.setRemoteContentDomainPolicy(domain, 'block'),
     });
     if (addr) blockGroup.push({
         label: `Never load from ${addr}`,
         icon: 'i-lucide-image-off',
-        onSelect: () => remoteContentPolicyStore.setAddressPolicy(addr, 'block'),
+        onSelect: () => preferencesStore.setRemoteContentAddressPolicy(addr, 'block'),
     });
 
     return [allowGroup, blockGroup].filter(g => g.length > 0);

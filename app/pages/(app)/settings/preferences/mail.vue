@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
-import { useFolderDragDropStore } from '~/composables/stores/useFolderDragDropStore';
-import { useFolderNestingStore } from '~/composables/stores/useFolderNestingStore';
+import { usePreferencesStore } from '~/composables/stores/usePreferencesStore';
 
 useSeoMeta({
 	title: 'Mail Preferences | Delivr',
@@ -12,35 +10,29 @@ useSeoMeta({
 const toast = useToast()
 
 // ── Global preferences ──
-const autoMarkSeenStore = useAutoMarkSeenStore();
-const folderNestingStore = useFolderNestingStore();
-const folderDragDropStore = useFolderDragDropStore();
-await Promise.all([autoMarkSeenStore.use(), folderNestingStore.use(), folderDragDropStore.use()]);
+const preferencesStore = usePreferencesStore();
+await preferencesStore.use();
 
 // Local, staged copy — edits only persist when the user clicks Save.
 const state = reactive({
-	autoMarkSeen: autoMarkSeenStore.enabled.value,
-	nestUnderInbox: folderNestingStore.nestUnderInbox.value,
-	folderDragDrop: folderDragDropStore.enabled.value,
+	autoMarkSeen: preferencesStore.autoMarkSeen.value,
+	nestUnderInbox: preferencesStore.nestUnderInbox.value,
+	folderDragDrop: preferencesStore.folderDragDrop.value,
 });
 
 const saving = ref(false)
 
 // Enable Save only when something actually changed.
 const isDirty = computed(() =>
-	state.autoMarkSeen !== autoMarkSeenStore.enabled.value
-	|| state.nestUnderInbox !== folderNestingStore.nestUnderInbox.value
-	|| state.folderDragDrop !== folderDragDropStore.enabled.value
+	state.autoMarkSeen !== preferencesStore.autoMarkSeen.value
+	|| state.nestUnderInbox !== preferencesStore.nestUnderInbox.value
+	|| state.folderDragDrop !== preferencesStore.folderDragDrop.value
 )
 
 async function onSubmit(_event: FormSubmitEvent<typeof state>) {
 	saving.value = true
 	try {
-		await Promise.all([
-			autoMarkSeenStore.update({ enabled: state.autoMarkSeen }),
-			folderNestingStore.update({ nestUnderInbox: state.nestUnderInbox }),
-			folderDragDropStore.update({ enabled: state.folderDragDrop }),
-		])
+		await preferencesStore.update({ ...state })
 		toast.add({
 			title: 'Preferences saved',
 			description: 'Your mail preferences have been updated.',
