@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailListItem, Mailbox } from '~/utils/types';
 import type { GetMailAccountsByMailAccountIdSpecialUseResponse } from '~/api-client';
+import type { ContextMenuItem } from '@nuxt/ui';
 import { Utils } from '~/utils';
 import { useMailDrag } from '~/composables/useMailDrag';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
@@ -348,26 +349,37 @@ function toggleRowSeen(mail: MailListItem) {
 const isDeleting = ref(false);
 const confirmSoftDeleteOpen = ref(false);
 const confirmPermanentDeleteOpen = ref(false);
+// Captured when the delete is requested, so the confirmation acts on exactly the
+// mails it was opened for (toolbar targets or a context-menu row).
+const deleteTargetUids = ref<number[]>([]);
 
 const deleteWarningText = computed(() => {
-    const n = effectiveActionUids.value.length;
+    const n = deleteTargetUids.value.length;
     return `This will permanently delete ${n} email${n === 1 ? '' : 's'}. This action cannot be undone.`;
 });
 
 // Route the delete button to the right confirmation: a heavy "type DELETE" modal
 // for permanent deletes (from Trash), a lightweight confirm for soft-deletes.
-function requestDelete() {
-    if (!hasActionTarget.value) return;
+function requestDelete(uids: number[] = effectiveActionUids.value) {
+    if (uids.length === 0) return;
+    deleteTargetUids.value = uids;
     if (isTrashFolder.value) confirmPermanentDeleteOpen.value = true;
     else confirmSoftDeleteOpen.value = true;
 }
 
+function dropFromSelection(uids: number[]) {
+    if (selectedUids.value.size === 0) return;
+    const next = new Set(selectedUids.value);
+    for (const uid of uids) next.delete(uid);
+    selectedUids.value = next;
+}
+
 async function deleteSelected(permanent: boolean) {
-    if (!hasActionTarget.value || isDeleting.value) return;
+    const uids = deleteTargetUids.value;
+    if (uids.length === 0 || isDeleting.value) return;
 
     isDeleting.value = true;
     try {
-        const uids = effectiveActionUids.value;
 
         const response = await useAPI(api =>
             api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDelete({
@@ -394,7 +406,7 @@ async function deleteSelected(permanent: boolean) {
         const unreadRemoved = mailList.value.filter(m => removed.has(m.uid) && isUnread(m)).length;
         adjustMailboxUnseen(currentMailbox.value, -unreadRemoved);
         mailList.value = mailList.value.filter(m => !removed.has(m.uid));
-        clearSelection();
+        dropFromSelection(uids);
         confirmSoftDeleteOpen.value = false;
         // Close the reading pane if the email it was showing is now gone.
         if (activeMailUid.value !== null && removed.has(activeMailUid.value)) {
@@ -468,11 +480,7 @@ async function moveToMailbox(target: Mailbox, uids: number[]) {
     adjustMailboxUnseen(target, unreadMoved);
     mailList.value = mailList.value.filter(m => !moved.has(m.uid));
     // Drop moved mails out of the selection so the action bar reflects reality.
-    if (selectedUids.value.size > 0) {
-        const next = new Set(selectedUids.value);
-        for (const uid of uids) next.delete(uid);
-        selectedUids.value = next;
-    }
+    dropFromSelection(uids);
     // Close the reading pane if the email it was showing was moved away.
     if (activeMailUid.value !== null && moved.has(activeMailUid.value)) {
         closeActiveMail();
@@ -504,8 +512,8 @@ onBeforeUnmount(() => {
 // Delete/Backspace removes the current selection, or the open mail if nothing
 // is selected. defineShortcuts already ignores keystrokes while typing in inputs.
 defineShortcuts({
-    delete: requestDelete,
-    backspace: requestDelete,
+    delete: () => requestDelete(),
+    backspace: () => requestDelete(),
 });
 
 // ── Archive ──
@@ -620,6 +628,90 @@ function closeActiveMail() {
         router.replace(folderRoute());
     }
 }
+
+// ── Context menu (right-click / long-press on a row) ──
+
+const contextUids = ref<number[]>([]);
+
+// Right-clicking a selected row acts on the whole selection, any other row on
+// just itself — the same rule as dragging.
+function onRowContextMenu(uid: number, open: boolean) {
+    if (!open) return;
+    contextUids.value = selectedUids.value.has(uid) && selectedUids.value.size > 0
+        ? Array.from(selectedUids.value)
+        : [uid];
+}
+
+function openComposerFor(query: Record<string, string>) {
+    router.push({ path: `/mail/${accountId}/compose`, query: { ...query, folder: systemFolderPath.value } });
+}
+
+const moveTargets = computed(() =>
+    mailboxes.value.filter(mb =>
+        mb.path !== systemFolderPath.value
+        && !mb.flags.some(f => f.toLowerCase() === '\\noselect')
+    )
+);
+
+function moveTargetLabel(mb: Mailbox): string {
+    if (MailboxDisplayUtils.isInbox(mb)) return 'Inbox';
+    return MailboxDisplayUtils.specialUseLabel(mb.specialUse)
+        ?? (mb.delimiter ? mb.path.split(mb.delimiter).join(' / ') : mb.path);
+}
+
+const contextMenuItems = computed<ContextMenuItem[][]>(() => {
+    const uids = contextUids.value;
+    if (uids.length === 0) return [];
+
+    const single = uids.length === 1 ? uids[0]! : null;
+    const targets = new Set(uids);
+    const allRead = mailList.value.filter(m => targets.has(m.uid)).every(m => !isUnread(m));
+    const groups: ContextMenuItem[][] = [];
+
+    if (single === null) {
+        groups.push([{ type: 'label', label: `${uids.length} emails selected` }]);
+    } else if (isDraftsFolder.value) {
+        groups.push([{ label: 'Edit draft', icon: 'i-lucide-file-edit', onSelect: () => openMail(single) }]);
+    } else {
+        groups.push([
+            { label: 'Open', icon: 'i-lucide-mail-open', onSelect: () => openMail(single) },
+            { label: 'Reply', icon: 'i-lucide-reply', onSelect: () => openComposerFor({ reply: String(single) }) },
+            { label: 'Reply All', icon: 'i-lucide-reply-all', onSelect: () => openComposerFor({ replyAll: String(single) }) },
+            { label: 'Forward', icon: 'i-lucide-forward', onSelect: () => openComposerFor({ forward: String(single) }) },
+        ]);
+    }
+
+    const organize: ContextMenuItem[] = [{
+        label: allRead ? 'Mark as unread' : 'Mark as read',
+        icon: allRead ? 'i-lucide-mail' : 'i-lucide-mail-open',
+        disabled: isApplyingBulkFlags.value,
+        onSelect: () => applySeen(uids, !allRead),
+    }];
+    const archive = archiveMailbox.value;
+    if (archive && canArchive.value) {
+        organize.push({ label: 'Archive', icon: 'i-lucide-archive', onSelect: () => moveToMailbox(archive, uids) });
+    }
+    organize.push({
+        label: 'Move to',
+        icon: 'i-lucide-folder-input',
+        disabled: moveTargets.value.length === 0,
+        children: moveTargets.value.map(mb => ({
+            label: moveTargetLabel(mb),
+            icon: MailboxDisplayUtils.isInbox(mb) ? 'i-lucide-inbox' : MailboxDisplayUtils.specialUseIcon(mb.specialUse),
+            onSelect: () => moveToMailbox(mb, uids),
+        })),
+    });
+    groups.push(organize);
+
+    groups.push([{
+        label: isTrashFolder.value ? 'Delete permanently' : 'Delete',
+        icon: 'i-lucide-trash-2',
+        color: 'error',
+        onSelect: () => requestDelete(uids),
+    }]);
+
+    return groups;
+});
 </script>
 
 <template>
@@ -734,7 +826,7 @@ function closeActiveMail() {
                     :back-link="props.fullScreen ? folderRoute() : undefined"
                     @archive="archiveSelected"
                     @toggle-read="toggleTargetsSeen"
-                    @delete="requestDelete"
+                    @delete="requestDelete()"
                     @reply="detailRef?.reply()"
                     @reply-all="detailRef?.replyAll()"
                     @forward="detailRef?.forward()"
@@ -822,9 +914,13 @@ function closeActiveMail() {
                             <div v-else class="flex-1 min-h-0 overflow-y-auto">
                                 <!-- ══ DENSE LIST (desktop list view only) ══ -->
                                 <template v-if="!cardLayout">
-                                    <div
+                                    <UContextMenu
                                         v-for="mail in mailList"
                                         :key="mail.uid"
+                                        :items="contextMenuItems"
+                                        @update:open="onRowContextMenu(mail.uid, $event)"
+                                    >
+                                    <div
                                         class="group relative flex items-center gap-3 px-4 py-1.5 border-b border-default last:border-b-0 cursor-pointer transition-colors text-sm"
                                         :class="[
                                             isSelected(mail.uid)
@@ -900,13 +996,18 @@ function closeActiveMail() {
                                             </UTooltip>
                                         </div>
                                     </div>
+                                    </UContextMenu>
                                 </template>
 
                                 <!-- ══ SPLIT MODE (compact 3-line) ══ -->
                                 <template v-else>
-                                    <div
+                                    <UContextMenu
                                         v-for="mail in mailList"
                                         :key="mail.uid"
+                                        :items="contextMenuItems"
+                                        @update:open="onRowContextMenu(mail.uid, $event)"
+                                    >
+                                    <div
                                         class="group relative flex items-start gap-2.5 px-4 py-2 border-b border-default last:border-b-0 cursor-pointer transition-colors"
                                         :class="[
                                             activeMailUid === mail.uid
@@ -972,6 +1073,7 @@ function closeActiveMail() {
                                             </div>
                                         </div>
                                     </div>
+                                    </UContextMenu>
                                 </template>
                             </div>
 
@@ -1069,7 +1171,7 @@ function closeActiveMail() {
                     icon-color="error"
                 >
                     <p class="text-sm text-muted">
-                        Move {{ effectiveActionUids.length }} email{{ effectiveActionUids.length === 1 ? '' : 's' }} to Trash?
+                        Move {{ deleteTargetUids.length }} email{{ deleteTargetUids.length === 1 ? '' : 's' }} to Trash?
                     </p>
 
                     <template #footer>
