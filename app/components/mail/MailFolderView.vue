@@ -8,7 +8,8 @@ import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 import MailDetailContent from '~/components/mail/MailDetailContent.vue';
 import MailToolbar from '~/components/mail/MailToolbar.vue';
 import { useEffectiveMailViewMode, type MailViewMode } from '~/composables/useMailViewMode';
-import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
+import { breakpointsTailwind, useBreakpoints, useEventListener } from '@vueuse/core';
+import { MailSelectionUtils } from '~/utils/mail/mailSelection';
 
 const props = defineProps<{
     /** Raw folder route param (possibly slash-joined encoded segments). */
@@ -227,15 +228,37 @@ function prevPage() {
 
 const selectedUids = ref<Set<number>>(new Set());
 
+// Where a Shift-range starts: the mail last clicked, toggled or moved to on its own.
+const selectionAnchor = ref<number | null>(null);
+// The row the keyboard is on. Only highlighted while the keyboard is in use.
+const cursorUid = ref<number | null>(null);
+const keyboardActive = ref(false);
+
+const mailOrder = computed(() => mailList.value.map(m => m.uid));
+
+// A deleted/moved mail or a new page can take the cursor's row away.
+watch(mailOrder, (order) => {
+    if (cursorUid.value !== null && !order.includes(cursorUid.value)) cursorUid.value = null;
+});
+
 function isSelected(uid: number): boolean {
     return selectedUids.value.has(uid);
 }
 
 function toggleSelection(uid: number) {
-    const newSet = new Set(selectedUids.value);
-    if (newSet.has(uid)) newSet.delete(uid);
-    else newSet.add(uid);
-    selectedUids.value = newSet;
+    selectedUids.value = MailSelectionUtils.toggle(selectedUids.value, uid);
+    selectionAnchor.value = uid;
+    cursorUid.value = uid;
+    keyboardActive.value = false;
+}
+
+// Shift selects from the anchor (or the open mail) to `uid`; with Ctrl/Cmd, or
+// from a checkbox, the range is added to the selection instead of replacing it.
+function selectRangeTo(uid: number, additive: boolean) {
+    const anchor = selectionAnchor.value ?? activeMailUid.value;
+    selectedUids.value = MailSelectionUtils.selectRange(mailOrder.value, selectedUids.value, anchor, uid, additive);
+    selectionAnchor.value = anchor ?? uid;
+    cursorUid.value = uid;
 }
 
 function toggleSelectAll() {
@@ -248,6 +271,7 @@ function toggleSelectAll() {
 
 function clearSelection() {
     selectedUids.value = new Set();
+    selectionAnchor.value = null;
 }
 
 const hasSelection = computed(() => selectedUids.value.size > 0);
@@ -544,15 +568,121 @@ async function archiveSelected() {
     await moveToMailbox(archiveMailbox.value, effectiveActionUids.value);
 }
 
-// Ctrl/Cmd-click a row to toggle it into the selection instead of opening it.
+// Click opens a mail, Ctrl/Cmd-click toggles it into the selection, Shift-click
+// selects the range up to it (Ctrl/Cmd+Shift adds the range).
 function onRowClick(uid: number, e: MouseEvent) {
-    if (e.ctrlKey || e.metaKey) {
+    keyboardActive.value = false;
+    if (e.shiftKey) {
+        e.preventDefault();
+        selectRangeTo(uid, e.ctrlKey || e.metaKey);
+    } else if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         toggleSelection(uid);
     } else {
+        selectionAnchor.value = uid;
+        cursorUid.value = uid;
         openMail(uid);
     }
 }
+
+// Shift-click would otherwise also select the text between the two rows.
+function onRowMouseDown(e: MouseEvent) {
+    if (e.shiftKey) e.preventDefault();
+}
+
+// Shift-clicking a checkbox adds the range up to it, like in Gmail. Runs in
+// the capture phase so the checkbox itself doesn't toggle as well.
+function onCheckboxClickCapture(uid: number, e: MouseEvent) {
+    if (!e.shiftKey) return;
+    e.preventDefault();
+    e.stopPropagation();
+    keyboardActive.value = false;
+    selectRangeTo(uid, true);
+}
+
+// ── Keyboard selection ──
+
+const mailRowsEl = ref<HTMLElement | null>(null);
+const readingPaneEl = ref<HTMLElement | null>(null);
+
+// Clicking the reading pane leaves nothing focused, just like clicking a row,
+// so remember it: there Space, the arrows and Ctrl/Cmd+A scroll and select the mail.
+const readingPaneClicked = ref(false);
+useEventListener('pointerdown', (e: PointerEvent) => {
+    readingPaneClicked.value = !!readingPaneEl.value?.contains(e.target as Node);
+}, { capture: true, passive: true });
+
+// The list only takes keys that nothing else wants: not while typing, not in
+// an open menu or dialog, and not while focus sits on a control outside it.
+function listOwnsKeyboard(e: KeyboardEvent): boolean {
+    if (e.defaultPrevented || e.altKey || e.isComposing) return false;
+    if (showFullDetail.value || mailList.value.length === 0) return false;
+    const target = e.target as HTMLElement | null;
+    if (!target || target === document.body) return !readingPaneClicked.value;
+    if (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="menu"], [role="listbox"], [role="dialog"]')) {
+        return false;
+    }
+    // A focused control in the list (a row's checkbox, a hover action) keeps
+    // Space and Enter, which activate it natively.
+    if ((e.key === ' ' || e.key === 'Enter') && target.closest('button, a[href], [role="button"], [role="checkbox"]')) {
+        return false;
+    }
+    return !!mailRowsEl.value?.contains(target);
+}
+
+function scrollRowIntoView(uid: number) {
+    mailRowsEl.value?.querySelector(`[data-mail-uid="${uid}"]`)?.scrollIntoView({ block: 'nearest' });
+}
+
+// Arrow keys move the cursor; with Shift they select from the anchor to it.
+function moveCursor(step: number, extend: boolean) {
+    const from = cursorUid.value ?? activeMailUid.value;
+    const next = MailSelectionUtils.move(mailOrder.value, from, step);
+    if (next === null) return;
+    if (extend) {
+        const anchor = selectionAnchor.value ?? from ?? next;
+        selectedUids.value = MailSelectionUtils.selectRange(mailOrder.value, selectedUids.value, anchor, next, false);
+        selectionAnchor.value = anchor;
+    } else {
+        selectionAnchor.value = next;
+    }
+    cursorUid.value = next;
+    keyboardActive.value = true;
+    scrollRowIntoView(next);
+
+    // Leave a clicked checkbox behind, so Space and Enter act on the cursor's row.
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && mailRowsEl.value?.contains(focused)) focused.blur();
+}
+
+//  ↑/↓ or k/j       move          Space or x   toggle the row
+//  Shift+↑/↓        select range  Ctrl/Cmd+A   select all
+//  Enter            open          Esc          clear the selection
+useEventListener('keydown', (e: KeyboardEvent) => {
+    if (!listOwnsKeyboard(e)) return;
+    const modifier = e.ctrlKey || e.metaKey;
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+    if (!modifier && (key === 'ArrowDown' || key === 'j')) {
+        moveCursor(1, e.shiftKey);
+    } else if (!modifier && (key === 'ArrowUp' || key === 'k')) {
+        moveCursor(-1, e.shiftKey);
+    } else if (!modifier && !e.shiftKey && (key === ' ' || key === 'x')) {
+        const uid = cursorUid.value ?? activeMailUid.value;
+        if (uid === null) return;
+        toggleSelection(uid);
+        keyboardActive.value = true;
+    } else if (modifier && !e.shiftKey && key === 'a') {
+        selectedUids.value = new Set(mailOrder.value);
+    } else if (!modifier && !e.shiftKey && key === 'Escape' && hasSelection.value) {
+        clearSelection();
+    } else if (!modifier && !e.shiftKey && key === 'Enter' && cursorUid.value !== null) {
+        openMail(cursorUid.value);
+    } else {
+        return;
+    }
+    e.preventDefault();
+});
 
 // ── Unread count ──
 
@@ -911,7 +1041,7 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                             </div>
 
                             <!-- Mail rows -->
-                            <div v-else class="flex-1 min-h-0 overflow-y-auto">
+                            <div v-else ref="mailRowsEl" class="flex-1 min-h-0 overflow-y-auto">
                                 <!-- ══ DENSE LIST (desktop list view only) ══ -->
                                 <template v-if="!cardLayout">
                                     <UContextMenu
@@ -925,15 +1055,18 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                                         :class="[
                                             isSelected(mail.uid)
                                                 ? 'bg-primary/10'
-                                                : 'hover:bg-elevated/60'
+                                                : 'hover:bg-elevated/60',
+                                            { 'ring-2 ring-inset ring-primary/60': keyboardActive && cursorUid === mail.uid }
                                         ]"
+                                        :data-mail-uid="mail.uid"
                                         draggable="true"
                                         @dragstart="onRowDragStart(mail.uid, $event)"
                                         @dragend="endDrag"
+                                        @mousedown="onRowMouseDown"
                                         @click="onRowClick(mail.uid, $event)"
                                     >
                                         <!-- Checkbox -->
-                                        <div class="shrink-0" @click.stop>
+                                        <div class="shrink-0" @click.capture="onCheckboxClickCapture(mail.uid, $event)" @click.stop>
                                             <UCheckbox
                                                 :model-value="isSelected(mail.uid)"
                                                 @update:model-value="toggleSelection(mail.uid)"
@@ -1014,15 +1147,18 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                                                 ? 'bg-primary/15 border-l-2 border-l-primary pl-3.5'
                                                 : isSelected(mail.uid)
                                                     ? 'bg-primary/10'
-                                                    : 'hover:bg-elevated/60'
+                                                    : 'hover:bg-elevated/60',
+                                            { 'ring-2 ring-inset ring-primary/60': keyboardActive && cursorUid === mail.uid }
                                         ]"
+                                        :data-mail-uid="mail.uid"
                                         draggable="true"
                                         @dragstart="onRowDragStart(mail.uid, $event)"
                                         @dragend="endDrag"
+                                        @mousedown="onRowMouseDown"
                                         @click="onRowClick(mail.uid, $event)"
                                     >
                                         <!-- Checkbox (primary selection trigger on touch) -->
-                                        <div class="shrink-0 pt-0.5" @click.stop>
+                                        <div class="shrink-0 pt-0.5" @click.capture="onCheckboxClickCapture(mail.uid, $event)" @click.stop>
                                             <UCheckbox
                                                 :model-value="isSelected(mail.uid)"
                                                 @update:model-value="toggleSelection(mail.uid)"
@@ -1114,6 +1250,7 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                         <!-- Detail Column (split view only) -->
                         <div
                             v-if="viewMode === 'split'"
+                            ref="readingPaneEl"
                             class="flex-1 min-h-0 min-w-0 hidden lg:flex lg:flex-col"
                         >
                             <!-- Reading pane hides while multiple emails are selected. -->

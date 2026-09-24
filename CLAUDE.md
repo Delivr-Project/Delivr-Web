@@ -51,7 +51,8 @@ app/
 │       │   └── MailRecipientInput.vue      # To/Cc/Bcc tag input with address validation
 │       ├── MailDetailContent.vue
 │       ├── MailIdentitiesManager.vue  # Sender-identity CRUD panel (list, add, edit, signature, default, delete)
-│       ├── MailFolderView.vue  # Folder list + split/list view modes, pagination, bulk actions, drag & drop
+│       ├── MailFolderView.vue  # Folder list + split/list view modes, pagination, bulk actions, drag & drop,
+│       │                       #   Shift/Ctrl-click and keyboard selection
 │       ├── MailListItem.vue
 │       ├── MailList.vue
 │       └── MailToolbar.vue     # Shared toolbar (bulk/read/delete/refresh + reading-pane actions)
@@ -98,7 +99,8 @@ app/
 │   ├── mail/                 # NOT auto-imported (nested) — import explicitly
 │   │   ├── mailAddress.ts    # `MailAddressUtils`: parse/format/validate/dedupe addresses
 │   │   ├── mailIdentity.ts   # `MailIdentityUtils`: sender list, duplicates, min-one rule
-│   │   └── mailCompose.ts    # `MailComposeUtils`: reply/forward builders, HTML ⇄ text conversions
+│   │   ├── mailCompose.ts    # `MailComposeUtils`: reply/forward builders, HTML ⇄ text conversions
+│   │   └── mailSelection.ts  # `MailSelectionUtils`: list selection rules (range, toggle, cursor move)
 │   ├── mailboxDisplay.ts
 │   ├── routeMatcher.ts
 │   └── types.ts
