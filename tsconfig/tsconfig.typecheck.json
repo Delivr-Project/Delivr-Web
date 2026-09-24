@@ -5,6 +5,7 @@
         "allowImportingTsExtensions": true
     },
     "include": [
+        "../.nuxt/nuxt.d.ts",
         "../tests/**/*"
     ]
 }

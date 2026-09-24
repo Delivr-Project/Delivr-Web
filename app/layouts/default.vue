@@ -6,8 +6,7 @@ import NotificationsSlideover from '~/components/dashboard/NotificationsSlideove
 import UserMenu from '~/components/dashboard/UserMenu.vue';
 import DelivrIcon from '~/components/img/DelivrIcon.vue';
 import DelivrLogo from '~/components/img/DelivrLogo.vue';
-import { useFolderDragDropStore } from '~/composables/stores/useFolderDragDropStore';
-import { useFolderNestingStore } from '~/composables/stores/useFolderNestingStore';
+import { usePreferencesStore } from '~/composables/stores/usePreferencesStore';
 import { useMailAccountsStore } from '~/composables/stores/useMailAccountsStore';
 import { useSelectedMailAccountStore } from '~/composables/stores/useSelectedMailAccountStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
@@ -30,16 +29,15 @@ const currentMailAccountStore = useSelectedMailAccountStore();
 const currentMailAccount = await currentMailAccountStore.use();
 const mailboxes = computed(() => currentMailAccount.value?.mailboxes || []);
 
+const preferencesStore = usePreferencesStore();
+await preferencesStore.use();
+
 // Preference: nest INBOX sub-folders under the Inbox item instead of lifting
 // them to top-level siblings. Reactive, so toggling it re-renders the tree.
-const folderNestingStore = useFolderNestingStore();
-await folderNestingStore.use();
-const nestUnderInbox = folderNestingStore.nestUnderInbox;
+const nestUnderInbox = preferencesStore.nestUnderInbox;
 
 // Preference: folder drag-and-drop is opt-in, so it's off unless enabled.
-const folderDragDropStore = useFolderDragDropStore();
-await folderDragDropStore.use();
-const folderDndEnabled = folderDragDropStore.enabled;
+const folderDndEnabled = preferencesStore.folderDragDrop;
 
 const { isMailSearchOpen } = useDashboard();
 
