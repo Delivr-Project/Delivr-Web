@@ -603,6 +603,14 @@ function onCheckboxClickCapture(uid: number, e: MouseEvent) {
 // ── Keyboard selection ──
 
 const mailRowsEl = ref<HTMLElement | null>(null);
+const readingPaneEl = ref<HTMLElement | null>(null);
+
+// Clicking the reading pane leaves nothing focused, just like clicking a row,
+// so remember it: there Space, the arrows and Ctrl/Cmd+A scroll and select the mail.
+const readingPaneClicked = ref(false);
+useEventListener('pointerdown', (e: PointerEvent) => {
+    readingPaneClicked.value = !!readingPaneEl.value?.contains(e.target as Node);
+}, { capture: true, passive: true });
 
 // The list only takes keys that nothing else wants: not while typing, not in
 // an open menu or dialog, and not while focus sits on a control outside it.
@@ -610,8 +618,13 @@ function listOwnsKeyboard(e: KeyboardEvent): boolean {
     if (e.defaultPrevented || e.altKey || e.isComposing) return false;
     if (showFullDetail.value || mailList.value.length === 0) return false;
     const target = e.target as HTMLElement | null;
-    if (!target || target === document.body) return true;
+    if (!target || target === document.body) return !readingPaneClicked.value;
     if (target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="menu"], [role="listbox"], [role="dialog"]')) {
+        return false;
+    }
+    // A focused control in the list (a row's checkbox, a hover action) keeps
+    // Space and Enter, which activate it natively.
+    if ((e.key === ' ' || e.key === 'Enter') && target.closest('button, a[href], [role="button"], [role="checkbox"]')) {
         return false;
     }
     return !!mailRowsEl.value?.contains(target);
@@ -636,6 +649,10 @@ function moveCursor(step: number, extend: boolean) {
     cursorUid.value = next;
     keyboardActive.value = true;
     scrollRowIntoView(next);
+
+    // Leave a clicked checkbox behind, so Space and Enter act on the cursor's row.
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && mailRowsEl.value?.contains(focused)) focused.blur();
 }
 
 //  ↑/↓ or k/j       move          Space or x   toggle the row
@@ -1233,6 +1250,7 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                         <!-- Detail Column (split view only) -->
                         <div
                             v-if="viewMode === 'split'"
+                            ref="readingPaneEl"
                             class="flex-1 min-h-0 min-w-0 hidden lg:flex lg:flex-col"
                         >
                             <!-- Reading pane hides while multiple emails are selected. -->
