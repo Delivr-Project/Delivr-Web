@@ -33,7 +33,7 @@ const account = mailAccountID === "new" ? ref({
     // Every account is created with its first sender identity — the API refuses
     // one without an address to send from.
     identity: {
-        display_name: '',
+        display_name: undefined,
         email_address: ''
     }
 

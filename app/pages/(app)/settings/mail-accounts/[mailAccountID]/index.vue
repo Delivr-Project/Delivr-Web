@@ -142,7 +142,7 @@ async function onFormSubmit() {
                 path: {
                     mailAccountID: (mailAccount_data.value as MailAccount).id,
                 },
-                body: mailAccount_data.value as MailAccount
+                body: mailAccount_data.value
             }));
 
             if (result.success) {
