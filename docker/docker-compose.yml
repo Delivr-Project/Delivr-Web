@@ -1,0 +1,14 @@
+
+services:
+
+  delivr-web:
+    image: ghcr.io/delivr-project/delivr-web:latest
+    container_name: delivr-web
+    restart: unless-stopped
+    ports:
+      - "14128:14128"
+    environment:
+      DELIVR_API_URL: https://api.delivr.example.com/v1
+      DELIVR_APP_URL: https://delivr.example.com
+
+      DELIVR_ENABLE_SIGNUP: false

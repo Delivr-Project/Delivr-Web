@@ -1,0 +1,46 @@
+
+services:
+
+  delivr-api:
+    image: ghcr.io/delivr-project/delivr-api:latest
+    container_name: delivr-api
+    restart: unless-stopped
+    ports:
+      - "14123:14123"
+    environment:
+      DLA_LOG_LEVEL: info
+
+      DLA_APP_URL: https://delivr.example.com
+    
+      DLA_DISABLE_DOCS: false
+
+      DLA_ENCRYPTION_KEY: "Your32CharacterEncryptionKeyHere"
+
+      DLA_MAX_ATTACHMENT_SIZE_MB: 25
+      
+      DLA_SMTP_HOST: "mail.example.com"
+      DLA_SMTP_PORT: "465"
+      DLA_SMTP_USERNAME: "noreply@delivr.example.com"
+      DLA_SMTP_PASSWORD: "YourSMTPPasswordHere"
+      DLA_SMTP_FROM: "noreply@delivr.example.com"
+      DLA_SMTP_SECURE: true
+
+    volumes:
+      - /opt/delivr/api/data:/opt/delivr/api/data
+      - /opt/delivr/api/config:/opt/delivr/api/config
+  
+  delivr-web:
+    image: ghcr.io/delivr-project/delivr-web:latest
+    container_name: delivr-web
+    restart: unless-stopped
+    ports:
+      - "14128:14128"
+    environment:
+      DELIVR_API_URL: https://api.delivr.example.com/v1
+      DELIVR_APP_URL: https://delivr.example.com
+
+      DELIVR_ENABLE_SIGNUP: false
+    
+    depends_on:
+      api:
+        condition: service_healthy
