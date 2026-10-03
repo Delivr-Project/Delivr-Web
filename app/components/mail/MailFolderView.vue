@@ -568,6 +568,13 @@ async function archiveSelected() {
     await moveToMailbox(archiveMailbox.value, effectiveActionUids.value);
 }
 
+// Hover quick action: archives just that row, whatever else is selected.
+async function archiveRow(uid: number) {
+    if (!archiveMailbox.value || !canArchive.value) return;
+    await moveToMailbox(archiveMailbox.value, [uid]);
+}
+
+// Ctrl/Cmd-click a row to toggle it into the selection instead of opening it.
 // Click opens a mail, Ctrl/Cmd-click toggles it into the selection, Shift-click
 // selects the range up to it (Ctrl/Cmd+Shift adds the range).
 function onRowClick(uid: number, e: MouseEvent) {
@@ -1111,11 +1118,11 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                                             class="absolute right-4 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5"
                                             @click.stop
                                         >
-                                            <UTooltip text="Archive">
-                                                <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="xs" />
+                                            <UTooltip v-if="canArchive" text="Archive">
+                                                <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="xs" @click="archiveRow(mail.uid)" />
                                             </UTooltip>
                                             <UTooltip text="Delete">
-                                                <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" />
+                                                <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" @click="requestDelete([mail.uid])" />
                                             </UTooltip>
                                             <UTooltip :text="isUnread(mail) ? 'Mark as read' : 'Mark as unread'">
                                                 <UButton
@@ -1180,7 +1187,8 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                                                         {{ mail.from?.name || mail.from?.address || 'Unknown' }}
                                                     </span>
                                                 </div>
-                                                <div class="flex items-center gap-1 shrink-0">
+                                                <!-- Attachment + date; swapped for the quick actions on hover -->
+                                                <div class="flex items-center gap-1 shrink-0 group-hover:hidden">
                                                     <UIcon
                                                         v-if="hasAttachments(mail)"
                                                         name="i-lucide-paperclip"
@@ -1192,6 +1200,28 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                                                     >
                                                         {{ mail.date ? formatRelativeDate(mail.date) : '' }}
                                                     </span>
+                                                </div>
+                                                <!-- Negative margin keeps the taller buttons from growing the row -->
+                                                <div
+                                                    class="shrink-0 -my-1 hidden group-hover:flex items-center gap-0.5"
+                                                    @click.stop
+                                                >
+                                                    <UTooltip v-if="canArchive" text="Archive">
+                                                        <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="xs" @click="archiveRow(mail.uid)" />
+                                                    </UTooltip>
+                                                    <UTooltip text="Delete">
+                                                        <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" @click="requestDelete([mail.uid])" />
+                                                    </UTooltip>
+                                                    <UTooltip :text="isUnread(mail) ? 'Mark as read' : 'Mark as unread'">
+                                                        <UButton
+                                                            :icon="isUnread(mail) ? 'i-lucide-mail-open' : 'i-lucide-mail'"
+                                                            color="neutral"
+                                                            variant="ghost"
+                                                            size="xs"
+                                                            :loading="isApplyingBulkFlags"
+                                                            @click="toggleRowSeen(mail)"
+                                                        />
+                                                    </UTooltip>
                                                 </div>
                                             </div>
 
