@@ -4,7 +4,13 @@ import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
 import { usePreferencesStore, extractDomain } from '~/composables/stores/usePreferencesStore';
 import { Utils } from '~/utils';
 import Gravatar from '~/components/Gravatar.vue';
-import { useMailAttachments } from '~/composables/useMailAttachments';
+import {
+    useMailAttachments,
+    fetchAttachmentObjectUrl,
+    isPreviewableType,
+    normalizeContentId,
+    referencedContentIds,
+} from '~/composables/useMailAttachments';
 
 const props = defineProps<{
     accountId: number
@@ -186,11 +192,58 @@ const shouldBlockRemote = computed(
     () => !loadRemoteOnce.value && resolvedRemotePolicy.value !== 'allow'
 );
 
+// ── Embedded (cid:) images ──
+// Attachments the HTML references via `cid:` are part of the body (e.g. a logo in a
+// signature), not files to list. Their bytes are fetched with the session token into
+// object URLs the sandboxed iframe can display; they're revoked when the mail changes.
+
+const inlineContentIds = computed(() =>
+    mailData.value?.body?.html ? referencedContentIds(mailData.value.body.html) : new Set<string>()
+);
+
+function isInlineAttachment(attachment: MailData['attachments'][number]): boolean {
+    return !!attachment.contentId
+        && isPreviewableType(attachment.contentType)
+        && inlineContentIds.value.has(normalizeContentId(attachment.contentId));
+}
+
+const inlineImages = ref<Record<string, string>>({});
+
+function revokeInlineImages() {
+    for (const url of Object.values(inlineImages.value)) URL.revokeObjectURL(url);
+    inlineImages.value = {};
+}
+
+watch(mailData, async (mail) => {
+    revokeInlineImages();
+    if (!mail || !import.meta.client) return;
+
+    const loaded: Record<string, string> = {};
+    await Promise.all(mail.attachments.map(async (attachment, idx) => {
+        if (!isInlineAttachment(attachment)) return;
+        try {
+            loaded[normalizeContentId(attachment.contentId!)] = await fetchAttachmentObjectUrl(attachmentRef(idx));
+        } catch {
+            // Left as a broken image; the attachment can't be listed either way.
+        }
+    }));
+
+    // A different mail may have loaded meanwhile — drop what is no longer shown.
+    if (mailData.value !== mail) {
+        for (const url of Object.values(loaded)) URL.revokeObjectURL(url);
+        return;
+    }
+    inlineImages.value = loaded;
+});
+
+onUnmounted(revokeInlineImages);
+
 const sanitized = computed(() => {
     if (!mailData.value?.body?.html) return { html: '', hasRemoteContent: false };
     return useSanitizeHtml(mailData.value.body.html, {
         wrapForDarkMode: true,
         blockRemoteContent: shouldBlockRemote.value,
+        inlineImages: inlineImages.value,
     });
 });
 const sanitizedHtml = computed(() => sanitized.value.html);
@@ -256,12 +309,18 @@ const remoteContentMenu = computed(() => {
 
 const hasHtmlBody = computed(() => !!mailData.value?.body?.html);
 const hasTextBody = computed(() => !!mailData.value?.body?.text);
-const hasAttachments = computed(() => (mailData.value?.attachments?.length ?? 0) > 0);
-
 // ── Attachments ──
 // Attachments are streamed from the API on demand and never stored/cached server-
 // side. The backend addresses each attachment by its index within the mail, which
-// matches this array's order — so the v-for index doubles as the attachment id.
+// matches this array's order — so the index is kept alongside each listed one
+// (embedded images are filtered out, which would otherwise shift it).
+
+const listedAttachments = computed(() =>
+    (mailData.value?.attachments ?? [])
+        .map((attachment, idx) => ({ attachment, idx }))
+        .filter(({ attachment }) => !isInlineAttachment(attachment))
+);
+const hasAttachments = computed(() => listedAttachments.value.length > 0);
 
 const { downloadAttachment, openAttachment } = useMailAttachments();
 const downloadingIdx = ref<number | null>(null);
@@ -324,7 +383,11 @@ function printEmail() {
 
     // Light theme for paper (no dark-mode wrap); honour the current image policy.
     const bodyHtml = mail.body?.html
-        ? useSanitizeHtml(mail.body.html, { wrapForDarkMode: false, blockRemoteContent: shouldBlockRemote.value }).html
+        ? useSanitizeHtml(mail.body.html, {
+            wrapForDarkMode: false,
+            blockRemoteContent: shouldBlockRemote.value,
+            inlineImages: inlineImages.value,
+        }).html
         : `<pre style="white-space:pre-wrap;font-family:inherit;margin:0;">${escapeHtml(mail.body?.text ?? '')}</pre>`;
 
     const rows: string[] = [];
@@ -625,11 +688,11 @@ defineExpose({
                     <div v-if="hasAttachments" class="rounded-lg border border-default p-4">
                         <div class="text-sm font-semibold text-default mb-3 flex items-center gap-2">
                             <UIcon name="i-lucide-paperclip" class="size-4" />
-                            Attachments ({{ mailData.attachments.length }})
+                            Attachments ({{ listedAttachments.length }})
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div
-                                v-for="(attachment, idx) in mailData.attachments"
+                                v-for="{ attachment, idx } in listedAttachments"
                                 :key="idx"
                                 class="flex items-center gap-3 p-3 rounded-lg border border-default hover:border-primary focus-within:border-primary transition-colors"
                             >

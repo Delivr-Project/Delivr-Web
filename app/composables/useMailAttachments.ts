@@ -101,6 +101,27 @@ export async function fetchAttachmentFile(ref: AttachmentRef, filename?: string,
     });
 }
 
+
+export async function fetchAttachmentObjectUrl(ref: AttachmentRef): Promise<string> {
+    return URL.createObjectURL(await fetchAttachmentBlob(ref, false));
+}
+
+
+export function normalizeContentId(value: string): string {
+    let id = value.trim().replace(/^cid:/i, '');
+    try { id = decodeURIComponent(id); } catch {  }
+    return id.replace(/^<|>$/g, '').trim().toLowerCase();
+}
+
+
+export function referencedContentIds(html: string): Set<string> {
+    const ids = new Set<string>();
+    for (const match of html.matchAll(/cid:([^"'()\s>]+)/gi)) {
+        ids.add(normalizeContentId(match[1]!));
+    }
+    return ids;
+}
+
 /** Trigger a browser download for an already-fetched blob via a transient object URL. */
 function triggerDownload(blob: Blob, filename?: string): void {
     const url = URL.createObjectURL(blob);

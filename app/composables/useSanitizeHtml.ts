@@ -1,4 +1,5 @@
 import DOMPurify, { type Config } from 'dompurify';
+import { normalizeContentId } from '~/composables/useMailAttachments';
 
 /**
  * Regex patterns for dangerous CSS that must be removed.
@@ -50,6 +51,8 @@ interface CssSanitizeOptions {
     blockRemote?: boolean;
     /** Called whenever a remote resource is stripped due to `blockRemote`. */
     onRemoteBlocked?: () => void;
+    /** Resolves a `cid:` reference to a displayable URL (see `inlineImages`). */
+    resolveCid?: (cid: string) => string | undefined;
 }
 
 /**
@@ -68,6 +71,12 @@ function sanitizeCssUrl(urlMatch: string, options: CssSanitizeOptions): string {
     // Block dangerous schemes
     if (DANGEROUS_CSS_URL_SCHEMES.test(url)) {
         return '/* blocked */';
+    }
+
+    // Embedded (inline) attachment, e.g. a background image sent along with the mail.
+    const resolved = /^cid:/i.test(url) ? options.resolveCid?.(url) : undefined;
+    if (resolved) {
+        return `url("${resolved}")`;
     }
 
     // Privacy: when remote-content blocking is active, strip external resources
@@ -173,7 +182,16 @@ export interface SanitizeHtmlResult {
  */
 export function useSanitizeHtml(
     html: string,
-    options?: { wrapForDarkMode?: boolean; blockRemoteContent?: boolean }
+    options?: {
+        wrapForDarkMode?: boolean;
+        blockRemoteContent?: boolean;
+        /**
+         * Displayable URLs (e.g. object URLs) of the mail's embedded attachments,
+         * keyed by their normalised Content-ID (`normalizeContentId`). `cid:`
+         * references to them are rewritten; unknown ones are left untouched.
+         */
+        inlineImages?: Record<string, string>;
+    }
 ): SanitizeHtmlResult {
     if (!import.meta.client) {
         // On SSR, return empty — HTML emails should only render client-side
@@ -183,6 +201,9 @@ export function useSanitizeHtml(
     const blockRemote = options?.blockRemoteContent ?? false;
     let remoteBlockedCount = 0;
     const markRemoteBlocked = () => { remoteBlockedCount++; };
+    const inlineImages = options?.inlineImages ?? {};
+    const resolveCid = (cid: string) => inlineImages[normalizeContentId(cid)];
+    const cssOptions: CssSanitizeOptions = { blockRemote, onRemoteBlocked: markRemoteBlocked, resolveCid };
 
     // Hook to sanitize CSS in <style> tags, filter dangerous <link>/<meta> tags
     DOMPurify.addHook('uponSanitizeElement', (node) => {
@@ -190,7 +211,7 @@ export function useSanitizeHtml(
 
         // Sanitize CSS content in <style> tags
         if (el.tagName === 'STYLE' && node.textContent) {
-            node.textContent = sanitizeCss(node.textContent, { blockRemote, onRemoteBlocked: markRemoteBlocked });
+            node.textContent = sanitizeCss(node.textContent, cssOptions);
         }
 
         // Filter <link> tags - only allow stylesheet links
@@ -231,6 +252,14 @@ export function useSanitizeHtml(
             el.setAttribute('rel', 'noopener noreferrer');
         }
 
+        // Embedded images: point `cid:` references at the fetched attachment. This
+        // runs after DOMPurify's URI check, which doesn't know the `blob:` scheme.
+        for (const attr of ['src', 'background']) {
+            const value = el.getAttribute(attr);
+            const resolved = value && /^\s*cid:/i.test(value) ? resolveCid(value) : undefined;
+            if (resolved) el.setAttribute(attr, resolved);
+        }
+
         // Privacy: strip remote images/resources so nothing is auto-fetched.
         // The original URLs are preserved in data-* attributes; images are simply
         // re-sanitized (blockRemote=false) once the user opts in to loading them.
@@ -263,7 +292,7 @@ export function useSanitizeHtml(
         if (el.hasAttribute('style')) {
             const style = el.getAttribute('style');
             if (style) {
-                el.setAttribute('style', sanitizeCss(style, { blockRemote, onRemoteBlocked: markRemoteBlocked }));
+                el.setAttribute('style', sanitizeCss(style, cssOptions));
             }
         }
     });
