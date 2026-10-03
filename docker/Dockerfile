@@ -1,4 +1,4 @@
-FROM oven/bun:latest-slim
+FROM oven/bun:slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates openssl \
     && rm -rf /var/lib/apt/lists/*
@@ -16,4 +16,4 @@ ENV NITRO_PORT=14128
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
 	CMD curl -f http://localhost:14128 || exit 1
 
-CMD [ "bun", "run", "/opt/leicraftmc/auth/laviac/app/.output/server/index.mjs" ]
+CMD [ "bun", "run", "/opt/delivr/web/app/.output/server/index.mjs" ]

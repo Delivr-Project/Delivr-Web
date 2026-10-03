@@ -1,21 +1,14 @@
-# Delivr web client only. Point it at a running Delivr API:
-#
-#   DELIVR_API_URL=https://api.example.com/v1 docker compose up -d
-#
-# This pulls the prebuilt image from ghcr.io. Add --build to build it from this checkout instead.
-#
-# For the full stack (API + web) use docker-compose.yml in the Delivr-API repository.
 
 services:
-  web:
+
+  delivr-web:
     image: ghcr.io/delivr-project/delivr-web:latest
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    container_name: delivr-web
     restart: unless-stopped
-    environment:
-      NUXT_PUBLIC_API_URL: ${DELIVR_API_URL:-http://localhost:14123/v1}
-      NUXT_PUBLIC_APP_URL: ${DELIVR_APP_URL:-http://localhost:14128}
-      NUXT_PUBLIC_IS_SIGNUP_ENABLED: ${DELIVR_ENABLE_SIGNUP:-false}
     ports:
-      - "${DELIVR_WEB_PORT:-14128}:14128"
+      - "14128:14128"
+    environment:
+      DELIVR_API_URL: https://api.delivr.example.com/v1
+      DELIVR_APP_URL: https://delivr.example.com
+
+      DELIVR_ENABLE_SIGNUP: false
