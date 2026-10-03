@@ -600,6 +600,9 @@ export type GetAccountPreferencesResponses = {
             'folder-dnd': {
                 enabled?: boolean;
             };
+            'split-view-hover-actions': {
+                enabled?: boolean;
+            };
             onboarding: {
                 completed?: boolean;
             };
@@ -854,6 +857,65 @@ export type PutAccountPreferencesFolderDndResponses = {
 };
 
 export type PutAccountPreferencesFolderDndResponse = PutAccountPreferencesFolderDndResponses[keyof PutAccountPreferencesFolderDndResponses];
+
+export type GetAccountPreferencesSplitViewHoverActionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/account/preferences/split-view-hover-actions';
+};
+
+export type GetAccountPreferencesSplitViewHoverActionsResponses = {
+    /**
+     * Split-view hover actions preference retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Split-view hover actions preference retrieved successfully';
+        data: {
+            enabled?: boolean;
+        };
+    };
+};
+
+export type GetAccountPreferencesSplitViewHoverActionsResponse = GetAccountPreferencesSplitViewHoverActionsResponses[keyof GetAccountPreferencesSplitViewHoverActionsResponses];
+
+export type PutAccountPreferencesSplitViewHoverActionsData = {
+    body: {
+        enabled?: boolean;
+    };
+    path?: never;
+    query?: never;
+    url: '/account/preferences/split-view-hover-actions';
+};
+
+export type PutAccountPreferencesSplitViewHoverActionsErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+};
+
+export type PutAccountPreferencesSplitViewHoverActionsError = PutAccountPreferencesSplitViewHoverActionsErrors[keyof PutAccountPreferencesSplitViewHoverActionsErrors];
+
+export type PutAccountPreferencesSplitViewHoverActionsResponses = {
+    /**
+     * Split-view hover actions preference updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Split-view hover actions preference updated successfully';
+        data: null;
+    };
+};
+
+export type PutAccountPreferencesSplitViewHoverActionsResponse = PutAccountPreferencesSplitViewHoverActionsResponses[keyof PutAccountPreferencesSplitViewHoverActionsResponses];
 
 export type GetAccountPreferencesOnboardingData = {
     body?: never;
@@ -3611,20 +3673,20 @@ export type DeleteAdminUsersByUserIdData = {
 
 export type DeleteAdminUsersByUserIdErrors = {
     /**
-     * Cannot delete user while packages are assigned
-     */
-    400: {
-        success: false;
-        code: 400;
-        message: 'Cannot delete user while packages are assigned';
-    };
-    /**
      * User not found
      */
     404: {
         success: false;
         code: 404;
         message: 'User not found';
+    };
+    /**
+     * Failed to delete user
+     */
+    500: {
+        success: false;
+        code: 500;
+        message: 'Failed to delete user';
     };
 };
 

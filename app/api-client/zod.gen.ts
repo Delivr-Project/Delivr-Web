@@ -230,6 +230,9 @@ export const zGetAccountPreferencesResponse = z.object({
         'folder-dnd': z.object({
             enabled: z.boolean().optional().default(false)
         }),
+        'split-view-hover-actions': z.object({
+            enabled: z.boolean().optional().default(false)
+        }),
         onboarding: z.object({
             completed: z.boolean().optional().default(false)
         })
@@ -339,6 +342,32 @@ export const zPutAccountPreferencesFolderDndResponse = z.object({
     success: z.literal(true),
     code: z.literal(200),
     message: z.literal('Folder drag-and-drop preference updated successfully'),
+    data: z.null()
+});
+
+/**
+ * Split-view hover actions preference retrieved successfully
+ */
+export const zGetAccountPreferencesSplitViewHoverActionsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Split-view hover actions preference retrieved successfully'),
+    data: z.object({
+        enabled: z.boolean().optional().default(false)
+    })
+});
+
+export const zPutAccountPreferencesSplitViewHoverActionsBody = z.object({
+    enabled: z.boolean().optional().default(false)
+});
+
+/**
+ * Split-view hover actions preference updated successfully
+ */
+export const zPutAccountPreferencesSplitViewHoverActionsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Split-view hover actions preference updated successfully'),
     data: z.null()
 });
 
