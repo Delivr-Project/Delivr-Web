@@ -68,6 +68,34 @@ Open **http://localhost:14128** and sign in.
 
 > 💡 **Regenerating the API client:** the frontend talks to the backend through a generated client. Keep the API running and up to date, then run `bun run api-client:generate`. Never hand-edit the `*.gen.ts` files.
 
+## 🐳 Docker
+
+Want to run the whole thing, API included? The [Delivr API](https://github.com/Delivr-Project/Delivr-API) repository has a `docker-compose.yml` that starts both with one command. That's usually the easiest way.
+
+If you already have an API running somewhere and just need the web client, grab the ready-made image:
+
+```bash
+docker run -d -p 14128:14128 \
+  -e NUXT_PUBLIC_API_URL=https://api.example.com/v1 \
+  -e NUXT_PUBLIC_APP_URL=https://mail.example.com \
+  ghcr.io/delivr-project/delivr-web:latest
+```
+
+Or with Compose: `DELIVR_API_URL=https://api.example.com/v1 docker compose up -d`. To update, run `docker compose pull && docker compose up -d`.
+
+Want to build it yourself instead? `docker build -f docker/Dockerfile -t delivr-web .` (or add `--build` to the Compose command).
+
+You configure the image when you start it, so one build works for any setup:
+
+| Variable | What it does | Default |
+|----------|--------------|---------|
+| `NUXT_PUBLIC_API_URL` | Where the API lives, including `/v1` | `http://localhost:14123/v1` |
+| `NUXT_PUBLIC_APP_URL` | The address of this web client | `http://localhost:14128` |
+| `NUXT_PUBLIC_IS_SIGNUP_ENABLED` | Set to `true` to show the sign-up link on the login page | `false` |
+| `PORT` | Port inside the container | `14128` |
+
+Keep in mind that the API URL is used by your *browser*, not by the container, so it has to be an address you can open yourself. On the API side, `DLA_APP_URL` must point to this web client, or the browser will block the requests (CORS).
+
 ## ⚙️ Configuration
 
 Environment-based configuration (see [`example.env`](./example.env)):
