@@ -2,6 +2,9 @@
 import * as z from "zod";
 import type { FormSubmitEvent, AuthFormField } from "@nuxt/ui";
 import { useUserInfoStore } from "~/composables/stores/useUserStore";
+import { usePreferencesStore } from "~/composables/stores/usePreferencesStore";
+import { useMailAccountsStore } from "~/composables/stores/useMailAccountsStore";
+import { useSelectedMailAccountStore } from "~/composables/stores/useSelectedMailAccountStore";
 
 const isSignupEnabled = useRuntimeConfig().public.isSignupEnabled;
 
@@ -80,6 +83,14 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 
         sessionToken.value = result.data.token;
 
+        // Another user may have been logged in on this tab (logout, an expired
+        // token and account deletion all end up here without a reload), so drop
+        // what their session loaded and let the stores fetch this user's data.
+        await Promise.all([
+            usePreferencesStore().clear(),
+            useMailAccountsStore().clear(),
+        ]);
+        useSelectedMailAccountStore().set(null);
         await useUserInfoStore().refresh();
 
         toast.add({

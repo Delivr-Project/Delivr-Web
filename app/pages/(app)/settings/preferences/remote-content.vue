@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRemoteContentPolicyStore, type RemoteContentDecision, type RemoteContentPolicyData } from '~/composables/stores/useRemoteContentPolicyStore';
+import { usePreferencesStore, type RemoteContentDecision, type RemoteContentPolicyData } from '~/composables/stores/usePreferencesStore';
 
 useSeoMeta({
 	title: 'Remote Content | Delivr',
@@ -8,7 +8,7 @@ useSeoMeta({
 
 const toast = useToast()
 
-const store = useRemoteContentPolicyStore();
+const store = usePreferencesStore();
 await store.use();
 
 interface Rule {
@@ -22,7 +22,7 @@ const domains = ref<Rule[]>([]);
 
 // Build the local lists from the persisted policy.
 function snapshotFromStore(): { addresses: Rule[]; domains: Rule[] } {
-	const data = store.current.value;
+	const data = store.remoteContentPolicy.value;
 	return {
 		addresses: Object.entries(data?.addresses ?? {}).map(([value, decision]) => ({ value, decision })),
 		domains: Object.entries(data?.domains ?? {}).map(([value, decision]) => ({ value, decision })),
@@ -105,7 +105,7 @@ const saving = ref(false);
 async function onSave() {
 	saving.value = true;
 	try {
-		await store.replace({
+		await store.replaceRemoteContentPolicy({
 			addresses: toMap(addresses.value),
 			domains: toMap(domains.value),
 		} satisfies RemoteContentPolicyData);
@@ -118,7 +118,7 @@ async function onSave() {
 	} catch (error) {
 		toast.add({
 			title: 'Error',
-			description: 'An unexpected error occurred while saving your rules.',
+			description: (error as Error).message || 'An unexpected error occurred while saving your rules.',
 			icon: 'i-lucide-alert-circle',
 			color: 'error',
 		});

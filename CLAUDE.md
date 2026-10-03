@@ -51,15 +51,15 @@ app/
 │       │   └── MailRecipientInput.vue      # To/Cc/Bcc tag input with address validation
 │       ├── MailDetailContent.vue
 │       ├── MailIdentitiesManager.vue  # Sender-identity CRUD panel (list, add, edit, signature, default, delete)
-│       ├── MailFolderView.vue  # Folder list + split/list view modes, pagination, bulk actions, drag & drop
+│       ├── MailFolderView.vue  # Folder list + split/list view modes, pagination, bulk actions, drag & drop,
+│       │                       #   Shift/Ctrl-click and keyboard selection
 │       ├── MailListItem.vue
 │       ├── MailList.vue
 │       └── MailToolbar.vue     # Shared toolbar (bulk/read/delete/refresh + reading-pane actions)
 ├── composables/
 │   ├── stores/               # State stores
-│   │   ├── useAutoMarkSeenStore.ts
 │   │   ├── useMailAccountsStore.ts
-│   │   ├── useRemoteContentPolicyStore.ts
+│   │   ├── usePreferencesStore.ts  # All per-user preferences (remote content, mark-as-read, folders, onboarding)
 │   │   ├── useSelectedMailAccountStore.ts
 │   │   └── useUserStore.ts
 │   ├── useAPI.ts
@@ -99,7 +99,8 @@ app/
 │   ├── mail/                 # NOT auto-imported (nested) — import explicitly
 │   │   ├── mailAddress.ts    # `MailAddressUtils`: parse/format/validate/dedupe addresses
 │   │   ├── mailIdentity.ts   # `MailIdentityUtils`: sender list, duplicates, min-one rule
-│   │   └── mailCompose.ts    # `MailComposeUtils`: reply/forward builders, HTML ⇄ text conversions
+│   │   ├── mailCompose.ts    # `MailComposeUtils`: reply/forward builders, HTML ⇄ text conversions
+│   │   └── mailSelection.ts  # `MailSelectionUtils`: list selection rules (range, toggle, cursor move)
 │   ├── mailboxDisplay.ts
 │   ├── routeMatcher.ts
 │   └── types.ts
@@ -148,6 +149,7 @@ server/                        # Nitro server routes (run on the SSR server)
 - **Layouts**: `auth.vue` for unauthenticated routes, `default.vue` for the main dashboard.
 - **Middleware**: Global middleware in `app/middleware/`. Auth middleware handles session validation. Rewrites middleware handles URL transformations.
 - **State Management**: Simple composable stores (not Pinia) in `app/composables/stores/`. The `abstractStore.ts` utility provides a base class pattern.
+- **Preferences** (`usePreferencesStore`): every per-user preference is loaded in one `GET /account/preferences` (pre-warmed by `auth.global.ts`), and each is saved through its own `PUT /account/preferences/<key>` — only the ones that changed. Writes **throw** instead of falling back to the defaults when the preferences couldn't be loaded (merging a remote-content rule into an empty policy would wipe the user's rules), and throw after rolling back a value whose write failed, so callers must catch and toast. `login.vue` clears it (and the mail-account stores) because a previous user's session may still be in memory. Unit-tested in `tests/preferencesStore.test.ts`.
 - **Styling**: Nuxt UI components with custom CSS in `app/assets/css/main.css`.
 - **PWA**: Configured via `@vite-pwa/nuxt` in `nuxt.config.ts`.
 - **Icons**: Use Lucide icons via the `i-lucide-*` format (e.g., `i-lucide-mail`).

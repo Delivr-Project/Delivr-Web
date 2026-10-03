@@ -1,9 +1,6 @@
 <script lang="ts" setup>
-import { useOnboardingStore } from '~/composables/stores/useOnboardingStore';
 import { useUserInfoStore } from '~/composables/stores/useUserStore';
-import { useAutoMarkSeenStore } from '~/composables/stores/useAutoMarkSeenStore';
-import { useFolderNestingStore } from '~/composables/stores/useFolderNestingStore';
-import { useFolderDragDropStore } from '~/composables/stores/useFolderDragDropStore';
+import { usePreferencesStore } from '~/composables/stores/usePreferencesStore';
 
 definePageMeta({
     layout: 'onboarding',
@@ -16,22 +13,16 @@ useSeoMeta({
 
 const toast = useToast();
 
-const onboardingStore = useOnboardingStore();
 const userInfoStore = useUserInfoStore();
-const autoMarkSeenStore = useAutoMarkSeenStore();
-const folderNestingStore = useFolderNestingStore();
-const folderDragDropStore = useFolderDragDropStore();
+const preferencesStore = usePreferencesStore();
 
 const [user] = await Promise.all([
     userInfoStore.use(),
-    onboardingStore.refreshIfNeeded(),
-    autoMarkSeenStore.use(),
-    folderNestingStore.use(),
-    folderDragDropStore.use(),
+    preferencesStore.use(),
 ]);
 
 // Already onboarded (e.g. opened /welcome directly) → nothing to do here.
-if (onboardingStore.completed.value) {
+if (preferencesStore.onboardingCompleted.value) {
     await navigateTo('/');
 }
 
@@ -39,34 +30,22 @@ const firstName = computed(() => user.value?.display_name?.trim().split(/\s+/)[0
 
 // Staged, local copy — persisted only when the user finishes.
 const prefs = reactive({
-    autoMarkSeen: autoMarkSeenStore.enabled.value,
-    nestUnderInbox: folderNestingStore.nestUnderInbox.value,
-    folderDragDrop: folderDragDropStore.enabled.value,
+    autoMarkSeen: preferencesStore.autoMarkSeen.value,
+    nestUnderInbox: preferencesStore.nestUnderInbox.value,
+    folderDragDrop: preferencesStore.folderDragDrop.value,
 });
 
 const finishing = ref(false);
 
-async function savePreferences() {
-    await Promise.all([
-        prefs.autoMarkSeen !== autoMarkSeenStore.enabled.value
-            ? autoMarkSeenStore.update({ enabled: prefs.autoMarkSeen })
-            : Promise.resolve(),
-        prefs.nestUnderInbox !== folderNestingStore.nestUnderInbox.value
-            ? folderNestingStore.update({ nestUnderInbox: prefs.nestUnderInbox })
-            : Promise.resolve(),
-        prefs.folderDragDrop !== folderDragDropStore.enabled.value
-            ? folderDragDropStore.update({ enabled: prefs.folderDragDrop })
-            : Promise.resolve(),
-    ]);
-}
-
 // Mark onboarding done so the first-login redirect stops firing, then leave the
 // welcome flow. `/` routes to the inbox, or to add a first mail account.
+// The preferences are saved first (the store only writes the ones that changed),
+// so a failed save keeps the welcome flow open to retry.
 async function complete(savePrefs: boolean) {
     finishing.value = true;
     try {
-        if (savePrefs) await savePreferences();
-        await onboardingStore.update({ completed: true });
+        if (savePrefs) await preferencesStore.update({ ...prefs });
+        await preferencesStore.update({ onboardingCompleted: true });
         await navigateTo('/');
     } catch (error: any) {
         toast.add({
