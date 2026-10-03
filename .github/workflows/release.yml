@@ -1,0 +1,114 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version Format: x.y.z-[alpha|beta|pre].n'
+        required: true
+        type: string
+      release_name:
+        description: 'Release title'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes or changelog'
+        required: true
+        type: string
+      prerelease:
+        description: 'Is this a pre-release?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|pre)\.[0-9]+)?$ ]]; then
+            echo "::error::Invalid version '$VERSION'. Expected x.y.z or x.y.z-[alpha|beta|pre].n"
+            exit 1
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run type checking
+        run: bun run typecheck
+
+      - name: Run tests
+        run: bun test
+
+      - name: Build app
+        run: bun run build
+
+      # The Nitro output is self-contained (server deps are bundled), so the
+      # archive runs with `bun delivr-web-v<version>/server/index.mjs`.
+      - name: Package build output
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          mkdir -p build/release
+          cp -r .output "build/delivr-web-v${VERSION}"
+          tar -czf "build/release/delivr-web-v${VERSION}.tar.gz" -C build "delivr-web-v${VERSION}"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-files
+          path: build/release/*
+          if-no-files-found: error
+          retention-days: 1  # Set to 1 day for temporary storage
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-files
+          path: ./release-files
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{ inputs.version }}
+          commit: ${{ github.sha }}
+          name: ${{ inputs.release_name }}
+          body: ${{ inputs.release_notes }}
+          prerelease: ${{ inputs.prerelease }}
+          artifacts: ./release-files/*
+          artifactErrorsFailBuild: true
+
+  docker:
+    needs: release
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      version: ${{ inputs.version }}
+      pre_release: ${{ inputs.prerelease && 'true' || 'false' }}
