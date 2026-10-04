@@ -24,7 +24,35 @@ export default defineNuxtConfig({
 				target: process.env.DEV_PROXY_TARGET || "https://api.delivr.is-on.net",
 				changeOrigin: true
 			}
-		} : {}
+		} : {},
+
+		rollupConfig: {
+			output: {
+				banner: (function () {
+					
+					const mappings = {
+						DELIVR_API_URL: "API_URL",
+						DELIVR_APP_URL: "APP_URL",
+						DELIVR_ENABLE_SIGNUP: "IS_SIGNUP_ENABLED"
+					};
+
+					const bannerCode = `
+						(function () {
+							const mappings = ${JSON.stringify(mappings)};
+							const env = globalThis.process?.env ?? {};
+							for (const [envName, runtimeName] of Object.entries(mappings)) {
+								if (!env['NUXT_PUBLIC_' + runtimeName] && env[envName]) {
+									env['NUXT_PUBLIC_' + runtimeName] = env[envName];
+								}
+							}
+						})();
+					`;
+
+					return bannerCode.replace(/^\s+|\s+$/g, '').replace(/\n\s*/g, ' ');
+				})()
+			}
+		},
+
 	},
 
 	runtimeConfig: {
