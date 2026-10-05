@@ -19,6 +19,10 @@ inputs:
   labels:
     description: "Docker Image Labels"
     required: true
+  platforms:
+    description: "Target platforms for Docker build"
+    required: false
+    default: "linux/amd64,linux/arm64"
   version:
     description: 'Release version Format: x.y.z-[alpha|beta|pre].n'
     required: true
@@ -54,6 +58,7 @@ runs:
         context: .
         file: ./docker/${{ inputs.dockerfile }}
         push: ${{ github.event_name != 'pull_request' }}
+        platforms: ${{ inputs.platforms }}
         tags: ${{ steps.set-tags.outputs.tags }}
         labels: ${{ inputs.labels }}
         cache-from: type=gha
