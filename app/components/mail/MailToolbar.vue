@@ -21,6 +21,10 @@ withDefaults(defineProps<{
     isApplyingFlags: boolean;
     isDeleting: boolean;
     isRefreshing: boolean;
+    canEmptyFolder?: boolean;
+    isEmptyingFolder?: boolean;
+    /** True in Trash, where emptying deletes for good. */
+    emptiesPermanently?: boolean;
     /** Show reply/forward/print — a single mail is open in split view. */
     showMailActions: boolean;
     /** A draft is continued in the composer, so it offers no reply/forward. */
@@ -44,6 +48,7 @@ defineEmits<{
     print: [];
     toggleView: [];
     refresh: [];
+    emptyFolder: [];
 }>();
 </script>
 
@@ -51,8 +56,11 @@ defineEmits<{
     <div class="flex items-center gap-2 px-4 py-2 border-b border-default shrink-0">
         <div v-if="showCount" class="text-sm text-muted shrink-0">
             <span class="font-medium text-default">{{ count }}</span>
-            <span class="mx-1">·</span>
-            <span>{{ unreadCount }} unread</span>
+            <!-- Hidden on phones to make room; the sidebar shows it anyway -->
+            <span class="hidden sm:inline">
+                <span class="mx-1">·</span>
+                <span>{{ unreadCount }} unread</span>
+            </span>
         </div>
 
         <div v-if="backLink" class="flex items-center gap-0.5 shrink-0">
@@ -125,6 +133,26 @@ defineEmits<{
         </div>
 
         <div class="w-px h-5 bg-default shrink-0" />
+
+        <!-- Deletes the whole folder, not just this page -->
+        <UTooltip
+            v-if="!backLink"
+            :text="emptiesPermanently ? 'Permanently delete every email in this folder' : 'Move every email in this folder to Trash'"
+        >
+            <UButton
+                icon="i-lucide-trash"
+                aria-label="Empty Folder"
+                color="error"
+                variant="ghost"
+                size="sm"
+                :disabled="!canEmptyFolder"
+                :loading="isEmptyingFolder"
+                @click="$emit('emptyFolder')"
+            >
+                <span class="sm:hidden">Empty</span>
+                <span class="hidden sm:inline">Empty Folder</span>
+            </UButton>
+        </UTooltip>
 
         <!-- View mode toggle (desktop only; mobile is always single-list) -->
         <UTooltip v-if="!isMobile" :text="viewMode === 'split' ? 'Switch to list view' : 'Switch to split view'">
