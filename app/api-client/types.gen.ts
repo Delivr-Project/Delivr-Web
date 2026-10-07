@@ -2563,6 +2563,65 @@ export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActions
 
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteResponses];
 
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllData = {
+    body: {
+        /**
+         * If true, permanently delete every mail. Otherwise, move them to Trash. Mails in the Trash folder itself are always deleted permanently.
+         */
+        permanent?: boolean;
+    };
+    path: {
+        mailAccountID: number;
+        /**
+         * URI-encoded mailbox path
+         */
+        mailboxPath: string;
+    };
+    query?: never;
+    url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mail-bulk-actions/delete-all';
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Mailbox with specified path not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Mailbox with specified path not found';
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllError = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllErrors[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllErrors];
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllResponses = {
+    /**
+     * All mails deleted successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'All mails deleted successfully';
+        data: {
+            success: boolean;
+            /**
+             * Number of mails in the mailbox when it was emptied
+             */
+            deletedCount: number;
+        };
+    };
+};
+
+export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllResponse = PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllResponses[keyof PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllResponses];
+
 export type PostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsData = {
     body: {
         /**
