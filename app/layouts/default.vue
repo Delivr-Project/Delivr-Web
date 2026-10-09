@@ -76,6 +76,13 @@ function resolveDropTarget(e: DragEvent): { anchor: HTMLElement; mailbox: Mailbo
 // folder A onto folder B renames A's IMAP path to live directly under B.
 
 const draggedFolder = ref<Mailbox | null>(null);
+// Extra drop space while dragging a folder. Delayed a tick, because changing
+// the layout inside dragstart can cancel the drag.
+const showFolderDropSpace = ref(false);
+watch(draggedFolder, (folder) => {
+    if (folder) setTimeout(() => { showFolderDropSpace.value = !!draggedFolder.value; });
+    else showFolderDropSpace.value = false;
+});
 
 function onFolderDragStart(e: DragEvent) {
     // Folder drag-and-drop is opt-in; when off, folders aren't drag sources.
@@ -466,7 +473,7 @@ const displaySidebars = computed(() => {
 
                 <div
                     v-if="displaySidebars.mailSidebar"
-                    class="flex flex-col flex-1 min-h-0 main-bg-color"
+                    class="flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden main-bg-color"
                 >
                     <UNavigationMenu
                         :collapsed="collapsed"
@@ -510,6 +517,7 @@ const displaySidebars = computed(() => {
                          the clear space), so the zone grows to give a drop area. -->
                     <div
                         class="flex-1"
+                        :class="{ 'pb-16': showFolderDropSpace }"
                         @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"

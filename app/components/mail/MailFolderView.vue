@@ -75,8 +75,13 @@ const folderIcon = computed(() => {
 });
 
 // Deleting from the Trash folder is permanent (there's nowhere further to move to);
-// deleting from anywhere else soft-deletes by moving to Trash.
+// deleting from anywhere else soft-deletes by moving to Trash. Same rule as the
+// server: the mapped Trash wins, otherwise we go by name. The mapping is declared
+// here (before isTrashFolder) and fetched further down in the Archive section.
+const specialUseMapping = ref<GetMailAccountsByMailAccountIdSpecialUseResponse['data'] | null>(null);
 const isTrashFolder = computed(() => {
+    const trashPath = specialUseMapping.value?.trash?.path;
+    if (trashPath) return trashPath.toLowerCase() === systemFolderPath.value.toLowerCase();
     const special = currentMailbox.value?.specialUse?.replace(/^\\/, '').toLowerCase();
     const lower = (special ?? folderTitle.value).toLowerCase();
     return lower === 'trash' || lower === 'deleted' || lower === 'deleted messages' || lower === 'deleted items';
@@ -113,6 +118,10 @@ function formatRelativeDate(timestamp: number): string {
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays}d`;
     return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
+}
+
+function emailCount(n: number): string {
+    return `${n} email${n === 1 ? '' : 's'}`;
 }
 
 function isUnread(mail: MailListItem): boolean {
@@ -312,7 +321,7 @@ const readToggleIcon = computed(() => targetsAllRead.value ? 'i-lucide-mail' : '
 
 // Core: set the seen flag for a set of mails (optimistic list + sidebar badge).
 async function applySeen(uids: number[], seen: boolean) {
-    if (uids.length === 0 || isApplyingBulkFlags.value) return;
+    if (uids.length === 0 || isApplyingBulkFlags.value || blockedByEmptying()) return;
 
     isApplyingBulkFlags.value = true;
     try {
@@ -400,7 +409,7 @@ function dropFromSelection(uids: number[]) {
 
 async function deleteSelected(permanent: boolean) {
     const uids = deleteTargetUids.value;
-    if (uids.length === 0 || isDeleting.value) return;
+    if (uids.length === 0 || isDeleting.value || blockedByEmptying()) return;
 
     isDeleting.value = true;
     try {
@@ -439,7 +448,7 @@ async function deleteSelected(permanent: boolean) {
 
         toast.add({
             title: permanent ? 'Emails deleted' : 'Moved to Trash',
-            description: `${uids.length} email${uids.length === 1 ? '' : 's'} ${permanent ? 'permanently deleted' : 'moved to Trash'}.`,
+            description: `${emailCount(uids.length)} ${permanent ? 'permanently deleted' : 'moved to Trash'}.`,
             color: 'success'
         });
 
@@ -452,6 +461,109 @@ async function deleteSelected(permanent: boolean) {
         }
     } finally {
         isDeleting.value = false;
+    }
+}
+
+// ── Empty folder ──
+
+// Kept app-wide, because the folder view remounts on every route change
+// (even opening a mail) while an empty may still be running.
+const emptyingFolders = useState<Record<string, boolean>>('emptyingFolders', () => ({}));
+const emptiedFolders = useState<Record<string, number>>('emptiedFolders', () => ({}));
+const emptyingKey = computed(() => `${accountId}:${systemFolderPath.value}`);
+const isEmptyingFolder = computed(() => !!emptyingFolders.value[emptyingKey.value]);
+const confirmEmptyFolderOpen = ref(false);
+
+function blockedByEmptying(): boolean {
+    if (!isEmptyingFolder.value) return false;
+    toast.add({ title: 'Folder is being emptied', description: 'Try again once it is done.', color: 'warning' });
+    return true;
+}
+
+const canEmptyFolder = computed(() =>
+    mailList.value.length > 0
+    && !mails.loading.value
+    && !isDeleting.value
+    && !isApplyingBulkFlags.value
+    && !isEmptyingFolder.value
+);
+
+const emptyFolderWarningText = computed(() => isTrashFolder.value
+    ? `This will permanently delete all emails in ${folderTitle.value}, including those on other pages. This action cannot be undone.`
+    : `This will move all emails in ${folderTitle.value} to Trash, including those on other pages.`
+);
+
+function requestEmptyFolder() {
+    if (canEmptyFolder.value) confirmEmptyFolderOpen.value = true;
+}
+
+// After a successful empty, whichever view is showing the folder reloads it.
+// Only a new timestamp for the *same* folder counts; switching folders also
+// changes the watched value, but that is handled by the folder watcher.
+watch(() => [emptyingKey.value, emptiedFolders.value[emptyingKey.value]] as const, async ([key, ts], [prevKey]) => {
+    if (key !== prevKey || ts === undefined) return;
+    clearSelection();
+    if (currentPage.value > 1) {
+        currentPage.value = 1;
+        if (activeMailUid.value !== null) closeActiveMail();
+        return;
+    }
+    await mails.refresh();
+    if (activeMailUid.value !== null && !mailList.value.some(m => m.uid === activeMailUid.value)) {
+        closeActiveMail();
+    }
+});
+
+async function emptyFolder() {
+    if (isEmptyingFolder.value) return;
+
+    const key = emptyingKey.value;
+    const mb = currentMailbox.value;
+    const permanent = isTrashFolder.value;
+
+    emptyingFolders.value = { ...emptyingFolders.value, [key]: true };
+    try {
+        const response = await useAPI(api =>
+            api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAll({
+                path: {
+                    mailAccountID: accountId,
+                    mailboxPath: systemFolderPath.value,
+                },
+                body: { permanent },
+            })
+        );
+
+        if (!response.success) {
+            toast.add({
+                title: 'Failed to empty folder',
+                description: response.message || 'An unknown error occurred.',
+                color: 'error'
+            });
+            return;
+        }
+
+        const n = response.data.deletedCount;
+
+        if (mb) {
+            const trash = specialMailbox('trash');
+            if (!permanent && trash && trash !== mb) {
+                trash.status.messages = (trash.status.messages ?? 0) + n;
+                adjustMailboxUnseen(trash, mb.status.unseen ?? 0);
+            }
+            mb.status.unseen = 0;
+            mb.status.messages = 0;
+        }
+        confirmEmptyFolderOpen.value = false;
+        emptiedFolders.value = { ...emptiedFolders.value, [key]: Date.now() };
+
+        toast.add({
+            title: permanent ? 'Folder emptied' : 'Moved to Trash',
+            description: `${emailCount(n)} ${permanent ? 'permanently deleted' : 'moved to Trash'}.`,
+            color: 'success'
+        });
+    } finally {
+        const { [key]: _done, ...rest } = emptyingFolders.value;
+        emptyingFolders.value = rest;
     }
 }
 
@@ -476,7 +588,7 @@ function onRowDragStart(uid: number, e: DragEvent) {
 // Perform the move once the sidebar reports which folder was dropped on.
 // Mirrors deleteSelected: optimistic row removal, toast, page/refresh fix-up.
 async function moveToMailbox(target: Mailbox, uids: number[]) {
-    if (uids.length === 0) return;
+    if (uids.length === 0 || blockedByEmptying()) return;
 
     const response = await useAPI(api =>
         api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsMove({
@@ -546,18 +658,22 @@ defineShortcuts({
 // Archive folder — it reflects the user's assignment (and auto-detection),
 // whereas a mailbox's own `specialUse` flag may not be set for a user-picked
 // Archive folder.
-const specialUseMapping = ref<GetMailAccountsByMailAccountIdSpecialUseResponse['data'] | null>(null);
+// (`specialUseMapping` is declared near the top, because isTrashFolder reads it.)
 const specialUseRes = await useAPI(api =>
     api.getMailAccountsByMailAccountIdSpecialUse({ path: { mailAccountID: accountId } })
 );
 if (specialUseRes.success) specialUseMapping.value = specialUseRes.data;
 
-// The account's Archive folder, resolved from the backend mapping.
-const archiveMailbox = computed(() => {
-    const archivePath = specialUseMapping.value?.archive?.path;
-    if (!archivePath) return undefined;
-    return mailboxes.value.find(mb => mb.path === archivePath);
-});
+// The mapped Archive/Trash folder. Without a mapping the server uses "Trash".
+// Exact match first, since "Trash" and "trash" can both exist.
+function specialMailbox(kind: 'archive' | 'trash'): Mailbox | undefined {
+    const path = specialUseMapping.value?.[kind]?.path ?? (kind === 'trash' ? 'Trash' : undefined);
+    if (!path) return undefined;
+    return mailboxes.value.find(mb => mb.path === path)
+        ?? mailboxes.value.find(mb => mb.path.toLowerCase() === path.toLowerCase());
+}
+
+const archiveMailbox = computed(() => specialMailbox('archive'));
 // Can't archive when there's no Archive folder or we're already in it.
 const canArchive = computed(() =>
     !!archiveMailbox.value && archiveMailbox.value.path !== systemFolderPath.value
@@ -969,7 +1085,11 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                     @forward="detailRef?.forward()"
                     @print="detailRef?.print()"
                     @toggle-view="toggleViewMode"
+                    :can-empty-folder="canEmptyFolder"
+                    :empties-permanently="isTrashFolder"
+                    :is-emptying-folder="isEmptyingFolder"
                     @refresh="handleRefresh"
+                    @empty-folder="requestEmptyFolder"
                 />
 
                 <!-- ══ LIST MODE with an open mail: full-panel detail (uses the
@@ -1366,6 +1486,15 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                     title="Delete permanently"
                     :warning-text="deleteWarningText"
                     :on-delete="() => deleteSelected(true)"
+                />
+
+                <DashboardDeleteModal
+                    v-model:open="confirmEmptyFolderOpen"
+                    :title="isTrashFolder ? 'Empty Trash' : 'Empty Folder'"
+                    :description="isTrashFolder ? undefined : 'Emails are moved to Trash'"
+                    prevent-auto-close
+                    :warning-text="emptyFolderWarningText"
+                    :on-delete="emptyFolder"
                 />
             </div>
         </template>

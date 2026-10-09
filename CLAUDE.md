@@ -55,7 +55,7 @@ app/
 │       │                       #   Shift/Ctrl-click and keyboard selection
 │       ├── MailListItem.vue
 │       ├── MailList.vue
-│       └── MailToolbar.vue     # Shared toolbar (bulk/read/delete/refresh + reading-pane actions)
+│       └── MailToolbar.vue     # Shared toolbar (bulk/read/delete/refresh, "Empty Folder" + reading-pane actions)
 ├── composables/
 │   ├── stores/               # State stores
 │   │   ├── useMailAccountsStore.ts
