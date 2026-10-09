@@ -76,7 +76,9 @@ const folderIcon = computed(() => {
 
 // Deleting from the Trash folder is permanent (there's nowhere further to move to);
 // deleting from anywhere else soft-deletes by moving to Trash. Same rule as the
-// server: the mapped Trash wins, otherwise we go by name.
+// server: the mapped Trash wins, otherwise we go by name. The mapping is declared
+// here (before isTrashFolder) and fetched further down in the Archive section.
+const specialUseMapping = ref<GetMailAccountsByMailAccountIdSpecialUseResponse['data'] | null>(null);
 const isTrashFolder = computed(() => {
     const trashPath = specialUseMapping.value?.trash?.path;
     if (trashPath) return trashPath.toLowerCase() === systemFolderPath.value.toLowerCase();
@@ -496,7 +498,10 @@ function requestEmptyFolder() {
 }
 
 // After a successful empty, whichever view is showing the folder reloads it.
-watch(() => emptiedFolders.value[emptyingKey.value], async () => {
+// Only a new timestamp for the *same* folder counts; switching folders also
+// changes the watched value, but that is handled by the folder watcher.
+watch(() => [emptyingKey.value, emptiedFolders.value[emptyingKey.value]] as const, async ([key, ts], [prevKey]) => {
+    if (key !== prevKey || ts === undefined) return;
     clearSelection();
     if (currentPage.value > 1) {
         currentPage.value = 1;
@@ -653,7 +658,7 @@ defineShortcuts({
 // Archive folder — it reflects the user's assignment (and auto-detection),
 // whereas a mailbox's own `specialUse` flag may not be set for a user-picked
 // Archive folder.
-const specialUseMapping = ref<GetMailAccountsByMailAccountIdSpecialUseResponse['data'] | null>(null);
+// (`specialUseMapping` is declared near the top, because isTrashFolder reads it.)
 const specialUseRes = await useAPI(api =>
     api.getMailAccountsByMailAccountIdSpecialUse({ path: { mailAccountID: accountId } })
 );
