@@ -544,9 +544,9 @@ async function emptyFolder() {
 
         const n = response.data.deletedCount;
 
+        const trash = permanent ? undefined : specialMailbox('trash');
         if (mb) {
-            const trash = specialMailbox('trash');
-            if (!permanent && trash && trash !== mb) {
+            if (trash && trash !== mb) {
                 trash.status.messages = (trash.status.messages ?? 0) + n;
                 adjustMailboxUnseen(trash, mb.status.unseen ?? 0);
             }
@@ -554,7 +554,14 @@ async function emptyFolder() {
             mb.status.messages = 0;
         }
         confirmEmptyFolderOpen.value = false;
-        emptiedFolders.value = { ...emptiedFolders.value, [key]: Date.now() };
+        // Also mark Trash as changed, so a view showing it reloads its list.
+        const now = Date.now();
+        const trashKey = trash ? `${accountId}:${trash.path}` : undefined;
+        emptiedFolders.value = {
+            ...emptiedFolders.value,
+            [key]: now,
+            ...(trashKey && trashKey !== key ? { [trashKey]: now } : {}),
+        };
 
         toast.add({
             title: permanent ? 'Folder emptied' : 'Moved to Trash',
