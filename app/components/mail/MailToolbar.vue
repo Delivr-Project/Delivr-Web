@@ -48,7 +48,7 @@ defineEmits<{
 </script>
 
 <template>
-    <div class="flex items-center gap-2 px-4 py-2 border-b border-default shrink-0">
+    <div class="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 border-b border-default shrink-0 min-w-0">
         <div v-if="showCount" class="text-sm text-muted shrink-0">
             <span class="font-medium text-default">{{ count }}</span>
             <span class="mx-1">·</span>
@@ -66,11 +66,13 @@ defineEmits<{
         </div>
 
 
-        <div class="flex-1" />
+        <div class="flex-1 min-w-0" />
 
         <!-- Selection actions: operate on the checked email(s) — one or many —
-             or the single email open in the reading pane. Disabled with no target. -->
-        <div class="flex items-center gap-0.5 shrink-0">
+             or the single email open in the reading pane. Disabled with no target.
+             May shrink and scroll sideways on very narrow screens rather than
+             pushing the refresh button off-screen. -->
+        <div class="flex items-center gap-0.5 min-w-0 overflow-x-auto [scrollbar-width:none]">
             <UTooltip :text="canArchive ? 'Archive' : 'No Archive folder'">
                 <UButton
                     icon="i-lucide-archive"
@@ -118,8 +120,9 @@ defineEmits<{
                         <UButton icon="i-lucide-forward" color="neutral" variant="ghost" size="sm" @click="$emit('forward')" />
                     </UTooltip>
                 </template>
+                <!-- Rarely useful on a phone; frees room for the rest of the toolbar. -->
                 <UTooltip text="Print">
-                    <UButton icon="i-lucide-printer" color="neutral" variant="ghost" size="sm" @click="$emit('print')" />
+                    <UButton icon="i-lucide-printer" color="neutral" variant="ghost" size="sm" class="hidden sm:inline-flex" @click="$emit('print')" />
                 </UTooltip>
             </template>
         </div>
