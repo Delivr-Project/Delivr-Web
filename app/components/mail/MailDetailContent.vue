@@ -4,6 +4,7 @@ import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
 import { usePreferencesStore, extractDomain } from '~/composables/stores/usePreferencesStore';
 import { Utils } from '~/utils';
 import Gravatar from '~/components/Gravatar.vue';
+import { useResizeObserver } from '@vueuse/core';
 import {
     useMailAttachments,
     fetchAttachmentObjectUrl,
@@ -237,6 +238,25 @@ watch(mailData, async (mail) => {
 });
 
 onUnmounted(revokeInlineImages);
+
+// Many HTML mails are laid out for a fixed width (e.g. 600px tables). Shrink
+// those to the iframe's width, like other mail clients do, instead of letting
+// the right edge run off-screen on narrow (mobile) viewports.
+const mailFrame = useTemplateRef<HTMLIFrameElement>('mailFrame');
+
+function fitMailToFrame() {
+    const doc = mailFrame.value?.contentDocument;
+    if (!doc?.body) return;
+    const root = doc.documentElement;
+    doc.body.style.zoom = '';
+    const available = root.clientWidth;
+    const needed = root.scrollWidth;
+    if (available > 0 && needed > available) {
+        doc.body.style.zoom = String(available / needed);
+    }
+}
+
+useResizeObserver(mailFrame, fitMailToFrame);
 
 const sanitized = computed(() => {
     if (!mailData.value?.body?.html) return { html: '', hasRemoteContent: false };
@@ -537,7 +557,7 @@ defineExpose({
 
                     <!-- Sender card -->
                     <div class="rounded-lg border border-default p-4">
-                        <div class="flex items-start gap-4">
+                        <div class="flex items-start gap-3 sm:gap-4">
                             <SenderAvatar
                                 :email="mailData.from?.address"
                                 :domain="senderDomain ?? undefined"
@@ -547,7 +567,7 @@ defineExpose({
                             />
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-0.5 flex-wrap">
-                                    <span class="font-semibold text-default">
+                                    <span class="font-semibold text-default min-w-0 wrap-anywhere">
                                         {{ mailData.from?.name || mailData.from?.address || 'Unknown' }}
                                     </span>
                                     <UBadge v-if="isUnread(mailData)" color="primary" size="xs">Unread</UBadge>
@@ -573,31 +593,35 @@ defineExpose({
                                     {{ showDetails ? 'Hide details' : 'Show details' }}
                                 </button>
 
-                                <div v-if="showDetails" class="mt-3 space-y-1.5 text-sm border-t border-default pt-3">
-                                    <div v-if="mailData.to.length > 0" class="flex gap-2">
-                                        <span class="text-dimmed shrink-0 w-14">To:</span>
-                                        <span class="text-muted break-all">{{ formatAddressList(mailData.to) }}</span>
+                                <!-- Labels stack above their values on narrow screens so the
+                                     value gets the full width instead of a sliver. -->
+                                <div v-if="showDetails" class="mt-3 space-y-2 sm:space-y-1.5 text-sm border-t border-default pt-3">
+                                    <div v-if="mailData.to.length > 0" class="flex flex-col sm:flex-row sm:gap-2">
+                                        <span class="text-dimmed shrink-0 sm:w-24">To:</span>
+                                        <span class="text-muted min-w-0 wrap-anywhere">{{ formatAddressList(mailData.to) }}</span>
                                     </div>
-                                    <div v-if="mailData.cc.length > 0" class="flex gap-2">
-                                        <span class="text-dimmed shrink-0 w-14">Cc:</span>
-                                        <span class="text-muted break-all">{{ formatAddressList(mailData.cc) }}</span>
+                                    <div v-if="mailData.cc.length > 0" class="flex flex-col sm:flex-row sm:gap-2">
+                                        <span class="text-dimmed shrink-0 sm:w-24">Cc:</span>
+                                        <span class="text-muted min-w-0 wrap-anywhere">{{ formatAddressList(mailData.cc) }}</span>
                                     </div>
-                                    <div v-if="mailData.bcc.length > 0" class="flex gap-2">
-                                        <span class="text-dimmed shrink-0 w-14">Bcc:</span>
-                                        <span class="text-muted break-all">{{ formatAddressList(mailData.bcc) }}</span>
+                                    <div v-if="mailData.bcc.length > 0" class="flex flex-col sm:flex-row sm:gap-2">
+                                        <span class="text-dimmed shrink-0 sm:w-24">Bcc:</span>
+                                        <span class="text-muted min-w-0 wrap-anywhere">{{ formatAddressList(mailData.bcc) }}</span>
                                     </div>
-                                    <div v-if="mailData.replyTo && mailData.replyTo.length > 0" class="flex gap-2">
-                                        <span class="text-dimmed shrink-0 w-14">Reply-To:</span>
-                                        <span class="text-muted break-all">{{ formatAddressList(mailData.replyTo) }}</span>
+                                    <div v-if="mailData.replyTo && mailData.replyTo.length > 0" class="flex flex-col sm:flex-row sm:gap-2">
+                                        <span class="text-dimmed shrink-0 sm:w-24">Reply-To:</span>
+                                        <span class="text-muted min-w-0 wrap-anywhere">{{ formatAddressList(mailData.replyTo) }}</span>
                                     </div>
-                                    <div v-if="mailData.messageId" class="flex gap-2">
-                                        <span class="text-dimmed shrink-0 w-14">Message-ID:</span>
-                                        <span class="text-muted font-mono text-xs break-all">{{ mailData.messageId }}</span>
+                                    <div v-if="mailData.messageId" class="flex flex-col sm:flex-row sm:gap-2">
+                                        <span class="text-dimmed shrink-0 sm:w-24">Message-ID:</span>
+                                        <span class="text-muted font-mono text-xs min-w-0 wrap-anywhere sm:pt-0.5">{{ mailData.messageId }}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-1 shrink-0">
+                            <!-- Hidden on narrow screens, where it would squeeze the sender
+                                 column; the toolbar and footer offer the same action there. -->
+                            <div class="hidden sm:flex items-center gap-1 shrink-0">
                                 <UButton
                                     v-if="isDraft"
                                     icon="i-lucide-file-pen-line"
@@ -660,10 +684,12 @@ defineExpose({
 
                             <ClientOnly>
                                 <iframe
+                                    ref="mailFrame"
                                     :srcdoc="sanitizedHtml"
                                     sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
                                     referrerpolicy="no-referrer"
                                     class="w-full border-0 block min-h-[60vh]"
+                                    @load="fitMailToFrame"
                                     style="background: transparent;"
                                 />
                                 <template #fallback>
@@ -735,7 +761,7 @@ defineExpose({
                     </div>
 
                     <!-- Footer actions -->
-                    <div class="flex items-center justify-between pt-2 border-t border-default">
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-default">
                         <div class="flex flex-wrap items-center gap-2">
                             <UButton v-if="isDraft" icon="i-lucide-file-pen-line" color="primary" variant="soft" size="sm" @click="handleEditDraft">
                                 Continue editing
