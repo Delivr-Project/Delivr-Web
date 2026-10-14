@@ -4,6 +4,7 @@ import { useSanitizeHtml } from '~/composables/useSanitizeHtml';
 import { usePreferencesStore, extractDomain } from '~/composables/stores/usePreferencesStore';
 import { Utils } from '~/utils';
 import Gravatar from '~/components/Gravatar.vue';
+import { useResizeObserver } from '@vueuse/core';
 import {
     useMailAttachments,
     fetchAttachmentObjectUrl,
@@ -237,6 +238,25 @@ watch(mailData, async (mail) => {
 });
 
 onUnmounted(revokeInlineImages);
+
+// Many HTML mails are laid out for a fixed width (e.g. 600px tables). Shrink
+// those to the iframe's width, like other mail clients do, instead of letting
+// the right edge run off-screen on narrow (mobile) viewports.
+const mailFrame = useTemplateRef<HTMLIFrameElement>('mailFrame');
+
+function fitMailToFrame() {
+    const doc = mailFrame.value?.contentDocument;
+    if (!doc?.body) return;
+    const root = doc.documentElement;
+    doc.body.style.zoom = '';
+    const available = root.clientWidth;
+    const needed = root.scrollWidth;
+    if (available > 0 && needed > available) {
+        doc.body.style.zoom = String(available / needed);
+    }
+}
+
+useResizeObserver(mailFrame, fitMailToFrame);
 
 const sanitized = computed(() => {
     if (!mailData.value?.body?.html) return { html: '', hasRemoteContent: false };
@@ -664,10 +684,12 @@ defineExpose({
 
                             <ClientOnly>
                                 <iframe
+                                    ref="mailFrame"
                                     :srcdoc="sanitizedHtml"
                                     sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
                                     referrerpolicy="no-referrer"
                                     class="w-full border-0 block min-h-[60vh]"
+                                    @load="fitMailToFrame"
                                     style="background: transparent;"
                                 />
                                 <template #fallback>

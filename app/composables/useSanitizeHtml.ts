@@ -322,7 +322,6 @@ const DARK_MODE_STYLES = `
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         font-size: 14px;
         line-height: 1.5;
-        overflow-x: hidden;
     }
     body {
         padding: 16px;
