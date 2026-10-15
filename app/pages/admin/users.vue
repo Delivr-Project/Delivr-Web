@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from "#ui/types";
 import type { GetAdminUsersResponses } from "@/api-client/types.gen";
-import * as z from "zod";
+import type { z } from "zod";
 import type { FormSubmitEvent } from "@nuxt/ui";
+import { zPostAdminUsersBody } from "~/api-client/zod.gen";
 import { useUserInfoStore } from "~/composables/stores/useUserStore";
 
 type AdminUser = GetAdminUsersResponses[200]["data"][number];
@@ -88,14 +89,8 @@ const showEditModal = ref(false);
 const showPasswordModal = ref(false);
 const selectedUser = ref<AdminUser | null>(null);
 
-const createSchema = z.object({
-    username: z.string().min(1, "Username is required"),
-    display_name: z.string().min(1, "Display name is required"),
-    email: z.string().email("Must be a valid email"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    role: z.enum(["admin", "user"]),
-});
-
+// Referenced here (not only in the template) so Biome keeps it a value import.
+const createSchema = zPostAdminUsersBody;
 type CreateSchema = z.output<typeof createSchema>;
 
 const createState = ref<CreateSchema>({
@@ -359,7 +354,7 @@ function getRoleColor(role: AdminUser["role"]) {
             class="space-y-4"
             @submit="handleCreate"
         >
-            <UFormField label="Username" name="username" required>
+            <UFormField label="Username" name="username" help="5–40 lowercase letters, digits, dots, underscores or hyphens" required>
                 <UInput
                     v-model="createState.username"
                     placeholder="johndoe"
