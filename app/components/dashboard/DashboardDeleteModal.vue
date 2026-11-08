@@ -5,6 +5,7 @@ const confirmText = ref("");
 
 interface Props {
     title: string;
+    description?: string;
     warningText: string;
     open: boolean;
     preventAutoClose?: boolean;
@@ -12,30 +13,40 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    preventAutoClose: false
+    preventAutoClose: false,
+    description: 'This action is permanent'
 });
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
 }>();
 
+const loading = ref(false);
+
+// Bumped on every open, so a delete that is still running from an earlier
+// opening can't touch the dialog anymore.
+let attempt = 0;
+
 // Setze confirmText zurück, wenn das Modal geschlossen wird
 watch(() => props.open, (newVal) => {
     if (!newVal) {
         confirmText.value = "";
+    } else {
+        attempt++;
+        loading.value = false;
     }
 });
 
-const loading = ref(false);
-
 async function onDeleteWrapper() {
+    const thisAttempt = attempt;
     loading.value = true;
+    try {
+        await props.onDelete();
+    } finally {
+        if (thisAttempt === attempt) loading.value = false;
+    }
 
-    await props.onDelete();
-
-    loading.value = false;
-
-    if (!props.preventAutoClose) {
+    if (thisAttempt === attempt && !props.preventAutoClose) {
         emit('update:open', false);
     }
 }
@@ -47,7 +58,7 @@ async function onDeleteWrapper() {
         v-model:open="props.open"
         @update:open="(value: boolean) => emit('update:open', value)"
         :title="title"
-        description="This action is permanent"
+        :description="description"
         icon="i-lucide-alert-triangle"
         icon-color="error"
     >
@@ -70,6 +81,10 @@ async function onDeleteWrapper() {
                     class="w-full"
                 />
             </div>
+
+            <p v-if="loading" class="text-sm text-muted">
+                Deleting… Closing this dialog won't stop it; it finishes in the background.
+            </p>
         </div>
 
         <template #footer>

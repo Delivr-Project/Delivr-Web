@@ -1357,6 +1357,28 @@ export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActio
     })
 });
 
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllBody = z.object({
+    permanent: z.boolean().optional().default(false)
+});
+
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllPath = z.object({
+    mailAccountID: z.number().gt(0),
+    mailboxPath: z.string()
+});
+
+/**
+ * All mails deleted successfully
+ */
+export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsDeleteAllResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('All mails deleted successfully'),
+    data: z.object({
+        success: z.boolean(),
+        deletedCount: z.number()
+    })
+});
+
 export const zPostMailAccountsByMailAccountIdMailboxesByMailboxPathMailBulkActionsFlagsBody = z.object({
     uids: z.array(z.number()).min(1),
     flags: z.object({
