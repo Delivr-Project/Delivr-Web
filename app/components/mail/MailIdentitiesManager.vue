@@ -4,6 +4,7 @@ import { zPostMailAccountsByMailAccountIdIdentitiesBody } from '~/api-client/zod
 import { MailIdentityUtils } from '~/utils/mail/mailIdentity';
 import { MailComposeUtils } from '~/utils/mail/mailCompose';
 import DOMPurify from 'dompurify';
+import * as z from 'zod';
 
 const props = withDefaults(defineProps<{
     accountId: number;
@@ -23,9 +24,12 @@ const emit = defineEmits<{ change: [] }>();
 
 const toast = useToast();
 
-// Create and update take the same three fields; the update endpoint accepts
-// them partially, so the stricter create schema validates both forms.
-const formSchema = zPostMailAccountsByMailAccountIdIdentitiesBody;
+// Create and update take the same fields; the update endpoint accepts them
+// partially, so the stricter create schema validates both forms. An empty
+// description field means "none" and is sent as `null`.
+const formSchema = zPostMailAccountsByMailAccountIdIdentitiesBody.extend({
+    description: z.string().trim().max(255)
+});
 
 const identities = ref<MailIdentity[]>([]);
 const loading = ref(false);
@@ -43,6 +47,14 @@ async function load(): Promise<void> {
 watch(() => props.accountId, () => { load(); }, { immediate: true });
 
 defineExpose({ reload: load });
+
+/** `(Work) Jane Doe <jane@example.com>` — how the identity is shown inside Delivr. */
+function identityLabel(identity: Pick<MailIdentity, 'display_name' | 'email_address' | 'description'>): string {
+    return MailIdentityUtils.formatLabel(
+        { name: identity.display_name, address: identity.email_address },
+        identity.description
+    );
+}
 
 // A mail account must keep at least one address to send from — the backend
 // refuses the last delete too, this only keeps the UI honest about it.
@@ -63,7 +75,7 @@ const suggestedIdentity = computed(() => {
 const formOpen = ref(false);
 const editing = ref<MailIdentity | null>(null);
 const saving = ref(false);
-const formState = reactive({ display_name: '', email_address: '', is_default: false, signature: '' });
+const formState = reactive({ display_name: '', email_address: '', description: '', is_default: false, signature: '' });
 
 // Stored as editor HTML, not mail HTML: the composer converts the whole body
 // when the mail is sent, and a pre-converted copy would no longer match what the
@@ -76,6 +88,7 @@ function openCreate(prefill?: { display_name: string; email_address: string }): 
     editing.value = null;
     formState.display_name = prefill?.display_name ?? '';
     formState.email_address = prefill?.email_address ?? '';
+    formState.description = '';
     formState.signature = '';
     // The first identity is the one compose picks, so default it on.
     formState.is_default = identities.value.length === 0;
@@ -86,6 +99,7 @@ function openEdit(identity: MailIdentity): void {
     editing.value = identity;
     formState.display_name = identity.display_name;
     formState.email_address = identity.email_address;
+    formState.description = identity.description ?? '';
     formState.is_default = identity.is_default;
     formState.signature = toEditorSignature(identity.signature);
     formOpen.value = true;
@@ -120,6 +134,7 @@ async function onFormSubmit(): Promise<void> {
     const body = {
         display_name: formState.display_name.trim(),
         email_address: formState.email_address.trim(),
+        description: formState.description.trim() || null,
         is_default: formState.is_default,
         signature: signatureToStore.value
     };
@@ -151,7 +166,7 @@ async function onFormSubmit(): Promise<void> {
 
         toast.add({
             title: target ? 'Identity updated' : 'Identity added',
-            description: `${body.display_name} <${body.email_address}> has been saved.`,
+            description: `${identityLabel(body)} has been saved.`,
             icon: 'i-lucide-check',
             color: 'success'
         });
@@ -225,7 +240,7 @@ async function confirmDelete(): Promise<void> {
 
         toast.add({
             title: 'Identity removed',
-            description: `${target.display_name} <${target.email_address}> has been removed.`,
+            description: `${identityLabel(target)} has been removed.`,
             icon: 'i-lucide-check',
             color: 'success'
         });
@@ -283,6 +298,9 @@ async function confirmDelete(): Promise<void> {
             >
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2">
+                        <UBadge v-if="identity.description" color="neutral" variant="subtle" size="xs" class="shrink-0">
+                            {{ identity.description }}
+                        </UBadge>
                         <span class="truncate text-sm text-white">{{ identity.display_name }}</span>
                         <UBadge v-if="identity.is_default" color="primary" variant="subtle" size="xs" class="shrink-0">
                             Default
@@ -377,6 +395,15 @@ async function confirmDelete(): Promise<void> {
                 </UFormField>
 
                 <UFormField
+                    name="description"
+                    label="Description"
+                    description="Only shown inside Delivr, to tell apart identities with the same name. Recipients never see it."
+                    class="flex flex-col gap-1"
+                >
+                    <UInput v-model="formState.description" placeholder="Work" maxlength="255" class="w-full" />
+                </UFormField>
+
+                <UFormField
                     name="is_default"
                     label="Default identity"
                     description="Preselect this address when composing a message."
@@ -427,7 +454,7 @@ async function confirmDelete(): Promise<void> {
                 <p class="text-sm text-red-300">
                     <strong>Warning:</strong>
                     This removes
-                    <strong>{{ deleteTarget?.display_name }} &lt;{{ deleteTarget?.email_address }}&gt;</strong>
+                    <strong>{{ deleteTarget ? identityLabel(deleteTarget) : '' }}</strong>
                     as a sender address. Messages already sent from it are not affected.
                 </p>
             </div>

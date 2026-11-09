@@ -14,6 +14,8 @@ export namespace MailIdentityUtils {
         id: number;
         display_name: string;
         email_address: string;
+        /** Only shown inside Delivr, never written into a sent mail. */
+        description?: string | null;
         is_default: boolean;
     }
 
@@ -35,6 +37,29 @@ export namespace MailIdentityUtils {
             name: identity.display_name || undefined,
             address: identity.email_address
         };
+    }
+
+    /**
+     * How a sender is shown inside Delivr: `(Work) Jane Doe <jane@example.com>`,
+     * so identities that share a display name can be told apart. The label is
+     * for the UI only; the mail itself is sent from the plain address.
+     */
+    export function formatLabel(address: MailAddressUtils.Address, description?: string | null): string {
+        const formatted = MailAddressUtils.format(address);
+        return description ? `(${description}) ${formatted}` : formatted;
+    }
+
+    /**
+     * The descriptions of the identities that have one, keyed by lowercased
+     * address. Kept apart from the sender addresses so it can't end up in a mail.
+     */
+    export function descriptionsByAddress(identities: readonly Identity[]): Record<string, string> {
+        const descriptions: Record<string, string> = {};
+        for (const identity of identities) {
+            if (!identity.description) continue;
+            descriptions[identity.email_address.trim().toLowerCase()] = identity.description;
+        }
+        return descriptions;
     }
 
     /**

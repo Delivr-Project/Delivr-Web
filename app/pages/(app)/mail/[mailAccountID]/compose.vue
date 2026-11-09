@@ -58,10 +58,10 @@ async function resolveDraftsFolder(): Promise<{ path: string; fallback: boolean 
 
 /**
  * Addresses to send from — the default identity, the account itself, then the
- * other identities — together with their signatures as editor content, keyed by
- * lowercased address.
+ * other identities — together with their signatures as editor content and their
+ * descriptions, both keyed by lowercased address.
  */
-async function loadSenders(): Promise<{ senders: Address[]; signatures: Record<string, string> }> {
+async function loadSenders(): Promise<{ senders: Address[]; signatures: Record<string, string>; descriptions: Record<string, string> }> {
     const response = await useAPI(api => api.getMailAccountsByMailAccountIdIdentities({ path: { mailAccountID: accountId } }));
     const identities = response.success ? response.data : [];
 
@@ -71,7 +71,11 @@ async function loadSenders(): Promise<{ senders: Address[]; signatures: Record<s
         signatures[identity.email_address.trim().toLowerCase()] = sanitizeStoredHtml(identity.signature);
     }
 
-    return { senders: MailIdentityUtils.senderAddresses(account, identities), signatures };
+    return {
+        senders: MailIdentityUtils.senderAddresses(account, identities),
+        signatures,
+        descriptions: MailIdentityUtils.descriptionsByAddress(identities)
+    };
 }
 
 async function loadMail(folder: string, uid: number): Promise<MailData | null> {
@@ -141,7 +145,7 @@ async function forwardedFiles(mail: MailData, folder: string): Promise<File[]> {
 }
 
 async function load() {
-    const [drafts, { senders, signatures }] = await Promise.all([resolveDraftsFolder(), loadSenders()]);
+    const [drafts, { senders, signatures, descriptions }] = await Promise.all([resolveDraftsFolder(), loadSenders()]);
 
     /** The signature of an address, as editor content. */
     const signatureOf = (from: Address | null | undefined) =>
@@ -162,7 +166,7 @@ async function load() {
         html: '',
         priority: 'normal'
     };
-    const base = { draftsPath: drafts.path, draftsFallback: drafts.fallback, senders, signatures };
+    const base = { draftsPath: drafts.path, draftsFallback: drafts.fallback, senders, signatures, descriptions };
 
     const folder = queryValue('folder');
     const draftUid = uidParam('draft');

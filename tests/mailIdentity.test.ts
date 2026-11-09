@@ -71,6 +71,45 @@ describe('MailIdentityUtils', () => {
 
     });
 
+    describe('formatLabel', () => {
+
+        test('puts the description in front of the address', () => {
+            expect(MailIdentityUtils.formatLabel({ name: 'John Doe', address: 'john@company.com' }, 'Business'))
+                .toBe('(Business) John Doe <john@company.com>');
+        });
+
+        test('shows the plain address without a description', () => {
+            const address = { name: 'John Doe', address: 'john@mymail.com' };
+            expect(MailIdentityUtils.formatLabel(address)).toBe('John Doe <john@mymail.com>');
+            expect(MailIdentityUtils.formatLabel(address, null)).toBe('John Doe <john@mymail.com>');
+        });
+
+    });
+
+    describe('descriptionsByAddress', () => {
+
+        test('keys the descriptions by lowercased address and skips identities without one', () => {
+            expect(MailIdentityUtils.descriptionsByAddress([
+                identity({ id: 1, email_address: 'John@MyMail.com', description: 'Private' }),
+                identity({ id: 2, email_address: 'john@company.com', description: 'Business' }),
+                identity({ id: 3, email_address: 'other@x.com', description: null }),
+                identity({ id: 4, email_address: 'plain@x.com' })
+            ])).toEqual({
+                'john@mymail.com': 'Private',
+                'john@company.com': 'Business'
+            });
+        });
+
+        test('keeps the description out of the sender addresses', () => {
+            const senders = MailIdentityUtils.senderAddresses(
+                { smtp_username: 'login' },
+                [identity({ id: 1, email_address: 'john@mymail.com', description: 'Private', is_default: true })]
+            );
+            expect(senders).toEqual([{ name: 'john@mymail.com', address: 'john@mymail.com' }]);
+        });
+
+    });
+
     describe('findDuplicate', () => {
 
         const identities = [

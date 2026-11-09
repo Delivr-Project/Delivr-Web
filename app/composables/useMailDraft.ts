@@ -54,6 +54,8 @@ export interface MailComposeSetup {
     senders: Address[];
     /** Signature per sender address (lowercased), as editor HTML. */
     signatures?: Record<string, string>;
+    /** Identity description per sender address (lowercased), only shown in the UI. */
+    descriptions?: Record<string, string>;
     content: DraftContent;
     storedAttachments?: StoredAttachment[];
     pendingFiles?: File[];
