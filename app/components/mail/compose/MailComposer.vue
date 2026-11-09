@@ -7,6 +7,7 @@ import MailRecipientInput from '~/components/mail/compose/MailRecipientInput.vue
 import { useMailDraft, type MailComposeSetup } from '~/composables/useMailDraft';
 import { MailAddressUtils } from '~/utils/mail/mailAddress';
 import { MailComposeUtils } from '~/utils/mail/mailCompose';
+import { MailIdentityUtils } from '~/utils/mail/mailIdentity';
 
 const props = defineProps<{
     accountId: number;
@@ -82,8 +83,13 @@ const senders = computed(() => {
     return list;
 });
 
+/** A sender as shown in the composer, with its identity description in front. */
+function senderLabel(sender: MailAddressUtils.Address): string {
+    return MailIdentityUtils.formatLabel(sender, props.setup.descriptions?.[sender.address.trim().toLowerCase()]);
+}
+
 const senderItems = computed<SelectMenuItem[]>(() => senders.value.map(sender => ({
-    label: MailAddressUtils.format(sender),
+    label: senderLabel(sender),
     value: sender.address
 })));
 
@@ -498,7 +504,7 @@ const focusEditor = props.setup.mode === 'reply' || props.setup.mode === 'replyA
                             <div v-else class="flex items-center gap-2 min-w-0 flex-1">
                                 <Gravatar :key="content.from?.address" :email="content.from?.address" size="2xs" />
                                 <span class="text-sm text-default truncate">
-                                    {{ content.from ? MailAddressUtils.format(content.from) : '—' }}
+                                    {{ content.from ? senderLabel(content.from) : '—' }}
                                 </span>
                             </div>
                         </div>

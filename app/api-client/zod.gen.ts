@@ -529,7 +529,8 @@ export const zPostMailAccountsBody = z.object({
     imap_password: z.string().min(1).max(1023),
     identity: z.object({
         display_name: z.string().min(1).max(255).optional(),
-        email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/)
+        email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+        description: z.string().min(1).max(255).nullish()
     }).optional()
 });
 
@@ -1424,6 +1425,7 @@ export const zGetMailAccountsByMailAccountIdIdentitiesResponse = z.object({
         created_at: z.int().gt(0).lte(9007199254740991),
         display_name: z.string().min(1).max(255),
         email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+        description: z.string().min(1).max(255).nullable(),
         signature: z.string().max(16384).nullable(),
         is_default: z.boolean()
     }))
@@ -1432,6 +1434,7 @@ export const zGetMailAccountsByMailAccountIdIdentitiesResponse = z.object({
 export const zPostMailAccountsByMailAccountIdIdentitiesBody = z.object({
     display_name: z.string().min(1).max(255),
     email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+    description: z.string().min(1).max(255).nullish(),
     signature: z.string().max(16384).nullish(),
     is_default: z.boolean()
 });
@@ -1484,6 +1487,7 @@ export const zGetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse =
         created_at: z.int().gt(0).lte(9007199254740991),
         display_name: z.string().min(1).max(255),
         email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/),
+        description: z.string().min(1).max(255).nullable(),
         signature: z.string().max(16384).nullable(),
         is_default: z.boolean()
     })
@@ -1492,6 +1496,7 @@ export const zGetMailAccountsByMailAccountIdIdentitiesByMailIdentityIdResponse =
 export const zPutMailAccountsByMailAccountIdIdentitiesByMailIdentityIdBody = z.object({
     display_name: z.string().min(1).max(255).optional(),
     email_address: z.email().regex(/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/).optional(),
+    description: z.string().min(1).max(255).nullish(),
     signature: z.string().max(16384).nullish(),
     is_default: z.boolean().optional()
 });
