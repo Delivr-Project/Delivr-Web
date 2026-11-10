@@ -16,16 +16,6 @@ export default defineNuxtConfig({
 		'~/assets/css/main.css',
 	],
 
-	// bundle icons at build time instead of fetching them at runtime
-	icon: {
-		provider: 'none',
-		clientBundle: {
-			scan: {
-				globInclude: ['app/**/*.{vue,ts}'],
-			},
-		},
-	},
-
 	nitro: {
 		preset: 'bun',
 
