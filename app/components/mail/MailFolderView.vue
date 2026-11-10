@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { MailAccountWithMailboxes, MailListItem, Mailbox } from '~/utils/types';
-import type { GetMailAccountsByMailAccountIdSpecialUseResponse } from '~/api-client';
 import type { ContextMenuItem } from '@nuxt/ui';
+import { useSpecialUseStore } from '~/composables/stores/useSpecialUseStore';
 import { Utils } from '~/utils';
 import { useMailDrag } from '~/composables/useMailDrag';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
@@ -77,8 +77,11 @@ const folderIcon = computed(() => {
 // Deleting from the Trash folder is permanent (there's nowhere further to move to);
 // deleting from anywhere else soft-deletes by moving to Trash. Same rule as the
 // server: the mapped Trash wins, otherwise we go by name. The mapping is declared
-// here (before isTrashFolder) and fetched further down in the Archive section.
-const specialUseMapping = ref<GetMailAccountsByMailAccountIdSpecialUseResponse['data'] | null>(null);
+// here (before isTrashFolder). Stored per account and refreshed in the background,
+// so opening a mail or switching folders doesn't wait for it again.
+const specialUseStore = useSpecialUseStore(accountId);
+const specialUseMapping = specialUseStore.mapping;
+const specialUseRefresh = specialUseStore.refresh();
 const isTrashFolder = computed(() => {
     const trashPath = specialUseMapping.value?.trash?.path;
     if (trashPath) return trashPath.toLowerCase() === systemFolderPath.value.toLowerCase();
@@ -153,6 +156,8 @@ const mails = await useAPIAsyncData<MailListItem[]>(
                 order: 'newest',
                 limit: pageSize.value,
                 offset: (currentPage.value - 1) * pageSize.value,
+                // the list only shows a preview; the open mail is fetched in full
+                view: 'summary',
             }
         }));
         if (!response.success) {
@@ -666,10 +671,7 @@ defineShortcuts({
 // whereas a mailbox's own `specialUse` flag may not be set for a user-picked
 // Archive folder.
 // (`specialUseMapping` is declared near the top, because isTrashFolder reads it.)
-const specialUseRes = await useAPI(api =>
-    api.getMailAccountsByMailAccountIdSpecialUse({ path: { mailAccountID: accountId } })
-);
-if (specialUseRes.success) specialUseMapping.value = specialUseRes.data;
+if (specialUseMapping.value === null) await specialUseRefresh;
 
 // The mapped Archive/Trash folder. Without a mapping the server uses "Trash".
 // Exact match first, since "Trash" and "trash" can both exist.

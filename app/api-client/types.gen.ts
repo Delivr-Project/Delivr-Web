@@ -1673,6 +1673,10 @@ export type GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsData = {
         offset?: number;
         order?: 'newest' | 'oldest';
         searchString?: string;
+        /**
+         * `summary`: `body` is only a short plain-text preview, attachment sizes of large mails are estimated. Much faster for lists.
+         */
+        view?: 'full' | 'summary';
     };
     url: '/mail-accounts/{mailAccountID}/mailboxes/{mailboxPath}/mails';
 };
