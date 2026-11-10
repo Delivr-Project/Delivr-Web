@@ -16,29 +16,6 @@ export default defineNuxtConfig({
 		'~/assets/css/main.css',
 	],
 
-	// bundle icons at build time instead of fetching them at runtime
-	icon: {
-		provider: 'none',
-		clientBundle: {
-			scan: {
-				globInclude: ['app/**/*.{vue,ts}'],
-			},
-			icons: [
-				'i-lucide-arrow-down', 'i-lucide-arrow-left', 'i-lucide-arrow-right', 'i-lucide-arrow-up',
-				'i-lucide-arrow-up-right', 'i-lucide-check', 'i-lucide-chevron-down', 'i-lucide-chevron-left',
-				'i-lucide-chevron-right', 'i-lucide-chevron-up', 'i-lucide-chevrons-left', 'i-lucide-chevrons-right',
-				'i-lucide-circle-alert', 'i-lucide-circle-check', 'i-lucide-circle-x', 'i-lucide-copy',
-				'i-lucide-copy-check', 'i-lucide-ellipsis', 'i-lucide-eye', 'i-lucide-eye-off',
-				'i-lucide-file', 'i-lucide-folder', 'i-lucide-folder-open', 'i-lucide-grip-vertical',
-				'i-lucide-hash', 'i-lucide-info', 'i-lucide-lightbulb', 'i-lucide-loader-circle',
-				'i-lucide-menu', 'i-lucide-minus', 'i-lucide-monitor', 'i-lucide-moon',
-				'i-lucide-panel-left-close', 'i-lucide-panel-left-open', 'i-lucide-plus', 'i-lucide-rotate-ccw',
-				'i-lucide-search', 'i-lucide-square', 'i-lucide-sun', 'i-lucide-triangle-alert',
-				'i-lucide-upload', 'i-lucide-x',
-			],
-		},
-	},
-
 	nitro: {
 		preset: 'bun',
 
