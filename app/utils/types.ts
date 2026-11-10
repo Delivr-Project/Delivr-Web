@@ -5,6 +5,7 @@ import type {
     GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses,
     GetMailAccountsByMailAccountIdMailboxesResponses,
     GetMailAccountsByMailAccountIdIdentitiesResponses,
+    GetMailAccountsByMailAccountIdSpecialUseResponses,
     GetMailAccountsResponses,
     PostAccountApikeysData,
     PostMailAccountsByMailAccountIdIdentitiesData,
@@ -46,6 +47,7 @@ export type MailAccountWithMailboxes = MailAccount & {
 export type NewMailAccount = NonNullable<PostMailAccountsData["body"]>;
 
 export type Mailbox = GetMailAccountsByMailAccountIdMailboxesResponses["200"]["data"][number];
+export type SpecialUseMapping = GetMailAccountsByMailAccountIdSpecialUseResponses["200"]["data"];
 
 export type MailData = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidResponses["200"]["data"];
 export type MailListItem = GetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsResponses["200"]["data"][number];

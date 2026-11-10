@@ -862,7 +862,8 @@ export const zGetMailAccountsByMailAccountIdMailboxesByMailboxPathMailsQuery = z
     limit: z.int().gte(1).lte(100).optional().default(10),
     offset: z.int().gte(0).lte(9007199254740991).optional().default(0),
     order: z.enum(['newest', 'oldest']).optional(),
-    searchString: z.string().optional()
+    searchString: z.string().optional(),
+    view: z.enum(['full', 'summary']).optional()
 });
 
 /**

@@ -11,8 +11,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
             return;
         }
 
-        await useUserInfoStore().refreshIfNeeded();
-        await useMailAccountsStore().refreshIfNeeded();
+        await Promise.all([
+            useUserInfoStore().refreshIfNeeded(),
+            useMailAccountsStore().refreshIfNeeded(),
+        ]);
 
         return navigateTo('/');
     }
@@ -21,11 +23,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo('/auth/login?url=' + encodeURIComponent(to.fullPath));
     }
 
-    const user = await useUserInfoStore().use();
-    // Loads every preference in one request, so pages and the mail view read
-    // them from the store without fetching again.
+    // Independent requests, so load them in parallel. Preferences come in one
+    // request; the mail accounts are what the default layout waits for.
     const preferencesStore = usePreferencesStore();
-    await preferencesStore.refreshIfNeeded();
+    const [user] = await Promise.all([
+        useUserInfoStore().use(),
+        preferencesStore.refreshIfNeeded(),
+        useMailAccountsStore().refreshIfNeeded(),
+    ]);
 
     // First-login gate: users who haven't completed the one-time, platform-wide
     // welcome onboarding are sent there first. Excludes /welcome itself so it

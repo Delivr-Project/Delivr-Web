@@ -130,7 +130,10 @@ async function loadMail() {
         mailData.value = response.data;
         // scheduleAutoMarkSeen();
 
-        await markSeen(props.mailUid);
+        // already read: nothing to send
+        if (!response.data.flags?.seen) {
+            await markSeen(props.mailUid);
+        }
 
     } finally {
         isLoading.value = false;

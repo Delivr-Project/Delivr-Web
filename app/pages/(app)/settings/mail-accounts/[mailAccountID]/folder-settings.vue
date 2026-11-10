@@ -2,6 +2,7 @@
 import type { MailAccountWithMailboxes, Mailbox } from '~/utils/types';
 import type { GetMailAccountsByMailAccountIdSpecialUseResponse, PutMailAccountsByMailAccountIdSpecialUseData } from '~/api-client';
 import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
+import { useSpecialUseStore } from '~/composables/stores/useSpecialUseStore';
 
 // The resolved special-use mapping the API returns (type → { path, source }).
 type SpecialUseMapping = GetMailAccountsByMailAccountIdSpecialUseResponse['data'];
@@ -273,6 +274,9 @@ function onSpecialSelect(type: SpecialType, value: string) {
     specialState[type] = value;
 }
 
+// the copy the mail view reads (see MailFolderView)
+const specialUseStore = useSpecialUseStore(accountId.value);
+
 async function loadSpecialUse() {
     const res = await useAPI((api) => api.getMailAccountsByMailAccountIdSpecialUse({ path: { mailAccountID: accountId.value } }));
     if (res.success) { specialUse.value = res.data; syncSpecialState(); }
@@ -318,6 +322,7 @@ async function saveSpecialUse() {
         }));
         if (!res.success) throw new Error(res.message || 'Failed to save special folders.');
         specialUse.value = res.data;
+        await specialUseStore.update(res.data);
         syncSpecialState();
         toast.add({ title: 'Special folders saved', description: 'Your special-folder mapping has been updated.', icon: 'i-lucide-check', color: 'success' });
         // Mailbox icons/behaviour depend on the resolved mapping — refresh them.
