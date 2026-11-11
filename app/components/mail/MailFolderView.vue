@@ -144,7 +144,9 @@ const currentPage = ref(1);
 
 // ── Data fetching ──
 
-const mails = await useAPIAsyncData<MailListItem[]>(
+// Lazy, so switching folders shows the view (with skeleton rows) right away
+// instead of waiting for the mail server.
+const mails = await useAPILazyAsyncData<MailListItem[]>(
     `mail-folder-${accountId}-${systemFolderPath.value}-${currentPage.value}`,
     async () => {
         const response = await useAPI(api => api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMails({
@@ -190,7 +192,11 @@ watch(pageSize, () => {
     }
 });
 
-const mailList = mails.data;
+// empty until the first load arrives
+const mailList = computed({
+    get: () => mails.data.value ?? [],
+    set: (list: MailListItem[]) => { mails.data.value = list; },
+});
 
 // Detail pane instance (only one is mounted at a time) so refresh can re-sync it.
 const detailRef = ref<{
@@ -822,6 +828,9 @@ const unreadCount = computed(() => mailList.value.filter(m => isUnread(m)).lengt
 
 // ── Active mail ──
 const activeMailUid = computed(() => props.mailUid ?? null);
+
+// Opening or closing a mail starts without a multi-selection, so the reading pane shows.
+watch(activeMailUid, () => clearSelection());
 
 // The open mail's own flags aren't loaded here — the list row is the only thing
 // this view knows about it, which is enough to keep reply/forward off a draft.
