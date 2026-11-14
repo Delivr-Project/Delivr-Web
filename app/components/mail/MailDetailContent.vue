@@ -37,8 +37,14 @@ const systemFolderPath = computed(() =>
     props.folderPath.toLowerCase() === 'inbox' ? 'INBOX' : props.folderPath
 );
 
-const isLoading = ref(true);
-const mailData = ref<MailData | null>(null);
+// Set by the folder view; without it every open goes to the API.
+const mailCache = inject(MAIL_CONTENT_CACHE, null);
+
+// a mail that was opened (or prefetched) before shows without a loading state
+const cachedMail = mailCache?.peek(props.mailUid) ?? null;
+
+const isLoading = ref(cachedMail === null);
+const mailData = ref<MailData | null>(cachedMail);
 
 // Global (per-user) preferences. Normally pre-warmed by the global auth
 // middleware before this component ever mounts; refreshed here too as a
@@ -60,7 +66,7 @@ preferencesStore.refreshIfNeeded();
 //     }
 // }
 
-async function markSeen(uid: number) {
+async function markSeen(uid: number, wasCached = false) {
     const response = await useAPI(api =>
         api.postMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUidFlags({
             path: {
@@ -71,6 +77,16 @@ async function markSeen(uid: number) {
             body: { seen: true },
         })
     );
+
+    // shown from the cache, but deleted or moved on the server since
+    if (wasCached && !response.success && (response.code as number) === 404) {
+        mailCache?.drop(uid);
+        if (mailData.value?.uid === uid) {
+            mailData.value = null;
+            emit('not-found');
+        }
+        return;
+    }
     // Only apply if we're still on the same mail; keep the list in sync via the emit.
     if (response.success && mailData.value?.uid === uid) {
         mailData.value.flags = response.data.flags;
@@ -104,19 +120,29 @@ async function markSeen(uid: number) {
 // onUnmounted(cancelAutoMark);
 
 async function loadMail() {
-    isLoading.value = true;
+    const uid = props.mailUid;
+    const cached = mailCache?.peek(uid) ?? null;
+
+    mailData.value = cached;
+    isLoading.value = cached === null;
     // A different mail is loading — drop any pending auto-mark for the previous one.
     // cancelAutoMark();
     try {
-        const response = await useAPI(api =>
-            api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid({
-                path: {
-                    mailAccountID: props.accountId,
-                    mailboxPath: systemFolderPath.value,
-                    mailUID: props.mailUid,
-                }
-            })
-        );
+        const response = mailCache
+            ? await mailCache.load(uid)
+            : await useAPI(api =>
+                api.getMailAccountsByMailAccountIdMailboxesByMailboxPathMailsByMailUid({
+                    path: {
+                        mailAccountID: props.accountId,
+                        mailboxPath: systemFolderPath.value,
+                        mailUID: uid,
+                    }
+                })
+            );
+
+        // another mail was opened while this one loaded
+        if (uid !== props.mailUid) return;
+
         if (!response.success) {
             toast.add({
                 title: 'Failed to load email',
@@ -128,15 +154,17 @@ async function loadMail() {
             return;
         }
         mailData.value = response.data;
+        isLoading.value = false;
         // scheduleAutoMarkSeen();
 
-        // already read: nothing to send
-        if (!response.data.flags?.seen) {
-            await markSeen(props.mailUid);
+        // Already read: nothing to send. A cached mail's flags may be outdated
+        // though, so it always asks — the answer carries the current ones.
+        if (cached || !response.data.flags?.seen) {
+            await markSeen(uid, cached !== null);
         }
 
     } finally {
-        isLoading.value = false;
+        if (uid === props.mailUid) isLoading.value = false;
     }
 }
 

@@ -1,6 +1,7 @@
 import { useMailAccountsStore } from "~/composables/stores/useMailAccountsStore";
 import { useUserInfoStore } from "~/composables/stores/useUserStore";
 import { usePreferencesStore } from "~/composables/stores/usePreferencesStore";
+import { useSelectedMailAccountStore } from "~/composables/stores/useSelectedMailAccountStore";
 
 export default defineNuxtRouteMiddleware(async (to) => {
 
@@ -37,6 +38,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
     // never redirect-loops; the welcome page clears the flag when finished.
     if (!preferencesStore.onboardingCompleted.value && to.path !== '/welcome') {
         return navigateTo('/welcome');
+    }
+
+    // The start page only forwards to the inbox. Doing that here spares loading
+    // and rendering that page first.
+    if (to.path === '/') {
+        const mailAccount = await useSelectedMailAccountStore().use();
+        return navigateTo(mailAccount.value ? `/mail/${mailAccount.value.id}/folder/inbox` : '/settings/mail-accounts');
     }
 
     if (to.path.startsWith('/admin')) {
