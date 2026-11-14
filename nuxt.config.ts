@@ -110,6 +110,12 @@ export default defineNuxtConfig({
 	pwa: {
         registerType: 'autoUpdate',
 		injectRegister: false,
+		workbox: {
+			// The page is rendered by the server, so no shell is precached to fall
+			// back to. The module's default ("/") names a URL that isn't in the
+			// precache, which makes the service worker throw while it installs.
+			navigateFallback: null,
+		},
         manifest: {
             name: 'Delivr',
             short_name: 'Delivr',

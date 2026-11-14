@@ -65,6 +65,7 @@ app/
 │   ├── useAPI.ts
 │   ├── useAppCookies.ts
 │   ├── useMailAttachments.ts # Authed binary fetch/download of mail attachments (`fetchAttachmentFile` → `File`)
+│   ├── useMailContentCache.ts # In-memory cache of opened mails per folder view (`createMailContentCache`)
 │   ├── useMailDraft.ts       # Draft state, dirty tracking, debounced autosave, attachments, send/discard
 │   ├── useMailDrag.ts        # Drag & drop state for moving mails between folders
 │   ├── useAwaitedComputed.ts
@@ -113,7 +114,10 @@ app/
     ├── client/                # Generated client core
     └── core/                  # Core client utilities
 
-server/                        # Nitro server routes (run on the SSR server)
+server/                        # Nitro server routes and plugins (run on the SSR server)
+├── plugins/
+│   ├── apiPreconnect.ts       # `<link rel="preconnect">` to the API origin in the page head
+│   └── iconCache.ts           # Lets browsers cache runtime-loaded icons
 └── routes/
     └── mail/[mailAccountID]/folder/[folderPath]/[mailUID]/attachment/[filename].get.ts
                                # Authenticated same-origin attachment preview proxy
@@ -150,6 +154,10 @@ server/                        # Nitro server routes (run on the SSR server)
 - **Middleware**: Global middleware in `app/middleware/`. Auth middleware handles session validation. Rewrites middleware handles URL transformations.
 - **State Management**: Simple composable stores (not Pinia) in `app/composables/stores/`. The `abstractStore.ts` utility provides a base class pattern.
 - **Preferences** (`usePreferencesStore`): every per-user preference is loaded in one `GET /account/preferences` (pre-warmed by `auth.global.ts`), and each is saved through its own `PUT /account/preferences/<key>` — only the ones that changed. Writes **throw** instead of falling back to the defaults when the preferences couldn't be loaded (merging a remote-content rule into an empty policy would wipe the user's rules), and throw after rolling back a value whose write failed, so callers must catch and toast. `login.vue` clears it (and the mail-account stores) because a previous user's session may still be in memory. Unit-tested in `tests/preferencesStore.test.ts`.
+- **Opened mails are cached per folder view** (`useMailContentCache`): `MailFolderView` creates the cache and provides it (`MAIL_CONTENT_CACHE`), `MailDetailContent` injects it — a mail opened before shows at once, and resting the mouse on a row for 120 ms loads that mail ahead. A mail's content never changes under its UID, so the cache is never refreshed; its flags do change, so opening a cached mail always sends the mark-as-read request, whose answer carries the current flags (a 404 there means the mail is gone and closes it). The cache dies with the folder view because UIDs are only unique per mailbox — don't make it global.
+- **Start page**: `/` only forwards to the inbox, which `auth.global.ts` does itself, so `(app)/index.vue` isn't loaded for it.
+- **API origin**: `server/plugins/apiPreconnect.ts` adds a preconnect hint when `apiUrl` and `appUrl` are on different origins. Serving the API's `/v1` path on the web client's domain avoids the CORS preflight the browser otherwise sends before the first request to every new URL.
+- **Service worker**: `workbox.navigateFallback` is `null` on purpose. The page is rendered by the server, so no shell is precached, and the module's default fallback (`/`) makes the generated worker throw while installing.
 - **Styling**: Nuxt UI components with custom CSS in `app/assets/css/main.css`.
 - **PWA**: Configured via `@vite-pwa/nuxt` in `nuxt.config.ts`.
 - **Icons**: Use Lucide icons via the `i-lucide-*` format (e.g., `i-lucide-mail`).

@@ -880,6 +880,28 @@ const isDraftsFolder = computed(() =>
     !!specialUseMapping.value?.drafts?.path && specialUseMapping.value.drafts.path === systemFolderPath.value
 );
 
+// Opened mails of this folder stay in memory, and the one under the mouse is
+// loaded ahead, so opening it shows the content at once.
+const mailContentCache = createMailContentCache(accountId, () => systemFolderPath.value);
+provide(MAIL_CONTENT_CACHE, mailContentCache);
+
+const PREFETCH_DWELL_MS = 120;
+let prefetchTimer: ReturnType<typeof setTimeout> | undefined;
+
+function onRowPointerEnter(uid: number, event: PointerEvent) {
+    // touch has no hover, and drafts open in the composer
+    if (event.pointerType !== 'mouse' || isDraftsFolder.value) return;
+
+    clearTimeout(prefetchTimer);
+    prefetchTimer = setTimeout(() => mailContentCache.prefetch(uid), PREFETCH_DWELL_MS);
+}
+
+function onRowPointerLeave() {
+    clearTimeout(prefetchTimer);
+}
+
+onBeforeUnmount(() => clearTimeout(prefetchTimer));
+
 function openMail(uid: number) {
     if (isDraftsFolder.value) {
         router.push({ path: `/mail/${accountId}/compose`, query: { draft: String(uid), folder: systemFolderPath.value } });
@@ -1208,6 +1230,8 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                                         @dragstart="onRowDragStart(mail.uid, $event)"
                                         @dragend="endDrag"
                                         @mousedown="onRowMouseDown"
+                                        @pointerenter="onRowPointerEnter(mail.uid, $event)"
+                                        @pointerleave="onRowPointerLeave"
                                         @click="onRowClick(mail.uid, $event)"
                                     >
                                         <!-- Checkbox -->
@@ -1300,6 +1324,8 @@ const contextMenuItems = computed<ContextMenuItem[][]>(() => {
                                         @dragstart="onRowDragStart(mail.uid, $event)"
                                         @dragend="endDrag"
                                         @mousedown="onRowMouseDown"
+                                        @pointerenter="onRowPointerEnter(mail.uid, $event)"
+                                        @pointerleave="onRowPointerLeave"
                                         @click="onRowClick(mail.uid, $event)"
                                     >
                                         <!-- Checkbox (primary selection trigger on touch) -->
