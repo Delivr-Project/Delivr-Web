@@ -181,16 +181,16 @@ const bubbleItems = [
 // system's own selection menu does there.
 const isTouch = useMediaQuery('(pointer: coarse)');
 
-type ToolbarItem = EditorToolbarItem & { tooltip?: { text?: string } };
-
-function withoutTooltips<T extends ToolbarItem>(groups: T[][]): T[][] {
-    return groups.map(group => group.map(({ tooltip, ...item }) => ({
-        ...item,
-        ...(tooltip?.text && !('aria-label' in item) ? { 'aria-label': tooltip.text } : {})
-    }) as T));
+function withoutTooltips(groups: EditorToolbarItem[][]): EditorToolbarItem[][] {
+    return groups.map(group => group.map((item) => {
+        if (!('tooltip' in item) || !item.tooltip) return item;
+        const { tooltip, ...rest } = item;
+        const label = typeof tooltip === 'object' ? tooltip.text : undefined;
+        return (label && !('aria-label' in rest) ? { ...rest, 'aria-label': label } : rest) as EditorToolbarItem;
+    }));
 }
 
-const shownToolbarItems = computed(() => isTouch.value ? withoutTooltips(toolbarItems) : toolbarItems);
+const shownToolbarItems = computed<EditorToolbarItem[][]>(() => isTouch.value ? withoutTooltips(toolbarItems) : toolbarItems);
 
 defineExpose({
     focus: (position: 'start' | 'end' = 'start') => focusAt(position)
