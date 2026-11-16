@@ -45,9 +45,11 @@ watch(model, (html) => {
     const editor = editorRef.value?.editor;
     if (!editor || html === editorContent) return;
     editorContent = html;
-    const { from } = editor.state.selection;
+    const { from, to } = editor.state.selection;
     editor.commands.setContent(html);
-    editor.commands.setTextSelection(from);
+    // Clamped to the new document by TipTap, which may be shorter (e.g. a
+    // shorter signature after switching identities).
+    editor.commands.setTextSelection({ from, to });
 });
 
 /**
