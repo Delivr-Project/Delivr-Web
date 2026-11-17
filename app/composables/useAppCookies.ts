@@ -4,6 +4,13 @@ type CookieOptionsWithoutReadonly<T> = CookieOptions<T> & {
     readonly?: false;
 }
 
+const SESSION_COOKIE_OPTIONS: CookieOptionsWithoutReadonly<string | null> = {
+    path: "/",
+    secure: true, // allowed on localhost; required in prod
+    sameSite: "lax",
+    httpOnly: false, // the client must read the token to attach it to the API client
+};
+
 class AppCookie<T extends string | null | undefined> {
 
     constructor(
@@ -15,8 +22,9 @@ class AppCookie<T extends string | null | undefined> {
         return useCookie(this.name);
     }
 
-    set(value: T) {
-        useCookie(this.name, this.options as CookieOptionsWithoutReadonly<T> | undefined).value = value;
+    set(value: T, options?: CookieOptionsWithoutReadonly<T>) {
+        const merged = { ...this.options, ...options } as CookieOptionsWithoutReadonly<T> | undefined;
+        useCookie(this.name, merged).value = value;
     }
 
 }
@@ -24,7 +32,7 @@ class AppCookie<T extends string | null | undefined> {
 export function useAppCookies() {
     return {
 
-        sessionToken: new AppCookie<string | null>("dla_session_token")
+        sessionToken: new AppCookie<string | null>("dla_session_token", SESSION_COOKIE_OPTIONS)
 
     } as const;
 }
