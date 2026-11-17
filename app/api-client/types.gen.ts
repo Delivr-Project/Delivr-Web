@@ -220,6 +220,120 @@ export type PostAuthResetPasswordRequestResponses = {
 
 export type PostAuthResetPasswordRequestResponse = PostAuthResetPasswordRequestResponses[keyof PostAuthResetPasswordRequestResponses];
 
+export type PostAuthPasskeyOptionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/passkey/options';
+};
+
+export type PostAuthPasskeyOptionsErrors = {
+    /**
+     * Too many pending passkey requests. Try again later.
+     */
+    429: {
+        success: false;
+        code: 429;
+        message: 'Too many pending passkey requests. Try again later.';
+    };
+};
+
+export type PostAuthPasskeyOptionsError = PostAuthPasskeyOptionsErrors[keyof PostAuthPasskeyOptionsErrors];
+
+export type PostAuthPasskeyOptionsResponses = {
+    /**
+     * Passkey challenge created
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Passkey challenge created';
+        data: {
+            /**
+             * Pass back with the signed credential to `POST /auth/passkey`
+             */
+            challenge_id: string;
+            /**
+             * PublicKeyCredentialRequestOptionsJSON to pass to navigator.credentials.get()
+             */
+            options: {
+                challenge: string;
+                [key: string]: unknown;
+            };
+        };
+    };
+};
+
+export type PostAuthPasskeyOptionsResponse = PostAuthPasskeyOptionsResponses[keyof PostAuthPasskeyOptionsResponses];
+
+export type PostAuthPasskeyData = {
+    body: {
+        challenge_id: string;
+        /**
+         * Credential returned by navigator.credentials.get(), serialized as JSON
+         */
+        response: {
+            id: string;
+            rawId: string;
+            response: {
+                clientDataJSON: string;
+                authenticatorData: string;
+                signature: string;
+                userHandle?: string;
+            };
+            authenticatorAttachment?: 'platform' | 'cross-platform';
+            clientExtensionResults: {
+                [key: string]: unknown;
+            };
+            type: 'public-key';
+        };
+    };
+    path?: never;
+    query?: never;
+    url: '/auth/passkey';
+};
+
+export type PostAuthPasskeyErrors = {
+    /**
+     * Invalid or expired passkey challenge / Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Invalid or expired passkey challenge / Syntax or validation error in request';
+    };
+    /**
+     * Passkey could not be verified
+     */
+    401: {
+        success: false;
+        code: 401;
+        message: 'Passkey could not be verified';
+    };
+};
+
+export type PostAuthPasskeyError = PostAuthPasskeyErrors[keyof PostAuthPasskeyErrors];
+
+export type PostAuthPasskeyResponses = {
+    /**
+     * Login successful
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Login successful';
+        data: {
+            user_id: number;
+            user_role: 'admin' | 'user';
+            created_at: number;
+            expires_at: number;
+            token: string;
+        };
+    };
+};
+
+export type PostAuthPasskeyResponse = PostAuthPasskeyResponses[keyof PostAuthPasskeyResponses];
+
 export type DeleteAccountData = {
     body?: never;
     path?: never;
@@ -975,6 +1089,261 @@ export type PutAccountPreferencesOnboardingResponses = {
 };
 
 export type PutAccountPreferencesOnboardingResponse = PutAccountPreferencesOnboardingResponses[keyof PutAccountPreferencesOnboardingResponses];
+
+export type GetAccountPasskeysData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/account/passkeys';
+};
+
+export type GetAccountPasskeysResponses = {
+    /**
+     * Passkeys retrieved successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Passkeys retrieved successfully';
+        data: Array<{
+            id: string;
+            created_at: number;
+            name: string;
+            device_type: 'singleDevice' | 'multiDevice';
+            backed_up: boolean;
+            last_used_at: number | null;
+        }>;
+    };
+};
+
+export type GetAccountPasskeysResponse = GetAccountPasskeysResponses[keyof GetAccountPasskeysResponses];
+
+export type PostAccountPasskeysData = {
+    body: {
+        /**
+         * Name to tell the passkey apart, e.g. the device it lives on
+         */
+        name: string;
+        /**
+         * Credential returned by navigator.credentials.create(), serialized as JSON
+         */
+        response: {
+            id: string;
+            rawId: string;
+            response: {
+                clientDataJSON: string;
+                attestationObject: string;
+                authenticatorData?: string;
+                transports?: Array<string>;
+                publicKeyAlgorithm?: number;
+                publicKey?: string;
+            };
+            authenticatorAttachment?: 'platform' | 'cross-platform';
+            clientExtensionResults: {
+                [key: string]: unknown;
+            };
+            type: 'public-key';
+        };
+    };
+    path?: never;
+    query?: never;
+    url: '/account/passkeys';
+};
+
+export type PostAccountPasskeysErrors = {
+    /**
+     * Passkey could not be verified / Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Passkey could not be verified / Syntax or validation error in request';
+    };
+};
+
+export type PostAccountPasskeysError = PostAccountPasskeysErrors[keyof PostAccountPasskeysErrors];
+
+export type PostAccountPasskeysResponses = {
+    /**
+     * Passkey registered successfully
+     */
+    201: {
+        success: true;
+        code: 201;
+        message: 'Passkey registered successfully';
+        data: {
+            id: string;
+            created_at: number;
+            name: string;
+            device_type: 'singleDevice' | 'multiDevice';
+            backed_up: boolean;
+            last_used_at: number | null;
+        };
+    };
+};
+
+export type PostAccountPasskeysResponse = PostAccountPasskeysResponses[keyof PostAccountPasskeysResponses];
+
+export type PostAccountPasskeysOptionsData = {
+    body: {
+        /**
+         * Current password — required to add a passkey
+         */
+        current_password: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/account/passkeys/options';
+};
+
+export type PostAccountPasskeysOptionsErrors = {
+    /**
+     * Current password is incorrect / Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Current password is incorrect / Syntax or validation error in request';
+    };
+    /**
+     * Too many pending passkey requests. Try again later.
+     */
+    429: {
+        success: false;
+        code: 429;
+        message: 'Too many pending passkey requests. Try again later.';
+    };
+};
+
+export type PostAccountPasskeysOptionsError = PostAccountPasskeysOptionsErrors[keyof PostAccountPasskeysOptionsErrors];
+
+export type PostAccountPasskeysOptionsResponses = {
+    /**
+     * Passkey registration started
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Passkey registration started';
+        data: {
+            /**
+             * PublicKeyCredentialCreationOptionsJSON to pass to navigator.credentials.create()
+             */
+            options: {
+                challenge: string;
+                [key: string]: unknown;
+            };
+        };
+    };
+};
+
+export type PostAccountPasskeysOptionsResponse = PostAccountPasskeysOptionsResponses[keyof PostAccountPasskeysOptionsResponses];
+
+export type DeleteAccountPasskeysByPasskeyIdData = {
+    body?: never;
+    path: {
+        /**
+         * ID of the passkey (its WebAuthn credential ID)
+         */
+        passkeyID: string;
+    };
+    query?: never;
+    url: '/account/passkeys/{passkeyID}';
+};
+
+export type DeleteAccountPasskeysByPasskeyIdErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Passkey not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Passkey not found';
+    };
+};
+
+export type DeleteAccountPasskeysByPasskeyIdError = DeleteAccountPasskeysByPasskeyIdErrors[keyof DeleteAccountPasskeysByPasskeyIdErrors];
+
+export type DeleteAccountPasskeysByPasskeyIdResponses = {
+    /**
+     * Passkey deleted successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Passkey deleted successfully';
+        data: null;
+    };
+};
+
+export type DeleteAccountPasskeysByPasskeyIdResponse = DeleteAccountPasskeysByPasskeyIdResponses[keyof DeleteAccountPasskeysByPasskeyIdResponses];
+
+export type PutAccountPasskeysByPasskeyIdData = {
+    body: {
+        /**
+         * Name to tell the passkey apart, e.g. the device it lives on
+         */
+        name: string;
+    };
+    path: {
+        /**
+         * ID of the passkey (its WebAuthn credential ID)
+         */
+        passkeyID: string;
+    };
+    query?: never;
+    url: '/account/passkeys/{passkeyID}';
+};
+
+export type PutAccountPasskeysByPasskeyIdErrors = {
+    /**
+     * Bad Request: Syntax or validation error in request
+     */
+    400: {
+        success: false;
+        code: 400;
+        message: 'Bad Request: Syntax or validation error in request';
+    };
+    /**
+     * Passkey not found
+     */
+    404: {
+        success: false;
+        code: 404;
+        message: 'Passkey not found';
+    };
+};
+
+export type PutAccountPasskeysByPasskeyIdError = PutAccountPasskeysByPasskeyIdErrors[keyof PutAccountPasskeysByPasskeyIdErrors];
+
+export type PutAccountPasskeysByPasskeyIdResponses = {
+    /**
+     * Passkey updated successfully
+     */
+    200: {
+        success: true;
+        code: 200;
+        message: 'Passkey updated successfully';
+        data: {
+            id: string;
+            created_at: number;
+            name: string;
+            device_type: 'singleDevice' | 'multiDevice';
+            backed_up: boolean;
+            last_used_at: number | null;
+        };
+    };
+};
+
+export type PutAccountPasskeysByPasskeyIdResponse = PutAccountPasskeysByPasskeyIdResponses[keyof PutAccountPasskeysByPasskeyIdResponses];
 
 export type GetMailAccountsData = {
     body?: never;
