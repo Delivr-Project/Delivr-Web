@@ -153,7 +153,7 @@ async function onDeleteAccount() {
 				<!-- Header -->
 				<div>
 					<h2 class="text-xl font-semibold text-white">Security Settings</h2>
-					<p class="text-sm text-slate-400 mt-1">Manage your password and account security</p>
+					<p class="text-sm text-slate-400 mt-1">Manage your password and passkeys</p>
 				</div>
 
 				<!-- Password Card -->
@@ -232,6 +232,8 @@ async function onDeleteAccount() {
 						</UForm>
 					</div>
 				</div>
+
+				<AccountPasskeys />
 
 				<!-- Danger Zone Card -->
 				<div class="rounded-xl border border-red-900/50 bg-red-950/20 backdrop-blur-sm overflow-hidden">

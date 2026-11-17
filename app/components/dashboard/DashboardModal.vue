@@ -36,7 +36,7 @@ const iconColorClasses: Record<NonNullable<Props['iconColor']>, string> = {
         }"
     >
         <template #title>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 pe-8">
                 <UIcon
                     v-if="icon"
                     :name="icon"
