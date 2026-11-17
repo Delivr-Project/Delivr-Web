@@ -237,6 +237,10 @@ const querySegments = computed(() => {
 });
 
 function onInputInput(e: Event) {
+    // Not `v-model`: it skips input while a mobile keyboard is still composing a
+    // word, and the input's own text is transparent, so nothing would show
+    // until the word is committed (e.g. by a space).
+    searchQuery.value = (e.target as HTMLInputElement).value;
     suppressSuggestions.value = false;
     syncCaret(e);
     // Overlay content updates on the next flush; re-sync scroll once it has.
@@ -888,7 +892,7 @@ watch(isOpen, (open) => {
 
                             <input
                                 ref="searchInputRef"
-                                v-model="searchQuery"
+                                :value="searchQuery"
                                 type="text"
                                 placeholder="Search your emails — try from:, to:, is:unread…"
                                 class="relative w-full border-0 p-0 py-1.5 bg-transparent outline-none text-base leading-normal text-transparent placeholder:text-dimmed"

@@ -2,6 +2,7 @@
 import type { EditorToolbarItem } from '@nuxt/ui';
 import { Node, mergeAttributes } from '@tiptap/core';
 import { TextAlign } from '@tiptap/extension-text-align';
+import { useMediaQuery } from '@vueuse/core';
 import MailComposeLinkPopover from '~/components/mail/compose/MailComposeLinkPopover.vue';
 import { MailComposeUtils } from '~/utils/mail/mailCompose';
 
@@ -27,12 +28,52 @@ const model = defineModel<string>({ required: true });
 
 const editorRef = useTemplateRef('editorRef');
 
+// The editor owns its content while the user types, so the model isn't passed
+// back into it (`v-model`): UEditor would serialize the whole document a second
+// time on every keystroke to compare it, and replace the content, cursor and
+// all, whenever the two differ. Only changes made outside the editor (a swapped
+// signature, another identity opened in the dialog) are pushed in.
+const initialContent = model.value;
+let editorContent = model.value;
+
+function onEditorUpdate(html: string) {
+    editorContent = html;
+    model.value = html;
+}
+
+watch(model, (html) => {
+    const editor = editorRef.value?.editor;
+    if (!editor || html === editorContent) return;
+    editorContent = html;
+    const { from, to } = editor.state.selection;
+    editor.commands.setContent(html);
+    // Clamped to the new document by TipTap, which may be shorter (e.g. a
+    // shorter signature after switching identities).
+    editor.commands.setTextSelection({ from, to });
+});
+
+/**
+ * Put the cursor at the start or end and focus the editor. Not TipTap's `focus`
+ * command: on Android it focuses the DOM in the middle of the command, and the
+ * focus transaction that starts no longer matches the editor state ("Applying a
+ * mismatched transaction").
+ */
+function focusAt(position: 'start' | 'end') {
+    const editor = editorRef.value?.editor;
+    if (!editor) return;
+    editor.commands.setTextSelection(position === 'start' ? 0 : editor.state.doc.content.size);
+    editor.view.focus();
+}
+
 onMounted(() => {
     const editor = editorRef.value?.editor;
     if (!editor) return;
     // Extensions may adjust the initial content once the editor is created (e.g.
     // a trailing paragraph after a quote), which reaches the model as an update.
-    const ready = () => nextTick(() => emit('ready'));
+    const ready = () => nextTick(() => {
+        if (props.autofocus) focusAt('start');
+        emit('ready');
+    });
     if (editor.isInitialized) ready();
     else editor.once('create', ready);
 });
@@ -135,8 +176,26 @@ const bubbleItems = [
     ]
 ] satisfies EditorToolbarItem[][];
 
+// The toolbars re-render every item on each keystroke, and on a phone that adds
+// up to a noticeable delay per key — tooltips are by far the most expensive
+// part. Touch screens can't hover, so they go without tooltips (their text
+// stays as the button's label) and without the bubble toolbar, whose job the
+// system's own selection menu does there.
+const isTouch = useMediaQuery('(pointer: coarse)');
+
+function withoutTooltips(groups: EditorToolbarItem[][]): EditorToolbarItem[][] {
+    return groups.map(group => group.map((item) => {
+        if (!('tooltip' in item) || !item.tooltip) return item;
+        const { tooltip, ...rest } = item;
+        const label = typeof tooltip === 'object' ? tooltip.text : undefined;
+        return (label && !('aria-label' in rest) ? { ...rest, 'aria-label': label } : rest) as EditorToolbarItem;
+    }));
+}
+
+const shownToolbarItems = computed<EditorToolbarItem[][]>(() => isTouch.value ? withoutTooltips(toolbarItems) : toolbarItems);
+
 defineExpose({
-    focus: (position: 'start' | 'end' = 'start') => editorRef.value?.editor?.commands.focus(position)
+    focus: (position: 'start' | 'end' = 'start') => focusAt(position)
 });
 </script>
 
@@ -144,7 +203,7 @@ defineExpose({
     <UEditor
         ref="editorRef"
         v-slot="{ editor }"
-        v-model="model"
+        :model-value="initialContent"
         content-type="html"
         :placeholder="{ placeholder: props.placeholder ?? 'Write your message…', mode: 'firstLine' }"
         :starter-kit="{
@@ -157,7 +216,7 @@ defineExpose({
         :extensions="extensions"
         :editor-props="editorProps"
         :editable="!props.disabled"
-        :autofocus="props.autofocus ? 'start' : false"
+        @update:model-value="onEditorUpdate"
         :ui="{
             root: 'flex flex-col',
             content: 'flex flex-col flex-1',
@@ -171,7 +230,7 @@ defineExpose({
     >
         <UEditorToolbar
             :editor="editor"
-            :items="toolbarItems"
+            :items="shownToolbarItems"
             class="sticky top-0 z-10 border-b border-default bg-default/90 backdrop-blur px-2 sm:px-4 py-1.5 overflow-x-auto"
         >
             <template #link>
@@ -180,6 +239,7 @@ defineExpose({
         </UEditorToolbar>
 
         <UEditorToolbar
+            v-if="!isTouch"
             :editor="editor"
             :items="bubbleItems"
             layout="bubble"
