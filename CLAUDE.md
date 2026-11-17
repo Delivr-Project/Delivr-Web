@@ -12,6 +12,7 @@
 - **Icons**: Lucide (via `@iconify-json/lucide`)
 - **Sanitization**: `dompurify`
 - **Rich text editor**: Nuxt UI `UEditor` (TipTap 3.x) + `@tiptap/extension-text-align`
+- **Passkeys**: `@simplewebauthn/browser` (WebAuthn)
 
 ## Project Structure
 
@@ -26,6 +27,8 @@ app/
 ├── components/
 │   ├── Gravatar.vue
 │   ├── SenderAvatar.vue        # Sender avatar (Gravatar / BIMI brand logo / initials)
+│   ├── account/             # Security settings cards
+│   │   └── AccountPasskeys.vue     # Passkey list, add (password + WebAuthn prompt), rename, remove
 │   ├── dashboard/           # Dashboard components
 │   │   ├── DashboardDeleteModal.vue
 │   │   ├── DashboardModal.vue
@@ -96,6 +99,8 @@ app/
 ├── utils/
 │   ├── index.ts
 │   ├── abstractStore.ts      # Base store class
+│   ├── auth/                 # NOT auto-imported (nested) — import explicitly
+│   │   └── passkey.ts        # `PasskeyUtils`: WebAuthn create/sign, autofill support, error wording
 │   ├── mail/                 # NOT auto-imported (nested) — import explicitly
 │   │   ├── mailAddress.ts    # `MailAddressUtils`: parse/format/validate/dedupe addresses
 │   │   ├── mailIdentity.ts   # `MailIdentityUtils`: sender list, duplicates, min-one rule
@@ -147,11 +152,12 @@ server/                        # Nitro server routes (run on the SSR server)
 - **Composer editor on phones** (`MailComposeEditor.vue`): typing on Android (Gboard, and Firefox in particular) breaks — the cursor jumps, text is deleted elsewhere — when each keystroke is slow or the editor content is replaced while the keyboard is composing. So: UEditor gets the content once (`:model-value="initialContent"` + `@update:model-value`) instead of `v-model`, which would serialize the whole document a second time per keystroke and `setContent` (resetting the cursor) whenever the two differ; only changes made outside the editor (signature swap, another identity in the dialog) are pushed in by a watcher. Focusing uses `focusAt` (`setTextSelection` + `view.focus()`), not TipTap's `focus` command, which on Android focuses the DOM mid-command and throws "Applying a mismatched transaction". On touch screens (`pointer: coarse`) the toolbar has no tooltips (their text becomes `aria-label`) and there's no bubble toolbar: Nuxt UI's toolbar re-renders every item on each transaction, and the tooltips were most of that cost. `prosemirror-view` is locked at ≥ 1.42.9 in `bun.lock` for its Android fixes (backspace on Firefox Android, Enter/Backspace dispatched during composition).
 - **Composing mail**: `/mail/{accountId}/compose` handles every mode via query params — `?draft=<uid>&folder=<path>` (resume), `?reply|replyAll|forward=<uid>&folder=<path>`, or `?to=&subject=` (new). The page resolves the Drafts folder via special-use (falling back to INBOX), builds the prefilled content with `MailComposeUtils`, sanitizes quoted HTML with DOMPurify, and hands everything to `MailComposer.vue`.
 - **Draft autosave** (`useMailDraft`): snapshot-based dirty tracking with a debounced save (2.5 s, 20 s max wait), serialized so only one save is in flight. The first save creates the draft (`POST`, flags `draft`+`seen`), later ones `PUT` it; since the API replaces the message, the draft UID and attachment ids are remapped after every save and the `?draft=` query is kept in sync. A 404 recreates a lost draft; 5xx retries once after 15 s. Sending force-saves first, then calls `/send` with `moveToSent`. TipTap normalizes content on `create`, so the editor emits `ready` and the composable takes its pristine baseline only then — otherwise an untouched reply would look dirty.
-- **Components**: Auto-imported from `app/components/`. Organized by domain (dashboard/, mail/, form/, img/).
+- **Components**: Auto-imported from `app/components/`. Organized by domain (account/, dashboard/, mail/, form/, img/).
 - **Layouts**: `auth.vue` for unauthenticated routes, `default.vue` for the main dashboard.
 - **Middleware**: Global middleware in `app/middleware/`. Auth middleware handles session validation. Rewrites middleware handles URL transformations.
 - **State Management**: Simple composable stores (not Pinia) in `app/composables/stores/`. The `abstractStore.ts` utility provides a base class pattern.
 - **Preferences** (`usePreferencesStore`): every per-user preference is loaded in one `GET /account/preferences` (pre-warmed by `auth.global.ts`), and each is saved through its own `PUT /account/preferences/<key>` — only the ones that changed. Writes **throw** instead of falling back to the defaults when the preferences couldn't be loaded (merging a remote-content rule into an empty policy would wipe the user's rules), and throw after rolling back a value whose write failed, so callers must catch and toast. `login.vue` clears it (and the mail-account stores) because a previous user's session may still be in memory. Unit-tested in `tests/preferencesStore.test.ts`.
+- **Security settings** (`settings/security.vue`): `AccountPasskeys` loads its data with `useAPILazyAsyncData`, so the page renders without waiting — `undefined` shows a skeleton, `null` a load failure. Adding a passkey asks for the current password.
 - **Styling**: Nuxt UI components with custom CSS in `app/assets/css/main.css`.
 - **PWA**: Configured via `@vite-pwa/nuxt` in `nuxt.config.ts`.
 - **Icons**: Use Lucide icons via the `i-lucide-*` format (e.g., `i-lucide-mail`).
