@@ -233,7 +233,7 @@ async function deletePasskey() {
 				</UFormField>
 
 				<div class="flex justify-end gap-3 pt-2">
-					<UButton label="Cancel" color="neutral" variant="ghost" @click="addOpen = false" />
+					<UButton label="Cancel" color="neutral" variant="ghost" @click="() => { addOpen = false }" />
 					<UButton type="submit" label="Continue" color="primary" :loading="addLoading" />
 				</div>
 			</UForm>
@@ -251,7 +251,7 @@ async function deletePasskey() {
 				</UFormField>
 
 				<div class="flex justify-end gap-3 pt-2">
-					<UButton label="Cancel" color="neutral" variant="ghost" @click="renameOpen = false" />
+					<UButton label="Cancel" color="neutral" variant="ghost" @click="() => { renameOpen = false }" />
 					<UButton type="submit" label="Save" color="primary" :loading="renameLoading" />
 				</div>
 			</UForm>
