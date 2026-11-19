@@ -53,7 +53,9 @@ app/
 │       ├── MailDetailContent.vue
 │       ├── MailIdentitiesManager.vue  # Sender-identity CRUD panel (list, add, edit, signature, default, delete)
 │       ├── MailFolderView.vue  # Folder list + split/list view modes, pagination, bulk actions, drag & drop,
-│       │                       #   Shift/Ctrl-click and keyboard selection
+│       │                       #   Shift/Ctrl-click and keyboard selection. Opening a mail remounts it
+│       │                       #   (list and mail are separate pages), so the page lives in `?page=` and
+│       │                       #   page size + selection in `useState`
 │       ├── MailListItem.vue
 │       ├── MailList.vue
 │       └── MailToolbar.vue     # Shared toolbar (bulk/read/delete/refresh, "Empty Folder" + reading-pane actions)
