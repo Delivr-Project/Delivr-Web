@@ -64,8 +64,10 @@ function resolveDropTarget(e: DragEvent): { anchor: HTMLElement; mailbox: Mailbo
     const href = anchor.getAttribute('href') ?? '';
     const match = href.match(/\/folder\/([^/?#]+)/);
     if (!match || !match[1]) return null;
-    const segments = MailboxDisplayUtils.parseFolderParam(match[1]);
-    const mailbox = MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, segments);
+    // The href holds the encoded segment; decode it once, as the router does for params.
+    let param = match[1];
+    try { param = decodeURIComponent(param); } catch { /* keep it as written */ }
+    const mailbox = MailboxDisplayUtils.findMailboxByFolderParam(mailboxes.value, param);
     return mailbox ? { anchor, mailbox } : null;
 }
 
@@ -268,10 +270,8 @@ function onFolderDragLeave(e: DragEvent) {
 // real `INBOX` path (what breadcrumbs and opened mails navigate to), or any
 // case/encoding variant — and it holds while viewing a mail inside that folder.
 const activeMailboxPath = computed(() => {
-    const segments = MailboxDisplayUtils.parseFolderParam(
-        route.params.folderPath as string | string[] | undefined
-    );
-    return MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, segments)?.path;
+    const param = MailboxDisplayUtils.folderParam(route.params.folderPath as string | string[] | undefined);
+    return MailboxDisplayUtils.findMailboxByFolderParam(mailboxes.value, param)?.path;
 });
 
 const sidebarItems = computed(() => {

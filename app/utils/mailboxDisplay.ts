@@ -71,25 +71,20 @@ export class MailboxDisplayUtils {
     }
 
     /**
-     * Decode a single dynamic route segment that was produced by
-     * {@link pathToUrlSegment}. The outer layer is decoded first, then each
-     * folder name; the result is split on every supported IMAP delimiter so the
-     * caller can try matching against the real mailbox list.
+     * The `[folderPath]` route param as the router hands it over: the URL segment
+     * decoded once (vue-router runs `decodeURIComponent` on params).
      */
-    public static parseFolderParam(param: string | string[] | undefined): string[] {
-        const raw = Array.isArray(param) ? param[0] : param;
-        if (!raw) return [];
-        try {
-            const decoded = decodeURIComponent(raw);
-            return decoded
-                .split(/[\/\\.]/)
-                .map((s) => {
-                    try { return decodeURIComponent(s); } catch { return s; }
-                })
-                .filter((s) => s.length > 0);
-        } catch {
-            return raw.split(/[\/\\.]/).filter((s) => s.length > 0);
-        }
+    public static folderParam(param: string | string[] | undefined): string {
+        return (Array.isArray(param) ? param[0] : param) ?? '';
+    }
+
+    /**
+     * What a mailbox's {@link pathToUrlSegment} turns into once the router has
+     * decoded it, i.e. what {@link folderParam} returns for that folder's URL.
+     */
+    public static routeParamFor(mb: Mailbox): string {
+        const segment = this.pathToUrlSegment(mb.path, mb.delimiter);
+        try { return decodeURIComponent(segment); } catch { return segment; }
     }
 
     public static normalizeFolderParam(param: unknown): string[] {
@@ -104,28 +99,27 @@ export class MailboxDisplayUtils {
     }
 
     /**
-     * Resolve the mailbox a set of URL segments points at. Matches against each
-     * mailbox's own delimiter-split path (so it works for any delimiter), with an
-     * "inbox" alias and a case-insensitive fallback.
+     * Resolve the mailbox a `[folderPath]` route param ({@link folderParam})
+     * points at. The param is compared with each mailbox's own URL form
+     * ({@link routeParamFor}) rather than split on delimiters, so folder names
+     * containing `.`, `/`, `\` or `%` resolve to themselves. A bare IMAP path
+     * (e.g. a typed `/folder/INBOX`), the lowercase "inbox" alias and a
+     * case-insensitive match are accepted as fallbacks.
      */
-    public static findMailboxByUrlSegments(mailboxes: Mailbox[], segments: string[]): Mailbox | undefined {
-        if (segments.length === 0) return undefined;
+    public static findMailboxByFolderParam(mailboxes: Mailbox[], param: string): Mailbox | undefined {
+        if (!param) return undefined;
 
-        const exact = mailboxes.find((mb) => {
-            const mbSegs = mb.path.split(mb.delimiter);
-            return mbSegs.length === segments.length && mbSegs.every((s, i) => s === segments[i]);
-        });
+        const exact = mailboxes.find((mb) => this.routeParamFor(mb) === param)
+            ?? mailboxes.find((mb) => mb.path === param);
         if (exact) return exact;
 
-        if (segments.length === 1 && segments[0]!.toLowerCase() === 'inbox') {
+        if (param.toLowerCase() === 'inbox') {
             const inbox = mailboxes.find(this.isInbox);
             if (inbox) return inbox;
         }
 
-        return mailboxes.find((mb) => {
-            const mbSegs = mb.path.split(mb.delimiter);
-            return mbSegs.length === segments.length && mbSegs.every((s, i) => s.toLowerCase() === segments[i]!.toLowerCase());
-        });
+        const lower = param.toLowerCase();
+        return mailboxes.find((mb) => this.routeParamFor(mb).toLowerCase() === lower || mb.path.toLowerCase() === lower);
     }
 
     /**
@@ -265,7 +259,7 @@ export class MailboxDisplayUtils {
 
     // Map a folder-tree node to a (possibly nested) navigation menu item.
     // `activePath` is the real IMAP path of the mailbox the current route
-    // resolves to (see `findMailboxByUrlSegments`), so the active highlight is
+    // resolves to (see `findMailboxByFolderParam`), so the active highlight is
     // driven by mailbox identity — not by string-matching the URL, which breaks
     // when the same folder is reached via different spellings (the lowercase
     // `inbox` alias vs the real `INBOX` path, or differing case/percent-encoding).

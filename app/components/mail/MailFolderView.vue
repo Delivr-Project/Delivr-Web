@@ -45,15 +45,14 @@ const accountId = mailAccount.data.value.id;
 const mailboxes = computed(() => mailAccount.data.value.mailboxes || []);
 
 // ── Resolve which mailbox these URL segments point at ──
-const folderSegments = computed(() => MailboxDisplayUtils.parseFolderParam(props.folderPathParam));
-const currentMailbox = computed(() => MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, folderSegments.value));
-const systemFolderPath = computed(() =>
-    currentMailbox.value?.path ?? folderSegments.value.join(mailboxes.value[0]?.delimiter || '/')
-);
+const folderParam = computed(() => MailboxDisplayUtils.folderParam(props.folderPathParam));
+const currentMailbox = computed(() => MailboxDisplayUtils.findMailboxByFolderParam(mailboxes.value, folderParam.value));
+// A folder that isn't in the list (yet) is taken by its literal path.
+const systemFolderPath = computed(() => currentMailbox.value?.path ?? folderParam.value);
 const folderTitle = computed(() =>
     currentMailbox.value
         ? MailboxDisplayUtils.displayName(currentMailbox.value)
-        : (folderSegments.value[folderSegments.value.length - 1] ?? 'Folder')
+        : (folderParam.value || 'Folder')
 );
 
 const breadcrumbItems = computed(() =>
@@ -853,7 +852,7 @@ function encodedFolderPath(): string {
     const delimiter = mb?.delimiter || mailboxes.value[0]?.delimiter || '/';
     return mb
         ? MailboxDisplayUtils.pathToUrlSegment(mb.path, delimiter)
-        : MailboxDisplayUtils.pathToUrlSegment(folderSegments.value.join(delimiter), delimiter);
+        : MailboxDisplayUtils.pathToUrlSegment(folderParam.value, delimiter);
 }
 
 function mailRoute(uid: number): string {
