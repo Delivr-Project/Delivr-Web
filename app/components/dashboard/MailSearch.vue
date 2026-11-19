@@ -5,6 +5,7 @@ import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
 import Gravatar from '~/components/Gravatar.vue';
 import { useDebounceFn } from '@vueuse/core';
 import { useRecentMailSearches } from '~/composables/useRecentSearches';
+import { useUserInfoStore } from '~/composables/stores/useUserStore';
 
 // ── Types ──
 
@@ -54,7 +55,8 @@ const PAGE_SIZE = 20;
 const hasMoreResults = computed(() => searchResults.value.length < totalResults.value);
 
 // Recent searches (persisted)
-const recentSearches = useRecentMailSearches();
+const userInfo = await useUserInfoStore().use();
+const recentSearches = useRecentMailSearches(() => userInfo.value?.id);
 const MAX_RECENT = 6;
 
 // ── Search operator catalog (Discord-style tokens) ──
