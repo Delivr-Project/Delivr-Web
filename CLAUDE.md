@@ -25,7 +25,8 @@ app/
 │       └── main.css          # Global styles
 ├── components/
 │   ├── Gravatar.vue
-│   ├── SenderAvatar.vue        # Sender avatar (Gravatar / BIMI brand logo / initials)
+│   ├── SenderAvatar.vue        # Sender avatar (Gravatar / BIMI brand logo / initials); the BIMI logo
+│   │                           #   is a sender-controlled URL, so it's only loaded while remote content is allowed
 │   ├── dashboard/           # Dashboard components
 │   │   ├── DashboardDeleteModal.vue
 │   │   ├── DashboardModal.vue

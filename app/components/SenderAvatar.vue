@@ -15,7 +15,13 @@ const props = defineProps<Omit<AvatarProps, 'src'> & {
     email?: string;
     /** Explicit sender domain; derived from `email` when omitted. */
     domain?: string;
-    /** Set to `false` to skip the BIMI lookup and use Gravatar only. */
+    /**
+     * Set to `false` to skip the BIMI lookup and use Gravatar only. The logo URL is
+     * whatever the sender's domain publishes, so loading it tells the sender the mail
+     * was opened — pass `false` while remote content is blocked. The logo is not
+     * checked against the mail's DMARC result, so it doesn't prove who sent the mail.
+     * Not reactive: re-key the component when it changes.
+     */
     bimi?: boolean;
 }>();
 
