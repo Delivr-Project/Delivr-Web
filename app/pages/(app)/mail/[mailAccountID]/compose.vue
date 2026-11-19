@@ -98,10 +98,12 @@ function toEditorHtml(mail: MailData, keepStyles: boolean): string {
 function sanitizeStoredHtml(html: string, keepStyles = true): string {
     return DOMPurify.sanitize(html, {
         USE_PROFILES: { html: true },
-        // The signature marker has to survive, or the composer can't find it again.
-        ADD_ATTR: [MailComposeUtils.SIGNATURE_ATTRIBUTE],
+        // The signature marker has to survive in drafts and signatures, or the composer
+        // can't find it again. In a quoted original it is the quoted sender's signature,
+        // so it goes — the composer must not take it for the user's own.
+        ADD_ATTR: keepStyles ? [MailComposeUtils.SIGNATURE_ATTRIBUTE] : [],
         FORBID_TAGS: ['style', 'img', 'picture', 'video', 'audio', 'iframe', 'svg', 'form', 'input', 'button'],
-        FORBID_ATTR: keepStyles ? ['class', 'id'] : ['style', 'class', 'id']
+        FORBID_ATTR: keepStyles ? ['class', 'id'] : ['style', 'class', 'id', MailComposeUtils.SIGNATURE_ATTRIBUTE]
     });
 }
 
