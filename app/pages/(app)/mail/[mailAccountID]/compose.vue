@@ -178,7 +178,12 @@ async function load() {
     if (draftUid !== null) {
         const draftFolder = folder ?? drafts.path;
         const mail = await loadMail(draftFolder, draftUid);
-        if (mail) {
+        // Only a draft may be edited: autosave replaces the stored message, so opening
+        // any other mail here (e.g. from a crafted link) would overwrite it with a
+        // rebuilt copy. Mail in the real Drafts folder counts too, for clients that
+        // store drafts without the \Draft flag.
+        const isDraft = !!mail && (!!mail.flags?.draft || (!drafts.fallback && draftFolder === drafts.path));
+        if (mail && isDraft) {
             setup.value = {
                 ...base,
                 mode: 'draft',
@@ -200,7 +205,11 @@ async function load() {
             };
             return;
         }
-        toast.add({
+        toast.add(mail ? {
+            title: 'Not a draft',
+            description: 'Only drafts can be edited. Starting a new message instead.',
+            color: 'warning'
+        } : {
             title: 'Draft not found',
             description: 'It may have been sent or deleted in the meantime. Starting a new message instead.',
             color: 'warning'
