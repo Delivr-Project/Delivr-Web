@@ -60,13 +60,14 @@ function buildAttachmentUrl(ref: AttachmentRef, download: boolean): string {
 /**
  * Same-origin preview URL served by the nitro proxy route. It mirrors the email's
  * view route and ends in the filename (shown in the browser tab), e.g.
- * `/mail/1/folder/INBOX%2FBekannte/68/attachment/Report.pdf`. The server resolves
- * the filename to the attachment and authenticates via the session cookie.
+ * `/mail/1/folder/INBOX%2FBekannte/68/attachment/Report.pdf?i=2`. The `i` query
+ * names the attachment, since a mail can carry two files with the same name; the
+ * server checks the filename against it and authenticates via the session cookie.
  */
 function buildPreviewUrl(ref: AttachmentRef, filename: string): string {
     const folder = encodeURIComponent(ref.mailboxPath);
     const name = encodeURIComponent(filename);
-    return `/mail/${ref.accountId}/folder/${folder}/${ref.mailUid}/attachment/${name}`;
+    return `/mail/${ref.accountId}/folder/${folder}/${ref.mailUid}/attachment/${name}?i=${ref.attachmentId}`;
 }
 
 /**

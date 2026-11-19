@@ -7,8 +7,10 @@
  * this route authenticates via the session cookie, forwards to the Delivr API with
  * a bearer token, and streams the bytes back — nothing is stored on disk.
  *
- * The URL carries the filename (not the attachment index the API uses), so we first
- * look up the attachment list to resolve the filename to its id, then stream its
+ * The URL ends in the filename and names the attachment with `?i=<id>` (the index
+ * the API uses), since one mail can carry two files with the same name. We look up
+ * the attachment list, take the attachment with that id only if its filename matches
+ * (without `i`, as in older links, the first one with that name), then stream its
  * content. Because this is served from the app's own origin, only inert content
  * types render inline; anything active (HTML, SVG, ...) is forced to download so it
  * cannot execute script in the app origin.
@@ -79,7 +81,12 @@ export default defineEventHandler(async (event) => {
         });
     }
     const listJson = await listResponse.json() as { data?: Array<{ id: number; filename?: string }> };
-    const match = listJson.data?.find(a => a.filename === filename);
+    const rawIndex = getQuery(event).i;
+    const index = rawIndex === undefined ? null : Number(rawIndex);
+    if (index !== null && !(Number.isInteger(index) && index >= 0)) {
+        throw createError({ statusCode: 400, statusMessage: 'Missing or invalid attachment parameters' });
+    }
+    const match = listJson.data?.find(a => a.filename === filename && (index === null || a.id === index));
     if (!match) {
         throw createError({ statusCode: 404, statusMessage: 'Attachment not found' });
     }
