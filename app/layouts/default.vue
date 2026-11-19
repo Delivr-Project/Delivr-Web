@@ -507,9 +507,11 @@ const displaySidebars = computed(() => {
                     <!-- Drop zone: drag mails onto a folder to move them there. When
                          folder drag-and-drop is enabled, dragging a folder re-nests
                          it (onto another folder) or moves it to the top level (into
-                         the clear space), so the zone grows to give a drop area. -->
+                         the clear space), so the zone grows to give a drop area.
+                         It scrolls on its own: without min-h-0 + overflow a long folder
+                         list spills over the "Folder Settings" link below it. -->
                     <div
-                        class="flex-1"
+                        class="flex-1 min-h-0 overflow-y-auto"
                         @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"
