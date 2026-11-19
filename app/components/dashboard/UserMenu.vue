@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from "@nuxt/ui";
 import { useUserInfoStore } from "~/composables/stores/useUserStore";
+import { clearRecentMailSearches } from "~/composables/useRecentSearches";
 
 defineProps<{
     collapsed?: boolean;
@@ -40,6 +41,7 @@ async function logout() {
         });
 
         await userinfoStore.clear();
+        clearRecentMailSearches();
 
         useAppCookies().sessionToken.get().value = null;
 

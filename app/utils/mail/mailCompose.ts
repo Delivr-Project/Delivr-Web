@@ -137,17 +137,27 @@ export namespace MailComposeUtils {
     }
 
     /**
+     * The user's own signature block. A block that starts inside the quoted
+     * original belongs to the person being quoted (a mail written in Delivr
+     * keeps the marker), so it is never read, replaced or dropped.
+     */
+    function ownSignature(html: string): RegExpMatchArray | null {
+        const match = html.match(SIGNATURE_BLOCK);
+        return match && match.index! < quotedRegionStart(html) ? match : null;
+    }
+
+    /**
      * The signature block's inner HTML, or `null` when the body has none. The
      * block never nests another `<div>` — the editor has no node for a plain
      * div, so one can't be typed or pasted into it — which is what makes a
      * non-greedy match for its closing tag correct.
      */
     export function readSignature(html: string): string | null {
-        return html.match(SIGNATURE_BLOCK)?.[1] ?? null;
+        return ownSignature(html)?.[1] ?? null;
     }
 
     export function hasSignatureBlock(html: string): boolean {
-        return SIGNATURE_BLOCK.test(html);
+        return ownSignature(html) !== null;
     }
 
     /**
@@ -175,8 +185,10 @@ export namespace MailComposeUtils {
      * so it always sits directly below what the user writes.
      */
     export function withSignature(html: string, signature: string): string {
-        if (hasSignatureBlock(html)) {
-            return html.replace(SIGNATURE_BLOCK, () => signatureBlock(signature));
+        const own = ownSignature(html);
+        if (own) {
+            const start = own.index!;
+            return html.slice(0, start) + signatureBlock(signature) + html.slice(start + own[0].length);
         }
         const at = quotedRegionStart(html);
         return html.slice(0, at) + signatureBlock(signature) + html.slice(at);
@@ -207,8 +219,9 @@ export namespace MailComposeUtils {
      * but an empty one has no business in the sent mail.
      */
     function stripEmptySignature(html: string): string {
-        return html.replace(SIGNATURE_BLOCK, (block, content: string) =>
-            content.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim() === '' ? '' : block);
+        const own = ownSignature(html);
+        if (!own || own[1]!.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim() !== '') return html;
+        return html.slice(0, own.index!) + html.slice(own.index! + own[0].length);
     }
 
     /** "On <date>, <sender> wrote:" line above a quoted reply. */

@@ -23,10 +23,13 @@ const isMobile = useBreakpoints(breakpointsTailwind).smaller('lg');
 const fullScreen = computed(() => isMobile.value || viewMode.value === 'list');
 
 function goBack() {
-    const folderPath = Array.isArray(route.params.folderPath)
-        ? route.params.folderPath[0]
-        : route.params.folderPath;
-    router.push(`/mail/${route.params.mailAccountID}/folder/${folderPath || ''}`);
+    // Back to the list on the page the mail was opened from. `route.path` is still
+    // encoded, so the folder segment stays one segment (the decoded param may hold "/").
+    const page = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
+    router.push({
+        path: route.path.replace(/\/[^/]+\/?$/, ''),
+        query: page ? { page } : {}
+    });
 }
 </script>
 

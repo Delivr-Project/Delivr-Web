@@ -561,10 +561,13 @@ defineExpose({
                     <!-- Sender card -->
                     <div class="rounded-lg border border-default p-4">
                         <div class="flex items-start gap-3 sm:gap-4">
+                            <!-- The BIMI logo is fetched from a URL the sender's domain publishes, so it
+                                 follows the remote-content setting like any other remote image. -->
                             <SenderAvatar
+                                :key="`${mailData.from?.address ?? ''}|${!shouldBlockRemote}`"
                                 :email="mailData.from?.address"
                                 :domain="senderDomain ?? undefined"
-                                :bimi="true"
+                                :bimi="!shouldBlockRemote"
                                 size="lg"
                                 class="shrink-0"
                             />

@@ -223,6 +223,37 @@ describe('MailComposeUtils signatures', () => {
         expect(body.startsWith('<p></p><div')).toBe(true);
     });
 
+    test('ignores a signature block inside a quoted reply', () => {
+        // The original was written in Delivr, so its sender's signature keeps the marker.
+        const reply = `<p></p><p>On 23 Sep 2026, Bob wrote:</p><blockquote><p>Please review.</p>${block('<p>Bob, Bob Ltd</p>')}</blockquote>`;
+        expect(MailComposeUtils.hasSignatureBlock(reply)).toBe(false);
+        expect(MailComposeUtils.readSignature(reply)).toBeNull();
+
+        const body = MailComposeUtils.withSignature(reply, SIG);
+        expect(body).toBe(
+            `<p></p>${block(SIG)}<p>On 23 Sep 2026, Bob wrote:</p><blockquote><p>Please review.</p>${block('<p>Bob, Bob Ltd</p>')}</blockquote>`
+        );
+        expect(MailComposeUtils.readSignature(body)).toBe(SIG);
+
+        // Switching the identity replaces the user's block, not the quoted one.
+        const swapped = MailComposeUtils.withSignature(body, '<p>Jane · Work</p>');
+        expect(swapped).toContain(`<p></p>${block('<p>Jane · Work</p>')}<p>On 23 Sep`);
+        expect(swapped).toContain(block('<p>Bob, Bob Ltd</p>'));
+    });
+
+    test('ignores a signature block inside a forwarded message', () => {
+        const forward = `<p></p><p>---------- Forwarded message ----------<br>From: Bob</p><p></p><p>original</p>${block('<p>Bob</p>')}`;
+        expect(MailComposeUtils.hasSignatureBlock(forward)).toBe(false);
+        const body = MailComposeUtils.withSignature(forward, SIG);
+        expect(body.indexOf(block(SIG))).toBeLessThan(body.indexOf('Forwarded message'));
+        expect(body).toContain(block('<p>Bob</p>'));
+    });
+
+    test('an empty quoted signature block is left alone when sending', () => {
+        const reply = `<p>Hi</p><p>Bob wrote:</p><blockquote>${block('<p></p>')}</blockquote>`;
+        expect(MailComposeUtils.toEmailHtml(reply)).toContain('data-delivr-signature');
+    });
+
     test('goes below a quote-less body, where the message ends', () => {
         expect(MailComposeUtils.withSignature('<p>Hi</p><p>Bye</p>', SIG))
             .toBe(`<p>Hi</p><p>Bye</p>${block(SIG)}`);

@@ -45,15 +45,14 @@ const accountId = mailAccount.data.value.id;
 const mailboxes = computed(() => mailAccount.data.value.mailboxes || []);
 
 // ── Resolve which mailbox these URL segments point at ──
-const folderSegments = computed(() => MailboxDisplayUtils.parseFolderParam(props.folderPathParam));
-const currentMailbox = computed(() => MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, folderSegments.value));
-const systemFolderPath = computed(() =>
-    currentMailbox.value?.path ?? folderSegments.value.join(mailboxes.value[0]?.delimiter || '/')
-);
+const folderParam = computed(() => MailboxDisplayUtils.folderParam(props.folderPathParam));
+const currentMailbox = computed(() => MailboxDisplayUtils.findMailboxByFolderParam(mailboxes.value, folderParam.value));
+// A folder that isn't in the list (yet) is taken by its literal path.
+const systemFolderPath = computed(() => currentMailbox.value?.path ?? folderParam.value);
 const folderTitle = computed(() =>
     currentMailbox.value
         ? MailboxDisplayUtils.displayName(currentMailbox.value)
-        : (folderSegments.value[folderSegments.value.length - 1] ?? 'Folder')
+        : (folderParam.value || 'Folder')
 );
 
 const breadcrumbItems = computed(() =>
@@ -138,9 +137,24 @@ function hasAttachments(mail: MailListItem): boolean {
 // ── Pagination ──
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
-const pageSize = ref(PAGE_SIZE_OPTIONS[0]!);
+// Opening a mail mounts this view anew (the list and an open mail are separate
+// pages), so what has to survive that lives outside it: the page in the URL
+// (`?page=`), the page size and the selection in `useState`.
+const pageSize = useState('mail-folder-page-size', () => PAGE_SIZE_OPTIONS[0]!);
 const pageSizeItems = PAGE_SIZE_OPTIONS.map(n => ({ label: String(n), value: n }));
-const currentPage = ref(1);
+
+function pageFromQuery(): number {
+    const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
+    const page = Number.parseInt(raw ?? '', 10);
+    return Number.isInteger(page) && page > 1 ? page : 1;
+}
+
+const currentPage = ref(pageFromQuery());
+
+watch(currentPage, (page) => {
+    if (page === pageFromQuery()) return;
+    router.replace({ query: { ...route.query, page: page > 1 ? String(page) : undefined } });
+});
 
 // ── Data fetching ──
 
@@ -240,7 +254,7 @@ function prevPage() {
 
 // ── Selection state ──
 
-const selectedUids = ref<Set<number>>(new Set());
+const selectedUids = useState<Set<number>>(`mail-folder-selection-${accountId}-${systemFolderPath.value}`, () => new Set());
 
 // Where a Shift-range starts: the mail last clicked, toggled or moved to on its own.
 const selectionAnchor = ref<number | null>(null);
@@ -253,7 +267,12 @@ const mailOrder = computed(() => mailList.value.map(m => m.uid));
 // A deleted/moved mail or a new page can take the cursor's row away.
 watch(mailOrder, (order) => {
     if (cursorUid.value !== null && !order.includes(cursorUid.value)) cursorUid.value = null;
-});
+    // The selection outlives this view (see `pageSize`), so drop mails that are gone.
+    const present = new Set(order);
+    if ([...selectedUids.value].some(uid => !present.has(uid))) {
+        selectedUids.value = new Set([...selectedUids.value].filter(uid => present.has(uid)));
+    }
+}, { immediate: true });
 
 function isSelected(uid: number): boolean {
     return selectedUids.value.has(uid);
@@ -853,15 +872,20 @@ function encodedFolderPath(): string {
     const delimiter = mb?.delimiter || mailboxes.value[0]?.delimiter || '/';
     return mb
         ? MailboxDisplayUtils.pathToUrlSegment(mb.path, delimiter)
-        : MailboxDisplayUtils.pathToUrlSegment(folderSegments.value.join(delimiter), delimiter);
+        : MailboxDisplayUtils.pathToUrlSegment(folderParam.value, delimiter);
+}
+
+/** Keeps the list on its page when a mail is opened or closed. */
+function pageQuery(): string {
+    return currentPage.value > 1 ? `?page=${currentPage.value}` : '';
 }
 
 function mailRoute(uid: number): string {
-    return `/mail/${accountId}/folder/${encodedFolderPath()}/${uid}`;
+    return `/mail/${accountId}/folder/${encodedFolderPath()}/${uid}${pageQuery()}`;
 }
 
 function folderRoute(): string {
-    return `/mail/${accountId}/folder/${encodedFolderPath()}`;
+    return `/mail/${accountId}/folder/${encodedFolderPath()}${pageQuery()}`;
 }
 
 // ── Navigation ──

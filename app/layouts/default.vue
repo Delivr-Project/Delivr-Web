@@ -64,8 +64,10 @@ function resolveDropTarget(e: DragEvent): { anchor: HTMLElement; mailbox: Mailbo
     const href = anchor.getAttribute('href') ?? '';
     const match = href.match(/\/folder\/([^/?#]+)/);
     if (!match || !match[1]) return null;
-    const segments = MailboxDisplayUtils.parseFolderParam(match[1]);
-    const mailbox = MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, segments);
+    // The href holds the encoded segment; decode it once, as the router does for params.
+    let param = match[1];
+    try { param = decodeURIComponent(param); } catch { /* keep it as written */ }
+    const mailbox = MailboxDisplayUtils.findMailboxByFolderParam(mailboxes.value, param);
     return mailbox ? { anchor, mailbox } : null;
 }
 
@@ -268,10 +270,8 @@ function onFolderDragLeave(e: DragEvent) {
 // real `INBOX` path (what breadcrumbs and opened mails navigate to), or any
 // case/encoding variant — and it holds while viewing a mail inside that folder.
 const activeMailboxPath = computed(() => {
-    const segments = MailboxDisplayUtils.parseFolderParam(
-        route.params.folderPath as string | string[] | undefined
-    );
-    return MailboxDisplayUtils.findMailboxByUrlSegments(mailboxes.value, segments)?.path;
+    const param = MailboxDisplayUtils.folderParam(route.params.folderPath as string | string[] | undefined);
+    return MailboxDisplayUtils.findMailboxByFolderParam(mailboxes.value, param)?.path;
 });
 
 const sidebarItems = computed(() => {
@@ -507,9 +507,11 @@ const displaySidebars = computed(() => {
                     <!-- Drop zone: drag mails onto a folder to move them there. When
                          folder drag-and-drop is enabled, dragging a folder re-nests
                          it (onto another folder) or moves it to the top level (into
-                         the clear space), so the zone grows to give a drop area. -->
+                         the clear space), so the zone grows to give a drop area.
+                         It scrolls on its own: without min-h-0 + overflow a long folder
+                         list spills over the "Folder Settings" link below it. -->
                     <div
-                        class="flex-1"
+                        class="flex-1 min-h-0 overflow-y-auto"
                         @dragstart="onFolderDragStart"
                         @dragover="onFolderDragOver"
                         @drop="onFolderDrop"
