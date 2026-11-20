@@ -78,6 +78,54 @@ export const zPostAuthResetPasswordRequestResponse = z.object({
 });
 
 /**
+ * Passkey challenge created
+ */
+export const zPostAuthPasskeyOptionsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Passkey challenge created'),
+    data: z.object({
+        challenge_id: z.string(),
+        options: z.object({
+            challenge: z.string()
+        })
+    })
+});
+
+export const zPostAuthPasskeyBody = z.object({
+    challenge_id: z.string().min(1),
+    response: z.object({
+        id: z.string().min(1),
+        rawId: z.string().min(1),
+        response: z.object({
+            clientDataJSON: z.string(),
+            authenticatorData: z.string(),
+            signature: z.string(),
+            userHandle: z.string().optional()
+        }),
+        authenticatorAttachment: z.enum(['platform', 'cross-platform']).optional(),
+        clientExtensionResults: z.record(z.string(), z.unknown()),
+        type: z.literal('public-key')
+    })
+});
+
+/**
+ * Login successful
+ */
+export const zPostAuthPasskeyResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Login successful'),
+    data: z.object({
+        user_id: z.int().gte(-9007199254740991).lte(9007199254740991),
+        user_role: z.enum(['admin', 'user']),
+        created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
+        expires_at: z.int().gte(-9007199254740991).lte(9007199254740991),
+        token: z.string()
+    })
+});
+
+/**
  * Account deleted successfully
  */
 export const zDeleteAccountResponse = z.object({
@@ -395,6 +443,116 @@ export const zPutAccountPreferencesOnboardingResponse = z.object({
     code: z.literal(200),
     message: z.literal('Onboarding state updated successfully'),
     data: z.null()
+});
+
+/**
+ * Passkeys retrieved successfully
+ */
+export const zGetAccountPasskeysResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Passkeys retrieved successfully'),
+    data: z.array(z.object({
+        id: z.string(),
+        created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
+        name: z.string(),
+        device_type: z.enum(['singleDevice', 'multiDevice']),
+        backed_up: z.boolean(),
+        last_used_at: z.int().gte(-9007199254740991).lte(9007199254740991).nullable()
+    }))
+});
+
+export const zPostAccountPasskeysBody = z.object({
+    name: z.string().min(1).max(100),
+    response: z.object({
+        id: z.string().min(1),
+        rawId: z.string().min(1),
+        response: z.object({
+            clientDataJSON: z.string(),
+            attestationObject: z.string(),
+            authenticatorData: z.string().optional(),
+            transports: z.array(z.string()).optional(),
+            publicKeyAlgorithm: z.number().optional(),
+            publicKey: z.string().optional()
+        }),
+        authenticatorAttachment: z.enum(['platform', 'cross-platform']).optional(),
+        clientExtensionResults: z.record(z.string(), z.unknown()),
+        type: z.literal('public-key')
+    })
+});
+
+/**
+ * Passkey registered successfully
+ */
+export const zPostAccountPasskeysResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(201),
+    message: z.literal('Passkey registered successfully'),
+    data: z.object({
+        id: z.string(),
+        created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
+        name: z.string(),
+        device_type: z.enum(['singleDevice', 'multiDevice']),
+        backed_up: z.boolean(),
+        last_used_at: z.int().gte(-9007199254740991).lte(9007199254740991).nullable()
+    })
+});
+
+export const zPostAccountPasskeysOptionsBody = z.object({
+    current_password: z.string().min(1)
+});
+
+/**
+ * Passkey registration started
+ */
+export const zPostAccountPasskeysOptionsResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Passkey registration started'),
+    data: z.object({
+        options: z.object({
+            challenge: z.string()
+        })
+    })
+});
+
+export const zDeleteAccountPasskeysByPasskeyIdPath = z.object({
+    passkeyID: z.string().min(1).max(1024)
+});
+
+/**
+ * Passkey deleted successfully
+ */
+export const zDeleteAccountPasskeysByPasskeyIdResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Passkey deleted successfully'),
+    data: z.null()
+});
+
+export const zPutAccountPasskeysByPasskeyIdBody = z.object({
+    name: z.string().min(1).max(100)
+});
+
+export const zPutAccountPasskeysByPasskeyIdPath = z.object({
+    passkeyID: z.string().min(1).max(1024)
+});
+
+/**
+ * Passkey updated successfully
+ */
+export const zPutAccountPasskeysByPasskeyIdResponse = z.object({
+    success: z.literal(true),
+    code: z.literal(200),
+    message: z.literal('Passkey updated successfully'),
+    data: z.object({
+        id: z.string(),
+        created_at: z.int().gte(-9007199254740991).lte(9007199254740991),
+        name: z.string(),
+        device_type: z.enum(['singleDevice', 'multiDevice']),
+        backed_up: z.boolean(),
+        last_used_at: z.int().gte(-9007199254740991).lte(9007199254740991).nullable()
+    })
 });
 
 export const zGetMailAccountsQuery = z.object({

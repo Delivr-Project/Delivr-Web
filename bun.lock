@@ -8,6 +8,7 @@
         "@hey-api/nuxt": "^0.2.1",
         "@hey-api/openapi-ts": "^0.95.0",
         "@nuxt/ui": "4.6.1",
+        "@simplewebauthn/browser": "14.0.0",
         "@tiptap/core": "3.22.3",
         "@tiptap/extension-text-align": "3.22.3",
         "@vite-pwa/nuxt": "1.1.1",
@@ -636,6 +637,8 @@
     "@simple-git/args-pathspec": ["@simple-git/args-pathspec@1.0.2", "", {}, "sha512-nEFVejViHUoL8wU8GTcwqrvqfUG40S5ts6S4fr1u1Ki5CklXlRDYThPVA/qurTmCYFGnaX3XpVUmICLHdvhLaA=="],
 
     "@simple-git/argv-parser": ["@simple-git/argv-parser@1.0.3", "", { "dependencies": { "@simple-git/args-pathspec": "^1.0.2" } }, "sha512-NMKv9sJcSN2VvnPT9Ja7eKfGy8Q8mMFLwPTCcuZMtv3+mYcLIZflg31S/tp2XCCyiY7YAx6cgBHQ0fwA2fWHpQ=="],
+
+    "@simplewebauthn/browser": ["@simplewebauthn/browser@14.0.0", "", {}, "sha512-1odWVqeEBTl7lJ9zMKLEsmTlnyrDO5iRcTvfMKKk1WThUnp/i8JJdffdj2icP+tty159s4PgwE3BiMoEW9NFow=="],
 
     "@sindresorhus/is": ["@sindresorhus/is@7.2.0", "", {}, "sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw=="],
 

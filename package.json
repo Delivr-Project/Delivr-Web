@@ -17,6 +17,7 @@
         "@hey-api/nuxt": "^0.2.1",
         "@hey-api/openapi-ts": "^0.95.0",
         "@nuxt/ui": "4.6.1",
+        "@simplewebauthn/browser": "14.0.0",
         "@tiptap/core": "3.22.3",
         "@tiptap/extension-text-align": "3.22.3",
         "@vite-pwa/nuxt": "1.1.1",
