@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { MailboxDisplayUtils } from '~/utils/mailboxDisplay';
-import MailFolderView from '~/components/mail/MailFolderView.vue';
 import { useEffectiveMailViewMode } from '~/composables/useMailViewMode';
 import { breakpointsTailwind, useBreakpoints } from '@vueuse/core';
 
+// One instance per folder: opening or closing a mail keeps the list instead of
+// rebuilding it. Query params don't re-mount either.
 definePageMeta({
-    key: (route) => route.path,
+    key: (route) => (route.params.mailUID ? route.path.slice(0, route.path.lastIndexOf('/')) : route.path),
 });
 
 const route = useRoute();
@@ -18,9 +18,10 @@ const mailUid = computed(() => {
     return Number.isNaN(n) ? null : n;
 });
 
+// An open mail takes over the whole panel on mobile and in list view.
 const viewMode = useEffectiveMailViewMode();
 const isMobile = useBreakpoints(breakpointsTailwind).smaller('lg');
-const fullScreen = computed(() => isMobile.value || viewMode.value === 'list');
+const fullScreen = computed(() => mailUid.value !== null && (isMobile.value || viewMode.value === 'list'));
 
 function goBack() {
     const folderPath = Array.isArray(route.params.folderPath)
